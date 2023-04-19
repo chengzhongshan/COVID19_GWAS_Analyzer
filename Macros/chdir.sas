@@ -1,0 +1,13 @@
+%macro chdir(dir);
+%let dir=%sysfunc(prxchange(s/\\/\//,-1,&dir));
+%if "&sysscp"="WIN" %then %do;
+x "cd /d &dir";
+%end;
+%else %do;
+data _null_;
+      rc=dlgcdir("&dir");
+      put rc=;
+run;
+%end;
+%put changed into the &dir;
+%mend;
