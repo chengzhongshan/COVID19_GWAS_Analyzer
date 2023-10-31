@@ -1,8 +1,8 @@
 # COVID19_GWAS_Analyzer
 
-SAS macros for comparing COVID-19 GWASs from HGI and GRASP databases
+                        SAS macros for comparing COVID-19 GWASs from HGI and GRASP databases
 
-![image](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/cd7bb6c1-4386-4818-88d6-d0cbe535eee3)
+![image](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/3f28404f-0cc4-4c91-aef7-ef6594a8f338)
 
 This package provides SAS scripts that perform differential effect size analysis between two COVID19 GWASs freely available from HGI or GRASP databases. Users need to have an account of SAS OnDemand for Academics, which can be freely accessed here (https://www.sas.com/en_us/software/on-demand-for-academics.html). 
 
