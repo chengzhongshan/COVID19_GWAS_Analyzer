@@ -57,6 +57,13 @@ eQTLSumOutdsd=AssocSummary,
 create_eqtl_boxplots=1
 );
 
+
+****Note: it is necessary to release space in SAS studio;
+****delete previous GWAS data sets;
+proc datasets nolist lib=D;
+delete GWAS1 GWAS2 GWAS1_vs_2;
+run; 
+
 *************Step6***********************;
 %import_sc_mtex_meta_umap_data(
 umap_file=https://cells.ucsc.edu/covid-hypertension/Seurat_umap.coords.tsv.gz,
