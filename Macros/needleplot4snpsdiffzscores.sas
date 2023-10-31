@@ -10,9 +10,12 @@ gwas2pvar,
 fig_height=400,
 fig_width=600,
 NotDrawBubbleBySize=0, /*Draw common bubble plot with the same size of bubbles*/
-transparency4needles=0.2,
+transparency4needles=0.6,
 keep_snp_order4xaxis=0,
-draw_p_axis_by_z_direction=1 /*Draw the log10P value axis on the end-right by +/- direction of its corresponding z-scores*/
+draw_p_axis_by_z_direction=1, /*Draw the log10P value axis on the end-right by +/- direction of its corresponding z-scores*/
+bubble_transparency=0.1,
+xaxisfontsize=10,
+maxbublesize=10 /*restricted the largest size for -log10P in pixel*/
 );
 %let snps=%sysfunc(prxchange(s/%str(%")//,-1,&snps));
 data a;
@@ -161,26 +164,26 @@ needle x=n y=z/baseline=0 baselineattrs=(pattern=dash color=darkred)
                group=g  lineattrs=(thickness=30) name="ndl" transparency=&transparency4needles;
 series x=n y=diffzscore_p/y2axis lineattrs=(pattern=dash color=lightred)
                     transparency=0 name="sr";  
-bubble x=n y=diffzscore_p size=bubblesize/colormodel=(darkorange) 
-                               y2axis fill fillattrs=(color=lightred) transparency=0.1
+bubble x=n y=diffzscore_p size=bubblesize/colormodel=(darkorange) bradiusmax=&maxbublesize
+                               y2axis fill fillattrs=(color=lightred) transparency=&bubble_transparency
                                name="bub";  
 %if &gwas1pvar ne %then %do;                               
-bubble x=n y=gwas1p size=bubblesize/colormodel=(darkorange) 
-                               y2axis fill fillattrs=(color=lightgreen) transparency=0.1
+bubble x=n y=gwas1p size=bubblesize/colormodel=(darkorange) bradiusmax=&maxbublesize
+                               y2axis fill fillattrs=(color=lightgreen) transparency=&bubble_transparency
                                name="bub1"; 
 series x=n y=gwas1p/y2axis lineattrs=(pattern=dash color=lightgreen)
                     transparency=0 name="sr1";                                 
 %end;  
 %if &gwas1pvar ne %then %do;                             
-bubble x=n y=gwas2p size=bubblesize/colormodel=(darkorange) 
-                               y2axis fill fillattrs=(color=lightblue) transparency=0.1
+bubble x=n y=gwas2p size=bubblesize/colormodel=(darkorange)  bradiusmax=&maxbublesize
+                               y2axis fill fillattrs=(color=lightblue) transparency=&bubble_transparency
                                name="bub2"; 
 series x=n y=gwas2p/y2axis lineattrs=(pattern=dash color=lightblue)
                     transparency=0 name="sr2";                                 
 %end;                               
 xaxis values=(1 to &tot by 1) valuesdisplay=(&names) 
       valuesrotate=diagonal fitpolicy=thin 
-      valueattrs=(size=6 family=bold) label="";
+      valueattrs=(size=&xaxisfontsize family=bold) label="";
 x2axis label="";
 yaxis label="Association z-score";
 

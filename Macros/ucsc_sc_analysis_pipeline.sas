@@ -1,3 +1,6 @@
+*Note: this macro is not updated with newly created macros for downloading ucsc gene expression matrix;
+*and the macro of importing single cell gene expression, making UMAP, and other visualizaiton macros;
+*these new macros have been written for the STAR Protocol paper of COVID19_GWAS_Analyzer;
 
 %macro ucsc_sc_analysis_pipeline(
 remove_pre_sc_sas_dsds=0,	/*provide 1 to remove all previous sc datasets, such as exp, headers, umap*/
@@ -622,7 +625,7 @@ rgx2cells_not_matched_as_other=&rgx4_not_matched_cells_as_others
 %mend;
 
 
-/*Demo code:
+/*Demo code:;
 
 *options mprint mlogic symbolgen;
 %let macrodir=/home/cheng.zhong.shan/Macros;

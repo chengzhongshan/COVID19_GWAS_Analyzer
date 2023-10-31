@@ -32,6 +32,11 @@
  %let &global_macro_out=&_nums_with_linker_;
  
 %end;
+%else %do;
+%put No need to get consecutive numbers as there is not linker among your input numbers;
+%put &nums_with_linker;
+%let &global_macro_out=&nums_with_linker;
+%end;
 
 %mend;
 

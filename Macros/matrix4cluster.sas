@@ -6,6 +6,11 @@
 					  id_var4cluster,
 					  numeric_vars
                       );
+*Remove records with id_var4cluster as missing;
+data &dsdin;
+set &dsdin;
+if &id_var4cluster^="";
+run;
 
 /*https://support.sas.com/documentation/cdl/en/statug/63033/HTML/default/viewer.htm#statug_distance_sect006.htm*/
 %if %scan(&numeric_vars,1,' ') ne  %then %do;

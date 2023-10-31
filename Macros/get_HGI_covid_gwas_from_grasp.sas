@@ -2,10 +2,23 @@
 %let wkdir=%sysfunc(getoption(work));
 %let gwas_gz_file=%sysfunc(prxchange(s/.*\///,-1,&gwas_url));
 %dwn_http_file(httpfile_url=&gwas_url,outfile=&gwas_gz_file,outdir=&wkdir);
+*Uncompress the file in Windows;
+%if &sysscp=WIN %then %do;
+ %UncompressGZWith7ZInWindows(
+gzfilepath=&wkdir/&gwas_gz_file,
+globalvar4finalfile=finalfilepath 
+);
+%put Final uncompressed file fullpath is here:;
+%put &finalfilepath;
+*make the filename_rgx as empty, and the macro will treat the input as txt file;
+%ImportHGICovidGWASFromZIP(zip=&finalfilepath,filename_rgx=,sasdsdout=&outdsd,deleteZIP=1);
+%end;
+%else %do;
 /*Put tmp data into sas work directory will save space*/
 /* %ImportTXTFromZIP(zip=&wkdir/&gwas_gz_file,filename_rgx=gz,sasdsdout=&outdsd, */
 /* extra_proc_import_codes=%str(getnames=yes),deleteZIP=1); */
 %ImportHGICovidGWASFromZIP(zip=&wkdir/&gwas_gz_file,filename_rgx=gz,sasdsdout=&outdsd,deleteZIP=1);
+%end;
 /*print the first 10 records for the imported gwas*/
 title "First 10 records in &outdsd derived from the gwas: &gwas_gz_file";
 proc print data=&outdsd(obs=10);run;
@@ -64,5 +77,3 @@ design_height=300
 /* %let gzfile=&wkdir/COVID19_HGI_B1_ALL_20201020.b37.txt.gz; */
 /* %ImportHGICovidGWASFromZIP(zip=&gzfile,filename_rgx=gz,sasdsdout=x,deleteZIP=0); */
 
-
-*/

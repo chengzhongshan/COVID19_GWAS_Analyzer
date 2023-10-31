@@ -1,6 +1,9 @@
 %macro map_grp_assoc2gene4covidsexgwas(
-gwas_dsd=FM.f_vs_m_mixedpop,
-gtf_dsd=FM.GTF_HG19,/*Need to use sas macro import gtf to save GTF_HG19*/
+gwas_dsd=FM.f_vs_m_mixedpop,/*Requires to have the arbitary var 
+chr in the input gwas dsd*/
+gtf_dsd=FM.GTF_HG19,/*Need to use sas macro import gtf to save GTF_HG19;
+these vars are arbitrary, such as chr, st, end, protein_coding (1 or 0)
+and type of bed region (gene or exon);*/
 chr=,
 min_st=,
 max_end=,
@@ -20,9 +23,43 @@ be separated in the final gene track;
 Customize this for different gene exon track!
 */
 where_cndtn_for_gwasdsd=%str() /*add filters to the input gwas_dsd; such as pval < 0.05 or gwas1_p < 0.05 or gwas2_p < 0.05*/,
+
+shift_text_yval=-0.2, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
+                      to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;
+                      Change it with the macro var pct4neg_y!*/
+fig_fmt=svg, /*output figure formats: svg, png, jpg, and others*/
+pct4neg_y=2, /*the most often used value is 1;
+              compacting the bed track y values by increasing the scatterplot scale, 
+              which can reduce the bed trace spaces; It seems that two-fold increasement
+              leads to better ticks for different tracks!
+              Use value >1 will increase the gene tract, while value < 1 will reduce it!
+              Note: when there are only 1 or 2 scatterplots, it is better to provide value = 0.5;
+              Modify this parameter with the parameter shift_text_yval to adjust gene label!
+              Typically, when there are more scatterplots, it is necessary to increase the value of pct4neg_y accordingly;
+              If there are only <4 scatterplots, the value would be usually set as 1 or 2;
+              */
+adjval4header=-0.5, /*In terms of header of each subscatterplot, provide postive value to move up scatter group header by the input value*/
+
 gwas_pos_var=pos,
-gwas_labels_in_order=gwas1_vs_gwas2 gwas1 gwas2 /*Provide gwas names matched with the numeric scatter_grp_var
+gwas_labels_in_order=gwas1_vs_gwas2 gwas1 gwas2, /*Provide gwas names matched with the numeric scatter_grp_var
 Use _ to represent blank space in each name, and these _ will be changed back into blank space!*/
+makedotheatmap=0,/*use colormap to draw dots in scatterplot instead of the discretemap;
+Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
+the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
+
+color_resp_var=,/*Use value of the var to draw colormap of dots in scatterplot
+if empty, the default var would be the same as that of yval_var;*/
+
+makeheatmapdotintooneline=0,/*This will make all dots have the same yaxis value but have different colors 
+based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var
+This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
+the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
+*/
+var4label_scatterplot_dots= /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
+label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
+default is empty; provide a variable that include non-empty strings for specific dots in the 
+scatterplots;*/
 );
 %if %ntokens(&gwas_labels_in_order)^=%ntokens(&AssocPVars) %then %do;
   %put Please ensure the gwas_labels_in_order has the same number of elements as that of AssocPVars;
@@ -31,8 +68,21 @@ Use _ to represent blank space in each name, and these _ will be changed back in
   %abort 255;
 %end;
 
+%let orig_minst=&min_st;
+%let orig_maxend=&max_end;
+
 %let min_st=%sysevalf(&min_st-&dist2genes);
 %let max_end=%sysevalf(&max_end+&dist2genes);
+
+*if the dist between min_st and max_end, the range may not be;
+*able to cover the gene body, resulting in failure of drawing gene body and exons;
+%if %sysevalf(&max_end - &min_st)<1e8 %then %do;
+ %put Extend to the st and end position to cover gene bodies and exons;
+ %let min_st=%sysevalf(&min_st - 50000000);
+ %let max_end=%sysevalf(&max_end + 50000000);
+%end;
+
+
 %let totP=%sysfunc(countw(&AssocPVars));
 %if &totP ne %sysfunc(countw(&ZscoreVars)) %then %do;
     %put Please make sure the two macro vars have the same number of parameters:;
@@ -52,12 +102,13 @@ pi=0;
 grp=genesymbol;
 _chr_=cats("chr",put(chr,2.));
 where chr=&chr and 
-( (st between &minst and &maxend) or (end between &minst and &maxend) )and 
+( (st between &min_st and &max_end) or (end between &min_st and &max_end) )
+and 
 /* type="gene" and protein_coding=1; */
 /*This does not work as expected, as some exons belonging to the same gene are colored differently*/
 /*It is also very time-consuming*/
 /* type in ("exon" "gene") and protein_coding=1; */
-type in ("gene" "exon") and protein_coding=1;
+type in ("gene" "exon") and protein_coding=1 and genesymbol not contains '.';
 /*and genesymbol not contains 'ENSG';*/
 run;
 
@@ -65,7 +116,7 @@ run;
 proc sort data=exons nodupkeys;by _all_;run;
 
 *Count how many exons in the exons dsd;
-*If there are more than 200, keep only gene and exclude all exons;
+*If there are more than 1000, keep only gene and exclude all exons;
 proc sql noprint;
 select count(type) into: tot_exons
 from exons
@@ -97,18 +148,26 @@ from exons;
 
 *Need to extend the min_st and max_end for better visualization in the final figure;
 proc sql noprint;
-select min(st)-1000, max(end)+1000 into :min_gpos,:max_gpos
+select min(st)-1000-&dist2genes, max(end)+1000+&dist2genes 
+into :min_gpos,:max_gpos
 from exons;
 *Need to compare it with original input min_st and max_end;
 %if &max_end>&max_gpos %then %let max_gpos=&max_end;
 %if &min_st<&min_gpos %then %let min_gpos=&min_st;
 %put The final chromosomal range for your query region is from &min_gpos to &max_gpos;
-
+%put However, we will restrict the x-axis to the original min and max genomic position in the final figure;
 *Need to enlarge the grp length by asigning longer comman label for it;
 *Filter input gwas_dsd with where condition to reduce the total number of markers;
 proc sql;
 create table signal_dsd as
 select 
+     %if %length(&color_resp_var)>0 %then %do;
+       &color_resp_var,
+     %end;
+     %if %length(&var4label_scatterplot_dots)>0 %then %do;
+       &var4label_scatterplot_dots,
+     %end;
+     
      %do i=1 %to &totP;
         %scan(&ZscoreVars,&i) > 0 as AssocGrp&i,
        -log10(%scan(&AssocPVars,&i)) as var4log10P&i,
@@ -116,7 +175,7 @@ select
        &gwas_pos_var as st,&gwas_pos_var+1 as end,"GWAS_Assoc_Signal" as grp,
        cats("chr",put(chr,2.)) as _chr_
 from &gwas_dsd	
-%if "&where_cndtn_for_gwasdsd"^="" %then %do;
+%if %length(&where_cndtn_for_gwasdsd)^=0 %then %do;
 (where=(&where_cndtn_for_gwasdsd))
 %end;
 where chr=&chr and 
@@ -165,7 +224,43 @@ be separated in the final gene track;
 (2) give value between 0 and 1 to separate genes based on the pct distance to the whole region;
 (3) give value > 1 to use absolute distance to separate genes into different groups;
 Customize this for different gene exon track!*/
-sc_labels_in_order=&gwas_labels_in_order /*Provide scatter names matched with the numeric scatter_grp_var*/
+sc_labels_in_order=&gwas_labels_in_order, /*Provide scatter names matched with the numeric scatter_grp_var*/
+min_xaxis=&orig_minst,
+max_xaxis=&orig_maxend,
+
+shift_text_yval=&shift_text_yval, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
+                      to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;
+                      Change it with the macro var pct4neg_y!*/
+fig_fmt=&fig_fmt, /*output figure formats: svg, png, jpg, and others*/
+pct4neg_y=&pct4neg_y, /*the most often used value is 1;
+              compacting the bed track y values by increasing the scatterplot scale, 
+              which can reduce the bed trace spaces; It seems that two-fold increasement
+              leads to better ticks for different tracks!
+              Use value >1 will increase the gene tract, while value < 1 will reduce it!
+              Note: when there are only 1 or 2 scatterplots, it is better to provide value = 0.5;
+              Modify this parameter with the parameter shift_text_yval to adjust gene label!
+              Typically, when there are more scatterplots, it is necessary to increase the value of pct4neg_y accordingly;
+              If there are only <4 scatterplots, the value would be usually set as 1 or 2;
+              */
+adjval4header=&adjval4header, /*In terms of header of each subscatterplot, provide postive value to move up scatter group header by the input value*/
+
+makedotheatmap=&makedotheatmap,/*use colormap to draw dots in scatterplot instead of the discretemap;
+Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
+the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
+
+color_resp_var=&color_resp_var,/*Use value of the var to draw colormap of dots in scatterplot
+if empty, the default var would be the same as that of yval_var;*/
+
+makeheatmapdotintooneline=&makeheatmapdotintooneline, /*This will make all dots have the same yaxis value but have different colors 
+based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var
+This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
+the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
+*/
+var4label_scatterplot_dots=&var4label_scatterplot_dots /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
+label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
+default is empty; provide a variable that include non-empty strings for specific dots in the 
+scatterplots;*/
 );
 %mend;
 

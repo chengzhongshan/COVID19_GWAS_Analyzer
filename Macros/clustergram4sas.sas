@@ -1,5 +1,10 @@
 %macro clustergram4sas(
-dsdin=_last_,
+/*The final rowlabels of the heatmap can be customized 
+when not clustering the final rowlabels by
+pre-sort the numeric_var names with two macros: 
+check_col_orders and pull_column
+*/
+dsdin=_last_,/*The input dataset is a ma and trix contains rownames and other numeric columns*/
 rowname_var=,/*the elements of rowname_var will be used to label heatmap columns*/
 numeric_vars=_numeric_,/*These column-wide numeric vars will become row-wide in the heatmap*/
 height=20,/*figure height in cm*/
@@ -20,8 +25,11 @@ cluster_type=3        /*values are 0, 1, 2, and 3 for not clustering heatmap,
 %importallmacros_ue; 
 */
 
+*Keep unique rownames;
+proc sort data=&dsdin out=x nodupkeys;by &rowname_var;run;
+
 data x(keep=&rowname_var &numeric_vars);
-set &dsdin;
+set x;
 /*Need to run this to rescue the inconsistency of column names*/
 &rowname_var=compress(&rowname_var);
 &rowname_var=prxchange('s/\.//',-1,&rowname_var);
@@ -84,7 +92,7 @@ do i=1 to dim(m);
  run;
 
  data all;
- merge 
+ merge heatmap 
 %if &cluster_type=1 or &cluster_type=3 %then %do;
  yaxis_dendrogram 
 %end;
@@ -92,7 +100,7 @@ do i=1 to dim(m);
  xaxis_dendrogram 
 %end;
 %if &cluster_type=0 or &cluster_type=3 %then %do;
- heatmap
+ 
 %end;
 ;
 run;
@@ -145,6 +153,8 @@ run;
 
 
 /*Note: make sure to let rowdata and columndata with union range*/
+ods graphics /reset=all noborder;
+*It is necessary to remove previous setting;
 proc template;
    define statgraph HeatDendrogram;
       begingraph / designheight=&height.cm designwidth=&width.cm;
@@ -191,6 +201,65 @@ run;
 
 /*Demo:
 
+data a;
+input a $ b $ c;
+c=log10(c);
+cards;
+a1 b1 100
+a1 b2 200
+a2 b1 300
+a3 b3 400
+;
+%debug_macro;
+*Macro var annotations:;
+*dsdin: The input dataset is a matrix contains rownames and other numeric columns;
+*rowname_var: the elements of rowname_var will be used to label heatmap columns;
+*colname_var: These column-wide names will be used to label heatmap rowlabels;
+*value_var: numeric data for heatmap cells;
+*height: figure 2 height in cm;
+*width: figure 2 width in cm;
+*columnweights: figure 2 column ratio;
+*rowweights; figure 2 row ratio;
+*cluster_type: values are 0, 1, 2, and 3 for not clustering heatmap clustering heatmap by column, row, and both;
+*This is just for comparison!;
+%clustergram4longformatdsd(
+dsdin=a,
+rowname_var=a,
+colname_var=b,
+value_var=c,
+height=8,
+width=10,
+columnweights=0.15 0.85, 
+rowweights=0.15 0.85, 
+cluster_type=3
+);
+
+*************************Optimized demo codes for clustergram4sas*****************************;
+*Now use the macro clustergram4sas with customized axis order;
+proc sort data=a;by a b;run;
+proc transpose data=a out=a_trans(drop=_name_);
+var c;
+id b;
+by a;
+run;
+proc print;run;
+*It is important here not to cluster the heatmap by row or both of row and column;
+%debug_macro;
+%pull_column(dsd=a_trans,dsdout=a_trans1,cols2pull=1 3 2 4);
+proc print data=a_trans1;run;
+%clustergram4sas(
+dsdin=a_trans1,
+rowname_var=a,
+numeric_vars=_numeric_,
+height=10,
+width=14,
+columnweights=0.15 0.85, 
+rowweights=0.15 0.85, 
+cluster_type=1       
+);
+
+
+***********************Other good demo codes************************************;
 *Make sure the input table have a column for rowname_var;
 *which will be used as column-wide labels in the final heatmap;
  

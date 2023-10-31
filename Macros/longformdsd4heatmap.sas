@@ -1,4 +1,22 @@
-%macro longformdsd4heatmap(dsdin,row_var,col_var,value_var,value_upperthres,Newvalue4upper,value_lowerthres,Newvalue4lower,cluster,srtbyrow,srtbycol,htmap_colwgt,htmap_rowwgt,dsdout);
+%macro longformdsd4heatmap(
+/*Compared to the macro heatmap4longformatdsd, this macro may not be good enough!
+whenever possible, please use the heatmap4longformatdsd! The macro is kept for 
+code reusing purpose!*/
+dsdin,
+row_var,
+col_var,
+value_var,
+value_upperthres,
+Newvalue4upper,
+value_lowerthres,
+Newvalue4lower,
+cluster,
+srtbyrow,
+srtbycol,
+htmap_colwgt,
+htmap_rowwgt,
+dsdout
+);
 
 %Scaleup_nrow_ncol(dsdin=&dsdin,
                    row_var4row=&row_var,
@@ -17,7 +35,7 @@ proc sort data=&dsdout;by &row_var &col_var;run;
 
 %if %eval(&cluster^=1) %then %do;
 
-ods graphics on/height=20in width=16in;
+/* ods graphics on/height=20in width=16in; */
 proc sgplot data=&dsdout;
 title h=10pt "Heatmap for dataset: &dsdin";
 heatmapparm y=&row_var x=&col_var colorresponse=&value_var/
@@ -141,7 +159,7 @@ run;
    end;
 run;
 %end;
-ods graphics on/height=20in width=15in; 
+/* ods graphics on/height=20in width=15in;  */
 proc sgrender data=&dsdout template=HeatDendrogram;
 run;
 
@@ -152,7 +170,7 @@ run;
 
 %mend;
 /*Demo: perform cluster analysis by row and col;
-
+ods graphics on/height=20in width=15in;
 %longformdsd4heatmap(dsdin=forheatmap,
                            row_var=gwas,
                            col_var=gene_name,

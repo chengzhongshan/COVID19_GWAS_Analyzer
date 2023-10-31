@@ -1,5 +1,8 @@
 %macro sc_glm4genes(
-/*Note: sc_freq_boxplot also perform DEG analysis, which is better than this macro*/
+/*Note: sc_freq_boxplot also perform DEG analysis, which is better than this macro
+However, this macro can be used for GTEx DEG analysis between sex or ancestry, such as 
+between AA and EA, if these grp information is added into the umap dataset manually!
+*/
 dsd,
 dsd_headers,
 dsd_umap,
@@ -34,9 +37,14 @@ select quote(scan(grps,2,'|')) into: _genes_ separated by ","
 from tgt_genes;
 %end;
 %else %do;
+/*proc sql noprint;*/
+/*select quote(grps) into: _genes_ separated by ","*/
+/*from tgt_genes;*/
+*Seems that SAS9.3 can not use quote here successfully, but in SAS OnDemand it is OK;
 proc sql noprint;
-select quote(grps) into: _genes_ separated by ","
+select grps into: _genes_ separated by " "
 from tgt_genes;
+%let _genes_=%quotelst(&_genes_);
 %end;
 
 *This is too slow; 

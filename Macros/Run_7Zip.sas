@@ -59,17 +59,26 @@ Usage: 7z <command> [<switches>...] <archive_name> [<file_names>...]
 *Seems that the above code can not change dir successfully;
 
 %let fullfilepath=%bquote(&Dir/&filename);
+
+%if %direxist(&Dir/&outdir4file) %then %do;
+ %put The dir containing uncompressed file is already there: &Dir/&outdir4file;
+ %put We will not uncompress the file again;
+%end;
+%else %do;
 options noxwait xsync;
 *Note: multiple commands in windows need to be sparated by &;
 *For simplicity, these commands can be split into multiple X commands, but sas failed to run;
+*Note:  Only double quote but not single quote in windows can be used to escape path containing space;
 %if %length(&outdir4file)>0 %then %do;
-X "cd /d &Dir & md &outdir4file & cd /d &outdir4file & 7z &Zip_cmd &fullfilepath &Extra_Cmd";
+*For unknown reason, the md command can not be added with /d in Windows 10;
+%put cd /d %str(%")&Dir%str(%") & md &outdir4file & cd /d %str(%")&outdir4file%str(%") & 7z &Zip_cmd %str(%")&fullfilepath%str(%") &Extra_Cmd;
+X cd /d %str(%")&Dir%str(%") & md &outdir4file & cd /d %str(%")&outdir4file%str(%") & 7z &Zip_cmd %str(%")&fullfilepath%str(%") &Extra_Cmd;
 %end;
 %else %do;
-X "cd /d &Dir & 7z &Zip_cmd &fullfilepath &Extra_Cmd";
+X cd /d %str(%")&Dir%str(%") & 7z &Zip_cmd %str(%")&fullfilepath%str(%") &Extra_Cmd;
 %end;
-
-
+%end;
+/*%abort 255;*/
 %mend Run_7Zip ;
 
 /*Demo:
@@ -112,5 +121,6 @@ Zip_Cmd=e,
 Extra_Cmd= -y,
 outdir4file= Seurat_umap.coords.tsv
 );
+
 */
 

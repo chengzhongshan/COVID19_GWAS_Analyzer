@@ -227,9 +227,9 @@ run;
         antialias=100000,axiscolor=black,border=0,gpath=,background=white,dpi=200,
         plotname=_circos,plottype=png,
         height=6in,width=6in,
-        fontcolor=black,svg=0,tiffdevice=TIFFP,transparent=0,
+        fontcolor=black,svg=1,tiffdevice=TIFFP,transparent=0,
         /**2.4: Document Options**/
-        destination=rtf,outdoc=,orientation=portrait,    
+        destination=PDF,outdoc=,orientation=portrait,    
         /**2.5: Output Plot Data**/
         out=);
     
@@ -1227,8 +1227,11 @@ run;
         %end;
     %end;
     /**Sets plot options**/
+    *Need to add this ods html to output all figures when running in Linux environment;
+    ods html;
+    
     options notes;
-    ods graphics / antialiasmax=%superq(antialias) scale=off imagename="%superq(plotname)" height=&height width=&width;
+    ods graphics on/reset=all antialiasmax=%superq(antialias) scale=off imagename="%superq(plotname)" height=&height width=&width;
     proc sgrender data=_plot template=_circos ;
     run;
     /**Creates the TIFF file from the PNG file created earlier**/

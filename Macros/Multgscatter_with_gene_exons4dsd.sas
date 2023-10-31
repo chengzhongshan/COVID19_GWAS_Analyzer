@@ -6,7 +6,20 @@ gene_exon_bed_dsd=,
 dist2st_and_end=50000,
 design_width=1000,
 design_height=200,
-barthickness=20);
+barthickness=20,
+makedotheatmap=0,/*use colormap to draw dots in scatterplot instead of the discretemap;
+Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
+the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
+
+color_resp_var=,/*Use value of the var to draw colormap of dots in scatterplot
+if empty, the default var would be the same as that of yval_var;*/
+
+makeheatmapdotintooneline=0/*This will make all dots have the same yaxis value but have different colors 
+based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var
+This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
+the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
+*/
+);
 
 
 /*proc print data=_last_(obs=10);run;*/
@@ -98,7 +111,19 @@ from &bed_dsd;
     track_width=&design_width,
     track_height=&design_height,
     dist2st_and_end=&dist2st_and_end,
-	dotsize=8
+	dotsize=8,
+	makedotheatmap=&makedotheatmap,/*use colormap to draw dots in scatterplot instead of the discretemap;
+Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
+the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
+
+color_resp_var=&color_resp_var,/*Use value of the var to draw colormap of dots in scatterplot
+if empty, the default var would be the same as that of yval_var;*/
+
+makeheatmapdotintooneline=&makeheatmapdotintooneline /*This will make all dots have the same yaxis value but have different colors 
+based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var
+This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
+the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
+*/
      );
   
    *options notes;

@@ -7,7 +7,7 @@ cell_type_var=cluster,
 pheno_var=,
 pheno_categories=,
 grpvar4boxplot=,/*separate umap and boxplot by pheno_var and grpvar*/
-samplewide=1,
+samplewide=0,
 sample_var=sample,
 boxplot_width=1000,
 boxplot_height=600,
@@ -36,7 +36,9 @@ rgx2cells_not_matched_as_other=  /*the rgx will be put inside: not prxmatch func
 /* run; */
 data _tgt_dsd_;
 set &dsd;
-where rownames="&gene" or scan(rownames,2,'|')="&gene";
+where rownames="&gene" or 
+           scan(rownames,2,'|')="&gene"  or
+           scan(rownames,1,'|')="&gene";
 run;
 *transpose wide data into long format data;
 data _tgt_dsd_;
@@ -117,7 +119,7 @@ title "Single cell expression UMAP for &gene by &grpvar4boxplot";
 title "Single cell expression UMAP plot for &gene";
 %end;    
 
-ods graphics on/reset=all width=&umap_width height=&umap_height noborder;
+ods graphics on/reset=all width=&umap_width height=&umap_height noborder imagename="UMAP4&dsd";
 proc sgpanel data=new__tgt_dsd_;
  *Only after using up the combination of all colors with the 1st datasymbol, it will use the combinations of;
  *colors with 2nd datasymbols, and the same applied to other datasymbols;
@@ -168,7 +170,7 @@ proc sort data=new__tgt_dsd_;by &cell_type_var
  &grpvar4boxplot
  %end;
  new_sgrp;
-ods graphics on/reset=all width=&boxplot_width height=&boxplot_height noborder;
+ods graphics on/reset=all width=&boxplot_width height=&boxplot_height noborder imagename="ExpBoxplot4&dsd";
 proc sgpanel data=new__tgt_dsd_
 %if %length(&where_cnd4sgplot)>0 %then %do;
  %*need to unquote it for correct resolution the macro var;
@@ -191,7 +193,8 @@ vbox exp/
          outlierattrs=(color=black symbol=circlefilled size=4)
          whiskerattrs=(color=black thickness=1 pattern=2) 
          medianattrs=(color=black thickness=2 pattern=1) 
-         meanattrs=(color=black symbol=circlefilled color=darkblue size=8);
+         meanattrs=(color=black symbol=circlefilled color=darkgreen size=8)
+         fillattrs=(transparency=0.5);
 keylegend /noborder valueattrs=(size=8);         
 label new_sgrp="Group";         
 run;

@@ -5,9 +5,15 @@ obs=max,
 sasdsdout=x,
 deleteZIP=0,
 infile_command=%str(firstobs=1 obs=10;input;info=_infile_;),
-use_zcat=0   /*This macro will use 7z in Windows and gzip in newer SAS or SAS OnDemand;
-              it also can use zcat in Linux*/
+/*Better to use nrbquote to replace str and use unquote within the macro
+to get back the input infile_command;*/
+use_zcat=0
 );
+
+%if %FileOrDirExist(&zip)=0 %then %do;
+  %put No file for the input macro var zip: &zip;
+  %abort 255;
+%end;
 
 *obs=max allows the macro to read all lines from files within zip or gzip;
 *If the purpose is to read headers, please use obs=10;
@@ -37,7 +43,7 @@ options compress=yes;
 	%let gzip_tag=gzip;
 %end;
 %else %if (%index(&zip,zip)) %then %do;
-    %let gzip_tab=zip;
+    %let gzip_tag=zip;
 %end;
 %else %do;
     *This would be for uncompressed file;
@@ -91,7 +97,7 @@ options compress=yes;
 
 
 	%put you gz file is &_gzfile_;
-	%let filename4dir=%sysfunc(prxchange(s/\.gz//,-1,&_gzfile_));
+	%let filename4dir=%sysfunc(prxchange(s/(.bgz|.tgz|gz)//i,-1,&_gzfile_));
 	*This is to prevent the outdir4file with the same name as the gz file;
 	*windows will failed to create the dir if the gz file exists;
 	%if %sysfunc(exist(&_gzdir_/&filename4dir)) %then %do;
@@ -103,7 +109,7 @@ options compress=yes;
  filename=&_gzfile_,
  Zip_Cmd=e, 
  Extra_Cmd= -y ,
-	outdir4file=&filename4dir
+ outdir4file=&filename4dir
  );
 	*Use the filename to create a dir to save uncompressed file;
 	*Note Run_7Zip will change dir into outdir4file;
@@ -122,7 +128,7 @@ data &sasdsdout;
 %let _EFIERR_=0;/*set the error detection macro variable*/
 /* infile target delimiter='09'x missover dsd firstobs=2; */
 infile fromzip 
-&infile_command;
+%unquote(&infile_command);
 if _error_ then call symputx('_ERIERR_',1);/*set error detection macro variable*/;
 run;
 filename fromzip clear;
@@ -185,7 +191,7 @@ length file $100.;
 %let _EFIERR_=0;/*set the error detection macro variable*/
 /* infile target delimiter='09'x missover dsd firstobs=2; */
 infile inzip(&txtdir/&txtfilename)
-&infile_command;
+%unquote(&infile_command);
 if _error_ then call symputx('_ERIERR_',1);/*set error detection macro variable*/;
 file="&txtfilename";
 run;
@@ -201,7 +207,7 @@ data &sasdsdout;
 %let _EFIERR_=0;/*set the error detection macro variable*/
 /* infile target delimiter='09'x missover dsd firstobs=2; */
 infile fromfile
-&infile_command;
+%unquote(&infile_command);
 if _error_ then call symputx('_ERIERR_',1);/*set error detection macro variable*/;
 run;
 filename fromfile clear;

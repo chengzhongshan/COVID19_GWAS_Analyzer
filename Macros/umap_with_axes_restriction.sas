@@ -6,9 +6,16 @@ lattice_or_not=0,
 raxis_max=20000,
 raxis_min=0,
 caxis_max=,
-caxis_min=45000);
-ods graphics on/reset=all width=&umap_width height=&umap_height noborder;
-proc sgpanel data=new__tgt_dsd_;
+caxis_min=45000,
+panel_row_num=1, /*The value will be assigned to rows in proc sgpanl for the panel statement;
+when value is 1, there would be 1 row for the final plot with subplots put into 1 row;
+when value is < total number of subplots, subplots will be put into specific rows one by one on column-wide;
+when value is equale to total number of subplots, all subplots will be put into a single column;*/
+noheader=1 /*remove header for each subplot*/
+);
+ods graphics on/reset=all width=&umap_width height=&umap_height noborder
+imagename="Restricted_umap4&dsdin";
+proc sgpanel data=&dsdin;
  *Only after using up the combination of all colors with the 1st datasymbol, it will use the combinations of;
  *colors with 2nd datasymbols, and the same applied to other datasymbols;
 /*  styleattrs datacontrastcolors=(green gold red black blue grey pink)   */
@@ -21,10 +28,10 @@ proc sgpanel data=new__tgt_dsd_;
  contains 'Ciliated';
 panelby new_sgrp 
 %if %eval(&lattice_or_not=1) %then %do;
-                 &grpvar4boxplot /layout=lattice novarname noheader;
+                 &grpvar4boxplot /layout=lattice novarname %if &noheader=1 %then %str(noheader);;
                  %end;
                  %else %do;
-                 /onepanel rows=1 novarname noheader;
+                 /onepanel rows=&panel_row_num novarname %if &noheader=1 %then %str(noheader);;
                  %end;
 scatter x=x y=y /group=cluster
 colorresponse=exp 

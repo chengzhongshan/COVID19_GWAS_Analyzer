@@ -71,12 +71,19 @@ options compress=yes;
   %let sasdsdout=txtdsd;
 %end;
 
-%if &gzip_tag ne %then %do;
+%if %sysevalf(&gzip_tag ne or &filename_rgx=txt) %then %do;
 %let fname=%sysfunc(prxchange(s/(.*\/|\.zip|\.gz|\.tgz)//i,-1,&zip));
 /* filename target "%sysfunc(getoption(work))/&fname"; */
 /*gzip parameter is only available in latest SAS9.4M5*/
 
-filename fromzip ZIP "&zip" GZIP;
+%if %sysevalf("&filename_rgx"="gz" or "&filename_rgx"="tgz") %then %do;
+filename fromzip ZIP "&zip"  GZIP;
+%end;
+%else %do;
+*for txt file;
+filename fromzip "&zip";
+%end;
+
 data &sasdsdout (keep=chr pos rsid p SE BETA AF het_p ref alt); 
 %let _EFIERR_=0;/*set the error detection macro variable*/
 /* infile target delimiter='09'x missover dsd firstobs=2; */

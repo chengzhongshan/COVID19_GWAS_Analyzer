@@ -18,10 +18,11 @@ design_width=1000,
 design_height=200,
 col_or_row_lattice=1, /*Plot each subplot in a single column or row:
                       1: columnlattice; 0: rowlattice*/
-uniscale4lattice=ALL /*Default is ALL to make all axis in the same format;
+uniscale4lattice=ALL, /*Default is ALL to make all axis in the same format;
                        Alternative values are as follows:
                        column: make column-wide xaxis the same if set col_or_row_lattice=1;
                        row: make row-wide yaxis the same, which is for col_or_row_lattice=0;*/
+outputfmt=gif /*Output figure format, such as svg, jpg,gif, and others*/
 );
    %let p_thrhd=%sysevalf(10**-&gwas_thrsd);/*get the p threshold*/
    %let Marker_Col_Name=%assign_str4missing(Inval=&Marker_Col_Name,NewVal=SNP);
@@ -143,9 +144,9 @@ uniscale4lattice=ALL /*Default is ALL to make all axis in the same format;
      top_tag=0;
 /*      this will interupted with center_pos */
 /*      if logP>=&gwas_thrsd then top_tag=1; */
-     if trim(left(scan(new_chr_tag,-1,':')))=&Marker_Col_Name then top_tag=2;
+     if trim(left(new_chr_tag))=catx(':',chr,&Marker_Col_Name) then top_tag=2;
      *Only keep center positon when the marker is the center snp;
-     if trim(left(scan(new_chr_tag,-1,':')))^=&Marker_Col_Name then center_pos=.;
+     else center_pos=.;
 
      *Get the x position for the query SNP;
      *As there would be multiple query SNPs, use mean of x positions;
@@ -172,6 +173,7 @@ uniscale4lattice=ALL /*Default is ALL to make all axis in the same format;
 */
      
      *Add snp rank into the dataset for ordering the subplots;
+     %let norefline=0;
      proc sql;
      create table &GWAS_dsdout as
      select * 
@@ -182,6 +184,13 @@ uniscale4lattice=ALL /*Default is ALL to make all axis in the same format;
      data &GWAS_dsdout;
      set &GWAS_dsdout;
      new_num_grps=input(grps,grps2nums.);
+     *When the center is not align with the top marker snp, adjust the center_pos;
+     *This is why we will not draw the center reline when drawing scatterplot in rowlattice mode;
+     if center_pos=500 and pos^=500 then do;
+       center_pos=pos;
+       *Let not draw vertical reference line if the center_pos is not at 500;
+       call symputx('norefline',1);
+     end;
      run;
      
     *Make a panel of plots with the same xaxis;
@@ -190,9 +199,10 @@ uniscale4lattice=ALL /*Default is ALL to make all axis in the same format;
     *https://blogs.sas.com/content/iml/2018/06/13/attrpriority-cycleattrs-styleattrs-ods-graphics.html;
     title "Scatterplots for &snps";
     ods graphics /reset=all height=&design_height.px width=&design_width.px
-    antialiasmax=50000000 attrpriority=none noborder;
+    antialiasmax=50000000 attrpriority=none noborder
+    imagename="TopSig4%sysfunc(prxchange(s/ /_/,-1,&snps))"  outputfmt=&outputfmt;
 /*     Need to make attrpriority as none to use the combination of color and symbol */
-     proc sgpanel data=&GWAS_dsdout;
+     proc sgpanel data=&GWAS_dsdout noautolegend;
 /*   panelby num_grps/layout=columnlattice onepanel novarname noheader; */
 *Remove header, as the order of subplots are according to the input snp order;
      format new_num_grps nums2grps.;
@@ -204,7 +214,9 @@ uniscale4lattice=ALL /*Default is ALL to make all axis in the same format;
      refline &gwas_thrsd/axis=y lineattrs=(color=darkred pattern=thindot);
 *It seems that the &xpos4topsnp is not correct sometimes;
 *Just use 500 for the x refline;
+     %if (&lattice_type=columnlattice and &norefline=0) %then %do;
         refline 500/axis=x lineattrs=(color=darkgreen pattern=dot thickness=2); 
+     %end;
 /*      refline &xpos4topsnp/axis=x lineattrs=(color=darkgreen pattern=dot thickness=2);      */
 /*      Note: datasymbols option will be overwritten by markerattrs option symbol; */
 /*      scatter x=&Marker_Pos_Col_Name y=logP/group=top_tag markerattrs=(symbol=circlefilled size=6) name="sc"; */

@@ -1,10 +1,11 @@
 %macro macroparas(
 macrorgx=.,
-dir=/home/cheng.zhong.shan/Macros 
+dir=%sysfunc(pathname(HOME))/Macros 
 ~/shared/Macros
 /home/zcheng/SAS-Useful-Codes/Macros 
 F:/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros
 /home/zhongshan/SAS-Useful-Codes/Macros
+H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros
 ,
 verbose=0,
 IsSASOnDemand=0,

@@ -35,6 +35,9 @@ options compress=no;
 *Also keep beta but not se, as se can be re-calculated by z/beta;
 *SAS OnDemand out of memory if including a.&beta_varname as gwas1_beta,b.&beta_varname as gwas2_beta;
 *a.&beta_varname as gwas1_beta,b.&beta_varname as gwas2_beta,;
+
+*Note: ordering by chr and pos in proc sql will consume too much memory and space;
+
 %if %length(&gwas1_tot)>0 and %length(&gwas2_tot)>0 %then %do;
 /*use pooled variance: 
 sqrt(
@@ -57,7 +60,8 @@ sqrt(
      from (select * from &gwas1dsd(where=(&p_varname<=)) group by &snp_varname having count(&snp_varname)=1) as a,
           (select * from &gwas2dsd group by &snp_varname having count(&snp_varname)=1) as b
      where a.&snp_varname=b.&snp_varname and 
-           a.&allele1var=b.&allele1var and a.&allele2var=b.&allele2var;
+           a.&allele1var=b.&allele1var and a.&allele2var=b.&allele2var
+            order by &gwas1chr_var,&gwas1pos_var; 
 
 %end;
 %else %do;
@@ -75,7 +79,8 @@ sqrt(
      from (select * from &gwas1dsd group by &snp_varname having count(&snp_varname)=1) as a,
           (select * from &gwas2dsd group by &snp_varname having count(&snp_varname)=1) as b
      where a.&snp_varname=b.&snp_varname and 
-           a.&allele1var=b.&allele1var and a.&allele2var=b.&allele2var;
+           a.&allele1var=b.&allele1var and a.&allele2var=b.&allele2var
+            order by &gwas1chr_var,&gwas1pos_var; 
 %end;
 
 /*
@@ -106,7 +111,7 @@ run;
 *IQR can not correct the lambda in the final QQplot;
 *Standardize zscore based on std method;
 proc stdize data=both method=&stdmethod out=both pstat;
-   title2 'METHOD=&stdmethod';
+/*    title2 'METHOD=&stdmethod'; */
    var diff_zscore;
 run;
 
@@ -121,6 +126,9 @@ run;
 /* update both */
 /* set diff_zscore=(diff_zscore-(&mean_zscore))/&zscore_std; */
 /* quit; */
+
+*Need to sort the combined gwas data set again;
+/* proc sort data=both;by order by &gwas1chr_var &gwas1pos_var;run; */
 
 options compress=no;
 
@@ -156,19 +164,20 @@ options compress=no;
 
 %if &stdize_zscore=1 %then %do;
    *Perform analysis on original unstandized zscore;
-   %print_text_as_title(
-   text=%str(GWAS Manhattan and QQ plots for unstandized differential zscore!)
-   );
 /*    title "GWAS for unstandized differential zscore!"; */
    %zscroe2p(dsdin=both,Zscore_var=Orig_diffzscore,dsdout=both);
    data both;set both;rename Pval=Orig_Pval;run;
-
+%if &mk_manhattan_qqplots4twoGWASs=1 %then %do;
+   %print_text_as_title(
+   text=%str(GWAS Manhattan and QQ plots for unstandized differential zscore!)
+   );
    %manhattan(dsdin=both,
               pos_var=pos,
               chr_var=chr,
               P_var=orig_Pval,
               logP=1,
-              dotsize=2);
+              dotsize=2,
+              gwas_sortedby_numchrpos=0);
    /*proc sort data=Assoc nodupkeys;*/
    /*by &snp_varname;*/
    /*run;*/
@@ -176,9 +185,12 @@ options compress=no;
    %Lambda_From_P(P_dsd=both,P_var=Orig_Pval,case_n=,control_n=,dsdout=lambdaout);
    title "";
 %end;
+%end;
 
 *For standardized zscore if the parameter of stdize_zscore=1;
 %zscroe2p(dsdin=both,Zscore_var=diff_zscore,dsdout=both);
+
+%if &mk_manhattan_qqplots4twoGWASs=1 %then %do;
 %print_text_as_title(
 text=%str(GWAS Manhattan and QQ Plots for differential GWAS after standardization!)
 );
@@ -188,12 +200,14 @@ text=%str(GWAS Manhattan and QQ Plots for differential GWAS after standardizatio
            chr_var=chr,
            P_var=Pval,
            logP=1,
-           dotsize=2);
+           dotsize=2,
+           gwas_sortedby_numchrpos=0);
 /*proc sort data=Assoc nodupkeys;*/
 /*by &snp_varname;*/
 /*run;*/
 %QQplot(dsdin=both,P_var=Pval);
 %Lambda_From_P(P_dsd=both,P_var=Pval,case_n=,control_n=,dsdout=lambdaout);
+%end;
 
 /*output the dataset both as gwasout*/
 proc datasets lib=work nolist;
@@ -213,7 +227,8 @@ run;
               chr_var=&gwas1chr_var,
               P_var=&p_varname,
               logP=1,
-              dotsize=2);
+              dotsize=2,
+              gwas_sortedby_numchrpos=1);
    /*proc sort data=Assoc nodupkeys;*/
    /*by &snp_varname;*/
    /*run;*/
@@ -230,7 +245,8 @@ run;
               chr_var=&gwas1chr_var,
               P_var=&p_varname,
               logP=1,
-              dotsize=2);
+              dotsize=2,
+              gwas_sortedby_numchrpos=1);
    /*proc sort data=Assoc nodupkeys;*/
    /*by &snp_varname;*/
    /*run;*/

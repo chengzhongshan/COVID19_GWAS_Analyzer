@@ -7,7 +7,10 @@ PreviousDsd=tgt, /*This is a fixed dsd used by the proc sgpanel*/
 Lib4PreviousDsd=GTEx,
 WhereFilters4Boxplot=%str(),
 boxplot_width=1200,
-boxplot_height=1000
+boxplot_height=1000,
+draw_exp_heatmap=1, /*Also draw exp heatmap*/
+columns=1 /*Draw boxplots in the number of columns
+asign value >1 if drawing multiple genes column-wide!*/
 );
 
 %if &boxplot_height eq %then 
@@ -268,18 +271,22 @@ run;
 /* on a.Var58=b.Var1; */
 
 *Samples without AA information will be excluded;
+*Better to keep them but can be exclude in downstream analysis if necessary;
 proc sql;
 create table tgt as 
 select a.*,b.snp,
        b.Var2 as local_AFR,
            b.var3 as AA
-from tgt as a,
+from tgt as a
+left join
 AA_info as b
-where a.Var58=b.Var1;
+on a.Var58=b.Var1;
 
 data tgt;
 set tgt;
-if not prxmatch("/(NotAA)/i",local_AFR);
+*if not prxmatch("/(NotAA)/i",local_AFR);
+if AA="" then AA="NoGeno";
+if snp=. then snp=-9;
 AA_Sex=catx('',AA,'-',Sex);
 AA_snp=catx('',put(snp,1.),'-',AA);
 run;
@@ -349,7 +356,7 @@ title "GTEx gene expression boxplots";
 /* proc sort data=tgt;by rownames Tissue cluster; */
 *Useful sas colornames;
 *https://support.sas.com/content/dam/SAS/support/en/books/pro-template-made-easy-a-guide-for-sas-users/62007_Appendix.pdf;
-ods graphics on/width=&boxplot_width height=&boxplot_height;
+ods graphics on/reset=all outputfmt=svg width=&boxplot_width height=&boxplot_height;
 %let fontsize=7;
 %if &UseGeneratedDsd=1 and &PreviousDsd ne %then %do;
 %let workingdsd=tgt;
@@ -388,12 +395,20 @@ run;
 %else %do;
  %let workingdsd=tgt;
 %end; 
+
+*sort the data by genesymbol;
+/* proc sort data=&workingdsd;by rownames; */
+/* run; */
+*comment out the above to sort the data by new_rownames;
+/* ods graphics on /outputfmt=svg; */
+ods graphics on/reset=all outputfmt=svg width=&boxplot_width height=&boxplot_height;
 proc sgpanel data=&workingdsd;
 %if %eval("&WhereFilters4Boxplot"^="") %then %do;
  where &WhereFilters4Boxplot;
 %end;
-panelby new_rownames/columns=1 novarname onepanel uniscale=column headerbackcolor=BWH
-        headerattrs=(size=&fontsize) nowall noborder noheaderborder;
+panelby new_rownames/columns=&columns novarname onepanel uniscale=column headerbackcolor=BWH
+        headerattrs=(size=&fontsize family=arial style=italic)  skipemptycells 
+        nowall noborder noheaderborder;
 format new_rownames y2x.;
 vbox exp/ group=&grpvar groupdisplay=cluster boxwidth=0.8 category=cluster
 /*          outlierattrs=(color=grey symbol=circle size=2) */
@@ -402,9 +417,9 @@ vbox exp/ group=&grpvar groupdisplay=cluster boxwidth=0.8 category=cluster
 /*          meanattrs=(color=black symbol=circlefilled color=darkblue size=4) */
          outlierattrs=(color=black symbol=circlefilled size=4)
          whiskerattrs=(color=black thickness=1.5 pattern=3) 
-         medianattrs=(color=black thickness=2 pattern=1) 
-         meanattrs=(color=darkblue symbol=circlefilled size=7)
-         splitjustify=center grouporder=ascending
+         medianattrs=(color=black thickness=1.5 pattern=1) 
+         meanattrs=(color=darkblue symbol=circlefilled size=5)
+         splitjustify=center grouporder=ascending fillattrs=(transparency=0.5) 
          SPREAD;
 
 *In case of tissues were subsetted!;
@@ -427,6 +442,8 @@ label="log2(TPM+1)";
 keylegend / title="Group" titleattrs=(size=&fontsize) 
 valueattrs=(size=&fontsize);
 run;
+
+/* %abort 255; */
 
 *Outputthe final dataset;
 %if %eval("&dsdout"^="exp") and (NOT %sysfunc(exist(&dsdout))) %then %do;
@@ -478,6 +495,44 @@ run;
 /* outline_thickness=2 */
 /* ); */
 /*  */
+
+ %if &draw_exp_heatmap=1 %then %do;
+  *Further make gene heatmap;
+  data tgt;
+  set tgt;
+  rownames1=rownames||"_"
+  %do gi=1 %to %ntokens(&bygrps);
+   ||%scan(&bygrps,&gi,%str( ))  
+  %end;
+  ;
+  run;
+
+  %macro gheatmap(var);
+  /* proc print data=tgt(obs=10);run; */
+  proc sql;
+  create table median_exp as
+  select distinct cluster,&var,median(exp) as exp
+  from tgt
+  group by cluster,&var;
+  /* proc print data=median_exp(obs=10);run; */
+  ods graphics on/reset=all;
+  %clustergram4longformatdsd(
+  dsdin=median_exp,/*The input dataset is a matrix contains rownames and other numeric columns*/
+  rowname_var=&var,/*the elements of rowname_var will be used to label heatmap columns*/
+  colname_var=cluster,/*These column-wide names will be used to label heatmap rowlabels*/
+  value_var=exp,/*numeric data for heatmap cells*/
+  height=35,/*figure height in cm*/
+  width=%sysevalf(25*%ntokens(&bygrps)),/*figure width in cm*/
+  columnweights=0.15 0.85, /*figure 2 column ratio*/
+  rowweights=0.05 0.95, /*figure 2 row ratio*/
+  cluster_type=3        /*values are 0, 1, 2, and 3 for not clustering heatmap, 
+                         clustering heatmap by column, row, and both*/
+  );
+  %mend;
+  %gheatmap(var=rownames);
+  %gheatmap(var=rownames1);
+ %end;
+
 %mend;
 
 /*Demo:
@@ -490,8 +545,8 @@ run;
 libname GTEX '/home/cheng.zhong.shan/data/GTEx_V8';
 
 *Note: the input gene order will be used to draw boxplots from up to down;
-*%let genes=MAP3K19 CXCR4 R3HDM1 DARS LCT UBXN4 MCM6 ZRANB3 RAB3GAP1 CCNT2 ACMSD TMEM163;
-%let genes=MAP3K19 CXCR4;
+%let genes=SPEG MAP3K19 CXCR4 R3HDM1 DARS LCT UBXN4 MCM6 ZRANB3 RAB3GAP1 CCNT2 ACMSD TMEM163;
+*%let genes=MAP3K19 CXCR4;
 
 *After running the follwoing macro once, it would be runnable again;
 *by adjust the parameters of UseGeneratedDsd and Lib4PreviousDsd;
@@ -500,13 +555,13 @@ libname GTEX '/home/cheng.zhong.shan/data/GTEx_V8';
 %Boxplots4GenesInGTExV8ByGrps(
 genes=&genes,
 dsdout=exp,
-bygrps=AA,
+bygrps=sex,
 UseGeneratedDsd=0,
 PreviousDsd=tgt,
 Lib4PreviousDsd=GTEx,
 WhereFilters4Boxplot=%str(),
 boxplot_width=1800,
-boxplot_height=800
+boxplot_height=2000
 );
 
 *Get subset genes for using them later;
@@ -515,6 +570,7 @@ proc print data=exp_all(obs=10);var rownames;run;
 data GTEX.target_genes;
 set exp_all;
 where scan(rownames,2,'|') in (
+'SPEG'
 'MAP3K19'
 'MCM6'
 'DARS'
@@ -541,7 +597,7 @@ run;
 libname GTEX '/home/cheng.zhong.shan/data/GTEx_V8';
 
 *Note: the input gene order will be used to draw boxplots from up to down;
-%let genes=MAP3K19 CXCR4 R3HDM1 DARS LCT UBXN4 MCM6 ZRANB3 RAB3GAP1 CCNT2 ACMSD TMEM163 IFNG IFNA IFNB;
+%let genes=SPEG MAP3K19 CXCR4 R3HDM1 DARS LCT UBXN4 MCM6 ZRANB3 RAB3GAP1 CCNT2 ACMSD TMEM163 IFNG IFNA IFNB;
 *%let genes=MAP3K19 CXCR4;
 data exp_all;set GTEX.target_genes;run;
 data headers;set GTEX.headers;run;
@@ -615,6 +671,35 @@ proc tabulate data=tgt;
 class rownames tissue AA cluster sex;
 table cluster*rownames,(AA*sex n);
 run;
+
+*Demo 3:;
+*Make gene expression heatmap based on the output;
+data tgt;
+set tgt;
+rownames1=rownames||"_"||AA;
+run;
+
+%let var=rownames;
+%let var=rownames1;
+proc print data=tgt(obs=10);run;
+proc sql;
+create table median_exp as
+select distinct cluster,&var,median(exp) as exp
+from tgt
+group by cluster,&var;
+proc print data=median_exp(obs=10);run;
+
+%clustergram4longformatdsd(
+dsdin=median_exp,
+rowname_var=&var,
+colname_var=cluster,
+value_var=exp,
+height=35,
+width=30,
+columnweights=0.15 0.85,
+rowweights=0.15 0.85,
+cluster_type=3        
+);
 
 */
 
