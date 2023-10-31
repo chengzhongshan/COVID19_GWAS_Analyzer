@@ -8,3 +8,4 @@ Once users have the free SAS account, they can login into the SAS OnDemand for A
 
 Please read our iScience paper for how we used the COVID19_GWAS_Analyzer to perform intergative GWAS analysis.
 https://www.sciencedirect.com/science/article/pii/S2589004223016322
+![image](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/cd7bb6c1-4386-4818-88d6-d0cbe535eee3)
