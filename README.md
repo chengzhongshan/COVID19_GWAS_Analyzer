@@ -1,6 +1,5 @@
 # COVID19_GWAS_Analyzer
 
-                        SAS macros for comparing COVID-19 GWASs from HGI and GRASP databases
 
 ![image](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/3f28404f-0cc4-4c91-aef7-ef6594a8f338)
 
