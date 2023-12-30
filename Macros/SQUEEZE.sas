@@ -4,6 +4,12 @@
 minimum-length computation process                                        */
 );
 
+*Note: this macro was updated by zhongshan to generate macro variable recording the length;
+*of each sequeezed variable;
+*The rationale is to avoid of truncation of macro variable if its length >256;
+*The original squeeze macro was renamed as SQUEEZE_1.sas, which is used by other macros;
+*The current macro is specifically for large sas dataset containing too many columns;
+
 *Read the paper about SQUEEZE_1.sas;
 *https://www.lexjansen.com/nesug/nesug06/io/io18.pdf;
 

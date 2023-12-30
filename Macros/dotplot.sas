@@ -35,6 +35,12 @@
        dcolor=BLACK,         /* color of horizontal lines              */
        errbar=,              /* variable giving length of error bar    */
                              /* for each observation                   */
+       errbar_size=0.25, /*adjust the number to increase or reduce error bar size*/
+       dot_symbol=dot,/*Other symbols, including square, diamond, triangle, or other sas accept symbols;
+                                        /*customized text with single or double quotes such as '+' is also applicable*/
+       dot_symbol_color=darkgreen,
+       fig_width=600, /*Figure width in pixel*/
+       fig_height=600,/*Figure height in pixel*/
        name=DOTPLOT);        /* Name for graphic catalog entry         */
 
 %if &yvar= %str() %then %do;
@@ -116,7 +122,7 @@ data _dots_;
        %end;
        %else %if &connect = AXIS
           %then %do;
-          function='POINT';
+          function='POINT'; 
           do x = 0 to 100 by 2;
              output;
              end;
@@ -142,8 +148,8 @@ data _err_;
    %annomac;
    %system(2,2); /* Use system 2 for the horiz. coordinate and 1 for vertical */
    %line(&xvar-&errbar,sort_key,&xvar+&errbar,sort_key,black,1,1);
-   %line(&xvar-&errbar,sort_key-0.1,&xvar-&errbar,sort_key+0.1,black,1,1);
-   %line(&xvar+&errbar,sort_key-0.1,&xvar+&errbar,sort_key+0.1,black,1,1);
+   %line(&xvar-&errbar,sort_key-&errbar_size,&xvar-&errbar,sort_key+&errbar_size,black,1,1);
+   %line(&xvar+&errbar,sort_key-&errbar_size,&xvar+&errbar,sort_key+&errbar_size,black,1,1);
    
 
 data _dots_;
@@ -152,6 +158,11 @@ data _dots_;
  /*-----------------------------------------------*
   | Draw the dot plot, plotting formatted Y vs. X |
   *-----------------------------------------------*/
+
+*this will change the figure size and ticks label font size;
+*Add htext=num to adjust figure label and tick font size;
+goptions reset=all ftext='arial' 
+         dev=gif xpixels=&fig_width ypixels=&fig_height gsfname=gout;
 
 proc gplot data= _dot_dat ;
    plot sort_key * &xvar
@@ -165,11 +176,13 @@ proc gplot data= _dot_dat ;
          annotate=_dots_;
    label   sort_key="&ylabel";
    format  sort_key _yname_.;
-   symbol1 v='-' h=1.4 c=black;
-   axis1   order=(1 to &nobs by 1)   label=(a=90 f=duplex)
-           major=none value=(j=r f=simplex);
+  *Change symbol for the mean in the plot;
+  *such as dot circle square star, as well as 'A' '+' and others;
+   symbol1 v=&dot_symbol h=1.4 c=&dot_symbol_color;
+   axis1   order=(1 to &nobs by 1)   label=(a=90 f=Arial)
+           major=none value=(j=r f=Arial);
    axis2   %if %length(&xorder)>0 %then order=(&xorder) ;
-           label=(f=duplex) offset=(1);
+           label=(f=Arial) offset=(1);
    run;
 %enddot:
 %mend dotplot;
@@ -540,14 +553,28 @@ set mean;
 err=stderr;
 run;
 
+*For demonstration purpose, just draw fewer teams on the y-axis;
+data _t_(where=(err^=.));
+set mean(obs=100);
+run;
+
 *************IMPORTANT!!!!!!: PLEASE MAKE SURE OF THE RANGE OF XORDER IS APPORPRIATE**************************
-*%dotplot(data=mean,xvar=hits,yvar=team);
-%dotplot(data=mean,xvar=hits,yvar=team,
+
+*this will change the figure size and ticks label font size;
+*goptions reset=all ftext='arial' htext=3 gunit=pct;
+ *        dev=gif xpixels=800 ypixels=800 gsfname=gout;
+*gunit=pct may need to be exclude, since the final figure is distorted;
+
+*%dotplot(data=_t_,xvar=hits,yvar=team,connect=dot);
+*Note: connect=zero seems to be malfunctional;
+
+%dotplot(data=_t_,xvar=hits,yvar=team,
           dcolor=green,connect=axis,
 		   xorder=70 to 150 by 10,
 		  errbar=err,name=GB0220);
-*%dotplot(data=mean, xvar=hits, yvar=team,
-          errbar=err, connect=axis,
+
+*%dotplot(data=_t_, xvar=hits, yvar=team,
+          errbar=err, connect=none,
 		  dcolor=green, group=league,
 		  xorder=70 to 150 by 10,
 		  name=GB0221);

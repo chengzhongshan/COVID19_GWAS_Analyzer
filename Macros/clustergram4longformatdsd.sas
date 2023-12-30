@@ -18,9 +18,10 @@ columnweights=0.05 0.95, /*figure 2 column ratio*/
 rowweights=0.15 0.85, /*figure 2 row ratio*/
 cluster_type=3,        /*values are 0, 1, 2, and 3 for not clustering heatmap, 
                        clustering heatmap by column, row, and both*/
-colormodel=cxFAFBFE cx667FA2 cxD05B5B /*Default is blue grey red heatmap;
+colormodel=cxFAFBFE cx667FA2 cxD05B5B, /*Default is blue grey red heatmap;
 Use different color names here to draw heatmap, such as yellow blue green red
-*/                      
+*/    
+fig_outputfmt=png /*output figure formats: svg, jpg, png, and other sas ods supported figure formats*/                  
 );
 
 *estimate the clustergram height and width by calculating total number of snpid and genegrp;
@@ -207,7 +208,7 @@ x_name_=prxchange('s/_+/ /',-1,x_name_);
 run;
 
 /*Note: make sure to let rowdata and columndata with union range*/
-ods graphics /noborder outputfmt=svg;
+ods graphics /noborder outputfmt=&fig_outputfmt;
 *It is necessary to remove previous setting;
 proc template;
    define statgraph HeatDendrogram;

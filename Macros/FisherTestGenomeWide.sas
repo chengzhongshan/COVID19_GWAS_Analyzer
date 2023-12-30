@@ -1,7 +1,7 @@
 %macro FisherTestGenomeWide(/*Note: this macro will use unique sampleID and pheno_var to make all to all combinations, please make sure the input table contain all target sampleID and pheno_var*/
 dsdin=_last_,
 vars4assoc=%str(chrom, Pos, ref), /*These vars will be concatenate into a single var, and the data of each will be subjected to fisher test by grp4fisher and phenotype var*/
-grp4fisher=subtype, /*This var will bed used to perform 2x2 fisher test, which will be included in the column names in the output table*/
+grp4fisher=subtype, /*This var will be used to perform 2x2 fisher test, which will be included in the column names in the output table*/
 SampleID=SampleID,  /*Patient ID*/
 pheno_var= ,    /*phenotype for fisher test with grp4fisher; in the output the pheno and grp4fisher will be put on row- and column-wide, respectively
                             the default is to use &grp4fisher, and the macro will use &grp4fisher to make pheno, i.e., samples with records of the var vars4assoc in the long format data will be assigned as pheno=1,

@@ -6,7 +6,7 @@ dsdout=,
 num_grp_output_name=,
 keep_uniq_rows_by_grp=0
 );
-/*Note: only unique grps will be remained in the final dataset*/
+/*Note: if keep_uniq_rows_by_grp=1, then only unique grps will be remained in the final dataset*/
 %let nvars=%numargs(&grp_vars4sort);
 *Use key instead of by in the proc sort, as unknown error occurred when using by with descending function;
 *Note: if &dsdin and &dsdout are the same, the final &dsdout will only contain unique rows by keys;

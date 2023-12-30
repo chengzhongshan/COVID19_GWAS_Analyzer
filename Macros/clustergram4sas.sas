@@ -1,18 +1,19 @@
 %macro clustergram4sas(
 /*The final rowlabels of the heatmap can be customized 
 when not clustering the final rowlabels by
-pre-sort the numeric_var names with two macros: 
+pre-sorting the numeric_var names with two macros: 
 check_col_orders and pull_column
 */
-dsdin=_last_,/*The input dataset is a ma and trix contains rownames and other numeric columns*/
+dsdin=_last_,/*The input dataset is a matrix contains rownames and other numeric columns*/
 rowname_var=,/*the elements of rowname_var will be used to label heatmap columns*/
 numeric_vars=_numeric_,/*These column-wide numeric vars will become row-wide in the heatmap*/
 height=20,/*figure height in cm*/
 width=24,/*figure width in cm*/
 columnweights=0.15 0.85, /*figure 2 column ratio*/
 rowweights=0.15 0.85, /*figure 2 row ratio*/
-cluster_type=3        /*values are 0, 1, 2, and 3 for not clustering heatmap, 
+cluster_type=3,        /*values are 0, 1, 2, and 3 for not clustering heatmap, 
                        clustering heatmap by column, row, and both*/
+outputfmt=png
 );
 
 
@@ -153,7 +154,7 @@ run;
 
 
 /*Note: make sure to let rowdata and columndata with union range*/
-ods graphics /reset=all noborder;
+ods graphics /reset=all noborder outputfmt=&outputformat;
 *It is necessary to remove previous setting;
 proc template;
    define statgraph HeatDendrogram;
@@ -194,6 +195,11 @@ proc template;
 run;
 proc sgrender data=all template=HeatDendrogram;
 run;
+
+*The above colormodel can be updated by using %colormac;
+*https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/graphref/p0d4brn7o50u8ln1xxolln8t7tvc.htm;
+*such as %RBG(100,100,0) for the yellow color;
+
 
 /* ods html close; */
 

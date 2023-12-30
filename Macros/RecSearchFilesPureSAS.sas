@@ -143,7 +143,7 @@ outdsd=files
          foreground=darkblue background=cxedf2f9 
          font_size=10pt];
     *background=linen;
-    label Macro_Info="Files matched with your regexpression &filter!";
+    label filefullname="Files matched with your regexpression &filter!";
     run;
 
 *	options source notes;
@@ -155,7 +155,7 @@ outdsd=files
 options mprint symbolgen mlogic macrogen;
 
 %RecSearchFilesPureSAS(
-root_path=C:\Users\Sam\Desktop\RunAs2CrackSAS,
+root_path=C:\Users\Sam\Desktop\RunAs4SAS,
 filter=.,
 outdsd=files
 );

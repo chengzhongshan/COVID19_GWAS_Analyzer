@@ -13,8 +13,13 @@ if it is, it will change back the use_zcat as 0!*/
 Readcutoff=0,/*It works with NumOfCells with expression reads greater or equal to this cutoff, i.e., Readcutoff >= 0*/
 NumOfCells=0, /*Filter out cells with non-zeor values, i.e., NumOfCells >= 0*/
 meancutoff=0, /*Filter out cells with too low expression, i.e., meancutoff >= 0*/
-subset_by_genes=  /*Provide gene symbols to only extract subset data for the dsdout4data;
+subset_by_genes=,  /*Provide gene symbols to only extract subset data for the dsdout4data;
 This would be helpful when the matrix is too large to be imported into SAS*/
+max_random_cells2import=1000000, /*If total number of cells larger than this cutoff, 
+the macro will randomly select the specificied number of cells;
+Note: if provide a cutoff > total number of cells in the matrix file, the macro 
+will not randomly select cells but instead choose all cells!*/ 
+random_seed=2718 /*random seed for selecting cells if total number of cells > max_random_cells2import*/
 );
 
 %if &OnSASOnDemand=1 or "&sysscp"="WIN" %then %let use_zcat=0;
@@ -61,6 +66,7 @@ globalvar4finalfile=finalfilepath
 %end;
 
 %end;
+
 
 %let mtxfile=&mtx_gzfile_or_url;
 %if %eval(%sysfunc(prxmatch(/http.*gz/i,&mtx_gzfile_or_url))=1) %then %do;
@@ -171,8 +177,12 @@ from features_tgt;
   %end;
 
 
+
+************************Important codes to import sparse matrix w/wo filters*****************************;
 %let extra_filter_by_genes=;
+
 %if %length(&subset_by_genes)>0 %then %do;
+
      %do ti=1 %to %ntokens(&rownums);
 	    %let num=%scan(&rownums,&ti);
         %let extra_filter_by_genes=%str(&extra_filter_by_genes row=&num);
@@ -185,7 +195,7 @@ from features_tgt;
  %put &extra_filter_by_genes;
 
 %let infile_cmd=%str(
-  firstobs=4 obs=max truncover lrecl=100000000 end=eof;
+  firstobs=4 obs=max truncover lrecl=1000000000 end=eof;
    retain rowtag V1-V&totcols . xn 0;
    array XX{*} V1-V&totcols;
 
@@ -225,7 +235,7 @@ from features_tgt;
 %else %do;
  *Optimized infile cmd for importing sparse expression matrix;
  *It is possible to filter these records based on median expression and total number of cells;
- *The following codes will let SAS forever, mainly due to use several rounds of large loops;
+ *The following codes will let SAS run forever, mainly due to use several rounds of large loops;
  *For learning purpose, I keep it here for comparison with latter optimized codes;
 /*%let infile_cmd=%str(*/
 /*  firstobs=4 obs=max truncover lrecl=100000000 end=eof;*/
@@ -264,7 +274,7 @@ from features_tgt;
 /* ) ;*/
 
 %let infile_cmd=%str(
-  firstobs=4 obs=max truncover lrecl=100000000 end=eof;
+  firstobs=4 obs=max truncover lrecl=1000000000 end=eof;
    retain rowtag V1-V&totcols . xn 0;
    array XX{*} V1-V&totcols;
 
@@ -298,24 +308,88 @@ from features_tgt;
 
 /* %abort 255;*/
 
-/*%let extra_filter_by_genes=;*/
-/**Even after using %nrbquote, It is still important to add %str again to escape special characters in SAS here;*/
-/*/*%let extra_filter_by_genes=%str(&extra_filter_by_genes  %nrbquote(if %());*/*/
-/*%if %length(&largest_rownum)>0 %then %do;*/
-/*	%let extra_filter_by_genes=%str(&extra_filter_by_genes  %nrbquote(if %());*/
-/*     %do ti=1 %to %ntokens(&rownums);*/
-/*	    %let num=%scan(&rownums,&ti);*/
-/*        %let extra_filter_by_genes=%str(&extra_filter_by_genes row^=&num);*/
-/*		%if &ti<%ntokens(&rownums) %then %do;*/
-/*         %let extra_filter_by_genes=%str(&extra_filter_by_genes %nrbquote(and));*/
-/*		%end;*/
-/*	 %end;*/
-/*  %end;*/
-/* %let extra_filter_by_genes=%str(&extra_filter_by_genes  %nrbquote(%) then delete;) if row>&largest_rownum then stop;);   */
-/* %put extra_filter_by_genes are:;*/
-/* %put &extra_filter_by_genes;*/
+*Randomly select cells if the sparse matrix is too large!;
+%if &max_random_cells2import>&totcols %then %do;
+  %put We will adjust the macro var max_random_cells2import equal to &totcols; 
+  %put as the initial aissigned values for the max_random_cells2import (n=&max_random_cells2import) larger than the total number of cells (n=&totcols);
+%end;
 
+%if (&totcols > &max_random_cells2import) %then %do;
+ *This procedure will be much faster;
+ %put The total number of cells (n=&totcols) is greater than the maximum number of cells allowed to be imported;
+ %put We will randomly select the total number of &max_random_cells2import cells for import!;
+*Note: it is necessary to use bquote when there are macro pct included in the infile_command;
+%ImportFileHeadersFromZIP(
+zip=&mtxfile,
+filename_rgx=.,
+obs=max,
+sasdsdout=&dsdout4data,
+deleteZIP=0,
+infile_command=%bquote(
+delimiter=' ' firstobs=4 obs=max truncover;
+
+%if &max_random_cells2import<&totcols %then %do;
+
+if _n_=1 then do;
+ array H{&totcols} _temporary_ (1:&totcols);
+ array S{&max_random_cells2import} _temporary_ (1:&max_random_cells2import);
+ _iorc_=&random_seed;
+  call ranperm(_iorc_,of H{*});
+  do _si_=1 to &max_random_cells2import;
+    S{_si_}=H{_si_};
+   end;
+end;
+input row col exp;
+%if %length(&extra_filter_by_genes)>0 %then %do;
+ if (&extra_filter_by_genes) and (col in S) then output;
+%end;
+%else %do;
+ if col in S then output;
+%end;
+
+%end;
+
+%else %do;
+
+input row col exp;
+%if %length(&extra_filter_by_genes)>0 %then %do;
+ if (&extra_filter_by_genes)  then output;
+%end;
+
+%end;
+
+drop _si_;
+)
+);
+
+proc transpose data=&dsdout4data out=&dsdout4data(drop=_name_) prefix=V;
+var exp;
+id col;
+by row;
+run; 
+%VarnamesInDsd(indsd=&dsdout4data,Rgx=V\d+,match_or_not_match=1,outdsd=colnames);
+data colnames;set colnames;n=scan(name,1,'V')+0;col_order=_n_;run;
+data _Header_;set Header;n=_n_;run;
+proc sql;
+create table Header(drop=n col_order) as 
+select a.*,b.col_order
+from _Header_ as a,
+        Colnames as b
+where a.n=b.n
+order by col_order;
+*Add rownames to the exp dataset and ensure it is put at the end of table;
+proc sql;
+create table &dsdout4data(drop=row) as
+select a.*,b.feature as rownames
+from &dsdout4data as a,
+         features as b
+where a.row=b.rowtag;
+%end;
+
+%else %do;
   *Generate wide format exp matrix from sparse matrix;
+  *Which would be very slow!;
+
   %ImportFileHeadersFromZIP(
   zip=&mtxfile,
   filename_rgx=.,
@@ -365,8 +439,10 @@ from features_tgt;
   /* put (_ALL_)(+0); */
   /* ;;; */
   /* run; */
+ %end;
 
 %end;
+/*This end matchs with the if on line 90: *For linux system, it is much easier to use zcat to pipe data into the macro;*/
 
 ************************The following is prepared for windows but not functional;
 /*  */
@@ -545,8 +621,10 @@ use_zcat=0,
 Readcutoff=0,
 NumOfCells=0, 
 meancutoff=0, 
-subset_by_genes= 
+subset_by_genes=,
+max_random_cells2import=10000000000 
 );
+
 libname SC "E:\JAK2_APOBEC3_and_MAP3K4_papers\sc_toppedCells_ucsc";
 proc datasets;
 copy in=work out=SC move;

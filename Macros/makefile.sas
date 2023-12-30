@@ -21,12 +21,12 @@ run;
 /* Build list of variable names */ 
 data _null_;                           
   set ___out_ nobs=count;
-  call symput("name"!!left(put(_n_,3.)),name);
-  call symput("type"!!left(put(_n_,3.)),type);
+  call symput("name"||left(put(_n_,3.)),name);
+  call symput("type"||left(put(_n_,3.)),type);
  
   /* Use var name when label not present */ 
   if label=" " then label=name;         
-  call symput("lbl"!!left(put(_n_,3.)),label);
+  call symput("lbl"||left(put(_n_,3.)),label);
   if _n_=1 then call symput("numvars", trim(left(put(count, best.))));
 run;
  
@@ -118,24 +118,26 @@ filename mypipe2 "C:\pipedata2.txt" lrecl=1000;
  
 * Invoke macro to write to a file, include proper parameters for your case.
 * Make sure that the variables are in the order you want and have the
-* desired formats.                                                     
+* desired formats.     
+
+*Note: the filename can be FILEREF or DDNAME of the file;                                          
  
 %makefile(dataset=one,
-          filename=mycsv,     * FILEREF or DDNAME of the file
+          filename=mycsv,    
           dlmr=",",
           qtes="yes",
           header="yes",
           label="yes");
  
 %makefile(dataset=one,
-          filename=mypipe,     * FILEREF or DDNAME of the file
+          filename=mypipe,    
           dlmr="|",
           qtes="yes",
           header="yes",
           label="yes");
  
 %makefile(dataset=one,
-          filename=mypipe2,     * FILEREF or DDNAME of the file
+          filename=mypipe2,     
           dlmr="|",
           qtes="no",
           header="yes",

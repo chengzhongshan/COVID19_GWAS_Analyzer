@@ -1,7 +1,7 @@
 /* =========================================================
  
  This macro produces the Laird and DerSimonian weighted 
- average of betas given s betas and their variances.
+ average of betas given several betas and their variances.
  
  includes changes made by Polyna Khudyakova
 (last change was done in August, 2015)

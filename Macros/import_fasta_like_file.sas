@@ -1,18 +1,24 @@
-%macro import_fasta_like_file(fasta_like_file,header_start_char,outdsd,onelinemode=1);
+%macro import_fasta_like_file(
+fasta_like_file,/*A file contain data like that of fasta*/
+header_start_char,/*regular expression to match the start chars*/
+outdsd,
+onelinemode=1
+);
 /*clear and create new temp file*/
 /*filename FT15F001 clear;*/
 filename FT15F001 "&fasta_like_file";
 /*Import data using parmcards*/
-data &outdsd(drop=t);
+data &outdsd(drop=t re);
 length fa_header $500. seq $32767;
 retain fa_header "" seq "" t 0;
 infile FT15F001 length=reclen end=eof;
+re=prxparse("/^&header_start_char/i");
 input;
-if (t=0 and prxmatch("/^&header_start_char/",_infile_)) then do;
+if (t=0 and prxmatch(re,_infile_)) then do;
 /* fa_header=substr(_infile_,2,reclen-1);*/
  fa_header=substr(_infile_,1,reclen);
 end;
-else if ( t>0 and prxmatch("/^&header_start_char/",_infile_) )then do;
+else if ( t>0 and prxmatch(re,_infile_) )then do;
  output;
  t=0;
  seq="";

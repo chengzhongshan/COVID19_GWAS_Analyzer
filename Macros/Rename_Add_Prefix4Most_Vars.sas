@@ -1,7 +1,7 @@
 /* Apply variable names, labels and formats
 from dataset indsd to target_dsd */
 *options mprint;
-%macro Rename_Add_Prefix4Most_Vars(indsd,prefix,excluded);
+%macro Rename_Add_Prefix4Most_Vars(indsd,prefix,excluded,replace_rgx_in_varname=);
 %let dsd_name=%scan(&indsd,-1,'.');
 %let dsd_lib=%scan(&indsd,-2,'.');
 %let re=%sysfunc(prxparse(s/ /" "/oi));
@@ -21,12 +21,22 @@ data temp;
 	where name not in %str(%("&rm_list"%));
 run;
 	
+%if %length(&replace_rgx_in_varname)>0 %then %do;
+proc sql noprint;
+   select count(*) into :n from temp;
+   select cat('rename ',strip(name),
+              '= ',%str("&prefix"),strip(prxchange("s/&replace_rgx_in_varname//i",-1,name)),';')
+      into :l1 - %sysfunc(compress(:l&n))
+      from temp;
+%end;
+%else %do;
 proc sql noprint;
    select count(*) into :n from temp;
    select cat('rename ',strip(name),
               '= ',%str("&prefix"),strip(name),';')
       into :l1 - %sysfunc(compress(:l&n))
       from temp;
+%end;
 quit;
 
 proc datasets lib=&dsd_lib nolist;
@@ -48,7 +58,7 @@ cards;
 run;
 
 options mprint macrogen mlogic symbolgen mfile;
-%Rename_Add_Prefix4Most_Vars(indsd=work.faminc,prefix=x,excluded=famid faminc1);
+%Rename_Add_Prefix4Most_Vars(indsd=work.faminc,prefix=x,excluded=famid faminc1,replace_rgx_in_varname=_);
 
 proc print data = faminc heading= h noobs;
 run;

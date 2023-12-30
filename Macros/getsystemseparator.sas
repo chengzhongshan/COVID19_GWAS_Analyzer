@@ -1,4 +1,4 @@
-%macro systemseparator;
+%macro getsystemseparator;
    %if (&sysscp=WIN) %then %do;
       %str(/)
    %end;

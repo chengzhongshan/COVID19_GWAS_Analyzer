@@ -3,6 +3,8 @@ A SAS Macro for doing semiparametric regression of multi-dimensional
 genetic pathway data, using least squares kernel machines and linear 
 mixed models.
 https://content.sph.harvard.edu/xlin/software.html
+Liu, D., Lin, X. and Ghosh, D. (2007) Semiparametric Regression of Multi-Dimensional Genetic Pathway Data: Least Squares Kernel 
+Machines and Linear Mixed Models. Biometrics, 63, 1079-1088.
 */
 /************************************************************************
  * path_name is the path where you store all your data files            *

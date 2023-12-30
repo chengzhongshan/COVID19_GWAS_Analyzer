@@ -1,4 +1,9 @@
-%macro fasta2sas(fasta,outdsd,fasta_one_line_mode=1);
+%macro fasta2sas(/*It is able to read a fasta file containing multiple fasta records*/
+fasta,
+outdsd,
+fasta_one_line_mode=1
+);
+
 filename fasta "&fasta";
 %if &fasta_one_line_mode %then %do;
 data &outdsd;
@@ -42,7 +47,7 @@ end;
 else do;
 input;
  if char(_infile_,1) eq ">" then do;
-  desc=char(_infile_,2);
+  desc=substr(_infile_,2);
 end;
 Sequence=_infile_;
 if Sequence^='' then output;*Make sure to use cats but not cat;
@@ -60,9 +65,9 @@ filename fasta clear;
 *output fasta in one line format with all fragment concatenated;
 %fasta2sas(fasta=Toy.fa,outdsd=x,fasta_one_line_mode=1);
 
-%fasta2sas(fasta=F:\360yunpan\SASCodesLibrary\SAS-Useful-Codes\SAS_Sequencing_Analysis\Fasta_Toy.txt,
+%fasta2sas(fasta=H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\SAS_Sequencing_Analysis\Fasta_Toy.txt,
 outdsd=x,
-fasta_one_line_mode=1);
+fasta_one_line_mode=0);
 
 */
 

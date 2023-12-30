@@ -15,13 +15,13 @@
 %end;
 
 %mend;
-/*
+/*Demo codes:;
 options mprint mlogic symbolgen;
 %cp(f=z.bed,fdir=D:\TCGA_LargeDB\CESC\cds_sorted,
     out=y.bed,outdir=D:\TCGA_LargeDB\CESC\cds_sorted);
-*/
 
-/*%get_filenames(location=%bquote(D:\TCGA_LargeDB\CESC\cds_sorted),dsd_out=filenames);
+*Another demo:;
+%get_filenames(location=%bquote(D:\TCGA_LargeDB\CESC\cds_sorted),dsd_out=filenames);
 data filenames;
 set filenames;
 file=memname;

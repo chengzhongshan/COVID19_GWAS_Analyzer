@@ -1,16 +1,19 @@
 %macro Boxplots4GenesInGTExV8ByGrps(
-genes=MAP3K19 R3HDM1 CXCR4 DARS LCT UBXN4 MCM6 ZRANB3 RAB3GAP1 CCNT2 ACMSD TMEM163;,
+genes=MAP3K19 R3HDM1 CXCR4,
 dsdout=exp,
 bygrps=sex AA, /*by AA population and sex or either of them!*/
 UseGeneratedDsd=0,
 PreviousDsd=tgt, /*This is a fixed dsd used by the proc sgpanel*/
 Lib4PreviousDsd=GTEx,
-WhereFilters4Boxplot=%str(),
+WhereFilters4Boxplot=%str(),/*such as cluster in ("Lung" "Spleen" "Whole Blood"); Note these items are case sensitive!*/
 boxplot_width=1200,
 boxplot_height=1000,
 draw_exp_heatmap=1, /*Also draw exp heatmap*/
-columns=1 /*Draw boxplots in the number of columns
+columns=1, /*Draw boxplots in the number of columns
 asign value >1 if drawing multiple genes column-wide!*/
+uniscale_type=all, /*make the axis the same for ALL, column (column-wide), or row (row-wide)*/
+yaxis_max_value= /*set the max value for the y axis, which will be set for all lattice panels
+If left empty, the macro will get the closer largest integer as the max y value;*/
 );
 
 %if &boxplot_height eq %then 
@@ -396,6 +399,12 @@ run;
  %let workingdsd=tgt;
 %end; 
 
+%if %length(&yaxis_max_value)=0 %then %do;
+ proc sql noprint;
+ select max(ceil(exp)) into: yaxis_max_value
+ from &workingdsd;
+%end;
+
 *sort the data by genesymbol;
 /* proc sort data=&workingdsd;by rownames; */
 /* run; */
@@ -404,9 +413,9 @@ run;
 ods graphics on/reset=all outputfmt=svg width=&boxplot_width height=&boxplot_height;
 proc sgpanel data=&workingdsd;
 %if %eval("&WhereFilters4Boxplot"^="") %then %do;
- where &WhereFilters4Boxplot;
+ where %unquote(&WhereFilters4Boxplot);
 %end;
-panelby new_rownames/columns=&columns novarname onepanel uniscale=column headerbackcolor=BWH
+panelby new_rownames/columns=&columns novarname onepanel uniscale=&uniscale_type headerbackcolor=BWH
         headerattrs=(size=&fontsize family=arial style=italic)  skipemptycells 
         nowall noborder noheaderborder;
 format new_rownames y2x.;
@@ -437,7 +446,7 @@ valueattrs=(size=&fontsize) labelattrs=(size=&fontsize) label=" ";
 colaxis fitpolicy=splitrotate;
 %end;
 
-rowaxis valueattrs=(size=&fontsize) labelattrs=(size=&fontsize) 
+rowaxis valueattrs=(size=&fontsize) labelattrs=(size=&fontsize) max=&yaxis_max_value
 label="log2(TPM+1)";
 keylegend / title="Group" titleattrs=(size=&fontsize) 
 valueattrs=(size=&fontsize);
@@ -543,6 +552,73 @@ run;
 %include "&macrodir/importallmacros_ue.sas";
 %importallmacros_ue;
 libname GTEX '/home/cheng.zhong.shan/data/GTEx_V8';
+
+*Best example:;
+*Maybe it is better to split these boxplots into different subpanels by tissue type;
+*The best way is to supply these tissue names to the whereFilters4Boxplot;
+*Once run it, change it as 1 for running with previous dsd;
+%Boxplots4GenesInGTExV8ByGrps(
+genes=&genes,
+dsdout=exp,
+bygrps=sex,
+UseGeneratedDsd=0,
+PreviousDsd=tgt,
+Lib4PreviousDsd=work,
+WhereFilters4Boxplot=%str(),
+boxplot_width=1600,
+boxplot_height=800,
+columns=1
+);
+
+*Get all these GTEx tissues and split these tissues into two batches;
+proc sql;
+select distinct quote(cluster) into: all_tissues separated by ','
+from tgt;
+%put &all_tissues;
+
+%select_element_range_from_list(list=%bquote(&all_tissues),st=1,end=27,sublist=tissues1,sep=%str(,));
+*Note: the newer macro select_elems_range_from_dsd is better than the above;
+
+*Crate boxplot based on previouslly generated data and only focus on first 27 tissues;
+*Note that these tissues are sorted internally;
+%Boxplots4GenesInGTExV8ByGrps(
+genes=&genes,
+dsdout=exp,
+bygrps=sex,
+UseGeneratedDsd=1,
+PreviousDsd=tgt,
+Lib4PreviousDsd=work,
+WhereFilters4Boxplot=%str(cluster in (%bquote(&tissues1))),
+boxplot_width=800,
+boxplot_height=800,
+columns=1
+);
+
+%Boxplots4GenesInGTExV8ByGrps(
+genes=&genes,
+dsdout=exp,
+bygrps=sex,
+UseGeneratedDsd=1,
+PreviousDsd=tgt,
+Lib4PreviousDsd=work,
+WhereFilters4Boxplot=%str(cluster in ("Lung" "Spleen" "Whole Blood")),
+boxplot_width=800,
+boxplot_height=800,
+columns=1
+);
+
+%glm_by_grps(
+dsd=tgt,
+grpvars=rownames cluster,
+yvar4glm=exp,
+GLMStatOutDsd=GLMStatOut,
+GLM_classes=sex,
+GLM_model=sex,
+pheno_var=sex,
+where_condition=%str(rownames="JAK2")
+);
+
+**************Other example codes:;
 
 *Note: the input gene order will be used to draw boxplots from up to down;
 %let genes=SPEG MAP3K19 CXCR4 R3HDM1 DARS LCT UBXN4 MCM6 ZRANB3 RAB3GAP1 CCNT2 ACMSD TMEM163;

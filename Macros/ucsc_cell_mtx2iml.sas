@@ -1,3 +1,4 @@
+
 /*The issue for this macro is that the two parameters startlinenum and endlinenum may 
 lead to the read of partial data for a specific feature, which means the records of the
 feature may be splitted into two sections and included in two blocks*/
@@ -13,6 +14,7 @@ endlinenum=5000,/*The line position number to stop the reading of data;
 For testing, set it as 5000; please enlarge it for real large dataset;
 To prevent SAS out of space in SAS OnDemand for Academics, it will read 5000000 records;
 You can change the startlinenum by a step of 5,000,000 and update the endlinenum accordingly*/
+output_adj_endlinenum_var=adj_endlinenum,/*The value is fixed, do not change it into other strings*/
 OnSASOnDemand=1,/*if it is true, it will use gzip funciton but not the linux zcat*/
 use_zcat=0, /*For HPC Linux system, asign value 1 indicating to use zcat;
 The macro will first check whether it is running with SAS OnDemand for Academics,
@@ -23,6 +25,7 @@ meancutoff=0.001, /*Filter out cells with too low expression, i.e., meancutoff >
 subset_by_genes=  /*Provide gene symbols to only extract subset data for the dsdout4data;
 This would be helpful when the matrix is too large to be imported into SAS*/
 );
+
 
 *This will let the macro only read records not passed this restricted record line number;
 %if &endlinenum eq %then %let endlinenum=max;
@@ -199,9 +202,9 @@ from features_tgt;
  %put extra_filter_by_genes are:;
  %put &extra_filter_by_genes;
 
-%let infile_cmd=%str(
+%let infile_cmd=%bquote(
   firstobs=4 obs=max truncover lrecl=100000000 end=eof;
-   retain rowtag V1-V&totcols . xn 0;
+   retain rowtag V1-V&totcols. xn 0;
    array XX{*} V1-V&totcols;
 
    input row col exp;
@@ -232,7 +235,7 @@ from features_tgt;
  
    end;
 
-   drop col row exp xn;
+   drop col row exp xn;  
  ) ;
 
  %end;
@@ -280,7 +283,7 @@ from features_tgt;
 
 %let infile_cmd=%str(
   firstobs=&startlinenum obs=&endlinenum truncover lrecl=100000000;
-   retain rowtag V1-V&totcols . xn 0;
+   retain rowtag V1-V&totcols. xn 0;
    array XX{*} V1-V&totcols;
 
    input row col exp;
@@ -292,6 +295,10 @@ from features_tgt;
    if exp>=&Readcutoff then xn=xn+1;
 
    if rowtag^=row then do;
+    *save this endrow number for the importing of next batch of data;
+    *this is because the last rowtag may not contain all records when reaching the endlinenum;
+    *thus all imported records for the last rowtag needs to be deleted and read it again in the next new batch;
+     call symputx('adj_endlinenum',trim(left(put(_n_,8.))));
      XX{symget('colnum')}=.;
      if (mean(of XX[*]) >= &meancutoff and xn >= &NumOfCells)  then output;
      xn=0;
@@ -303,7 +310,9 @@ from features_tgt;
      XX{symget('colnum')}=exp;
    end;
    if _n_=&endlinenum then do;
-    if (mean(of XX[*]) >= &meancutoff and xn >= &NumOfCells)  then output; 
+    *No need to ouput the records for the last rowtag!;
+    *if (mean(of XX[*]) >= &meancutoff and xn >= &NumOfCells)  then output; 
+    *Note: if output statment is not run, it is impossible to use these rowtag or other values for calling symputx;
     stop;
    end;
    drop col row exp xn _n_;
@@ -341,9 +350,9 @@ from features_tgt;
 &infile_cmd 
 &extra_filter_by_genes
 ),
-  use_zcat=&use_zcat
+  use_zcat=&use_zcat,
+  var4endlinenum=adj_endlinenum
   );
-
 
 %end;
 
@@ -406,11 +415,13 @@ barcode_gzfile_or_url=https://cells.ucsc.edu/covid19-toppcell/int-all-cells/barc
 dsdout4headers=header,
 dsdout4data=exp,
 startlinenum=4,
-endlinenum=10000000,
+endlinenum=1000000000,
 OnSASOnDemand=1,
 use_zcat=0
 );
+%put &adj_endlinenum;
 endsubmit;
+
 use exp var _num_;
 read all into iml_exp;
 close exp;
@@ -421,11 +432,11 @@ quit;
 endsubmit;
 
 t=iml_exp[,1:10];
-*store iml_exp;
+store iml_exp;
 show storage;
 *free iml_exp;
 
-
+proc iml;
 submit;
 %ucsc_cell_mtx2iml(
 mtx_gzfile_or_url=https://cells.ucsc.edu/covid19-toppcell/int-all-cells/matrix.mtx.gz,
@@ -433,12 +444,13 @@ feat_gzfile_or_url=https://cells.ucsc.edu/covid19-toppcell/int-all-cells/feature
 barcode_gzfile_or_url=https://cells.ucsc.edu/covid19-toppcell/int-all-cells/barcodes.tsv.gz,
 dsdout4headers=header,
 dsdout4data=exp1,
-startlinenum=10000001,
-endlinenum=20000000,
+startlinenum=&adj_endlinenum,
+endlinenum=%sysevalf(&adj_endlinenum+1000000000),
 OnSASOnDemand=1,
 use_zcat=0
 );
 endsubmit;
+
 use exp1 var _num_;
 read all into iml_exp1;
 close exp1;

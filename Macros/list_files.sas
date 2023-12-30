@@ -13,7 +13,7 @@
    %let name=%qsysfunc(dread(&did,&i));
 
 /*%if %qupcase(%qscan(&name,-1,.)) = %upcase(&file_rgx) %then %do;*/
-   %if %sysfunc(prxmatch(/&file_rgx/,&name)) %then %do;
+   %if %sysfunc(prxmatch(/&file_rgx/i,&name)) %then %do;
         %put &dir/&name;
       %end;
       %else %if %qscan(&name,2,.) = %then %do;        

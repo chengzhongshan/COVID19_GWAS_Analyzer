@@ -1,4 +1,14 @@
-%macro format_xaxis_with_numeric_order(dsdin,Xaxis_vars,new_Xaxis_var,Var4sorting_Xaxis,function4sorting,descending_or_not,dsdout,createdfmtname);
+%macro format_xaxis_with_numeric_order(
+dsdin,
+Xaxis_vars,
+new_Xaxis_var,
+Var4sorting_Xaxis,
+function4sorting,
+descending_or_not,
+dsdout,
+createdfmtname,
+KeyVar4Xaxis_vars=KeyVar4dsdout
+);
 
 *If AlsoAppFun4Cols=1, will apply specific function on each row or ALL Rows (if row_keys is missing) for ALL these matched columns;
 *For AlsoAppFun4Cols=1, we can not use avg but mean, because avg is going to calculate mean based on group and mean is to calculate mean of different columns;
@@ -70,6 +80,7 @@ var_labels as b
 on strip(left(a.KeyVar4dsdout))=strip(left(b.KeyVar4dsdout))
 ;
 
+*This actually not helpful;
 data &dsdout;
 set &dsdin._tmp;
 num_grp=&new_Xaxis_var;
@@ -77,7 +88,13 @@ num_grp=&new_Xaxis_var;
 attrib &new_Xaxis_var format=&createdfmtname..;
 run;
 
+*Note: new evaluation revealed that the above format is not useful;
+*The variable KeyVar4Xacis_vars can not used to draw plot with numeric order directly.;
 proc sort data=&dsdout;by num_grp;run;
+data &dsdout;
+set &dsdout;
+rename KeyVar4Xaxis_vars=&KeyVar4Xaxis_vars;
+run;
 
 %mend;
 
@@ -111,14 +128,16 @@ Var4sorting_Xaxis=value,
 function4sorting=avg,
 descending_or_not=1,
 dsdout=tmp,
-createdfmtname=Xaxis_var_label);
+createdfmtname=Xaxis_var_label,
+KeyVar4Xaxis_vars=KeyVar4dsdout
+);
 
 proc boxplot data=tmp;
-plot value*grp;
+plot value*KeyVar4dsdout;
 run;
 
 proc sgplot data=tmp;
-scatter x=grp y=value;
+scatter x=KeyVar4dsdout y=value;
 run;
 
 */

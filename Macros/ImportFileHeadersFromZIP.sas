@@ -7,8 +7,26 @@ deleteZIP=0,
 infile_command=%str(firstobs=1 obs=10;input;info=_infile_;),
 /*Better to use nrbquote to replace str and use unquote within the macro
 to get back the input infile_command;*/
-use_zcat=0
+extra_infile_macrovar_prefix=infile_cmd,/*To prevent the crash of sas when the length of the macro var infile_command is too long,
+it is better to assign different parts of infile commands into multiple global macro vars with similar prefix, such as infile_cmd;
+it is better to use bquote or nrbquote to excape each extra infile command!*/
+num_infile_macro_vars=0,/*Provide positve number to work with the global macro var of extra_infile_macrovar_prefix*/
+use_zcat=0,
+var4endlinenum=adj_endlinenum, /*make global var for the endline number but it is 
+necessary to use syminputx in the infile_command to record the endline number;
+call symputx("&var4endlinenum",trim(left(put(_n_,8.))));
+It is possible to assign other numeric value generated in the infile_command to 
+this macro var for other purpose, because this global macro var will be accessible 
+by other outsite macros!
+call symputx('adj_endlinenum',trim(left(put(rowtag,8.))));*/
+global_var_prefix4vars2drop=drop_var,/*To handle the issue of trunction of macro var infile_command if there are too many variables to be dropped in the infile procedure;
+it is feasible to create global macro variables with the same prefix, such as drop_var, to exclude them*/
+num_vars2drop=0 /*Provide postive number to work with the macro var global_var_prefix4vars2drop to resolve these variables to be excluded*/
 );
+
+*This will run first even it was put at the end of infile statment;
+%global &var4endlinenum;
+%let &var4endlinenum=-9;
 
 %if %FileOrDirExist(&zip)=0 %then %do;
   %put No file for the input macro var zip: &zip;
@@ -129,6 +147,24 @@ data &sasdsdout;
 /* infile target delimiter='09'x missover dsd firstobs=2; */
 infile fromzip 
 %unquote(&infile_command);
+
+/*To prevent the crash of sas when the length of the macro var infile_command is too long,
+it is better to assign different parts of infile commands into multiple global macro vars with similar prefix, such as infile_cmd;
+*Provide positve number to work with the global macro var of extra_infile_macrovar_prefix*/
+%if &num_infile_macro_vars>0 %then %do;
+%do extra_i=1 %to &num_infile_macro_vars;
+    %unquote( &&&extra_infile_macrovar_prefix&extra_i);
+%end;
+%end;
+
+*Drop vars if num_vars2drop>0;
+%if &num_vars2drop>0 %then %do;
+%do di=1 %to &num_vars2drop;
+  drop &&&global_var_prefix4vars2drop&di;
+ %end;
+%end;
+
+
 if _error_ then call symputx('_ERIERR_',1);/*set error detection macro variable*/;
 run;
 filename fromzip clear;
@@ -208,6 +244,23 @@ data &sasdsdout;
 /* infile target delimiter='09'x missover dsd firstobs=2; */
 infile fromfile
 %unquote(&infile_command);
+
+/*To prevent the crash of sas when the length of the macro var infile_command is too long,
+it is better to assign different parts of infile commands into multiple global macro vars with similar prefix, such as infile_cmd;
+*Provide positve number to work with the global macro var of extra_infile_macrovar_prefix*/
+%if &num_infile_macro_vars>0 %then %do;
+%do extra_i=1 %to &num_infile_macro_vars;
+    %unquote( &&&extra_infile_macrovar_prefix&extra_i);
+%end;
+%end;
+
+*Drop vars if num_vars2drop>0;
+%if &num_vars2drop>0 %then %do;
+%do di=1 %to &num_vars2drop;
+  drop &&&global_var_prefix4vars2drop&di;
+ %end;
+%end;
+
 if _error_ then call symputx('_ERIERR_',1);/*set error detection macro variable*/;
 run;
 filename fromfile clear;
@@ -242,6 +295,10 @@ filename fromfile clear;
 /* dsdout=&sasdsdout); */
 
 options compress=no;
+
+%if &&&var4endlinenum>0 %then
+%put The record number for the macro var &var4endlinenum: &&&var4endlinenum;
+
 %mend;
 
 /*Demo:

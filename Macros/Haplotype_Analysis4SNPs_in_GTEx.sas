@@ -99,6 +99,7 @@ new_macro_list_var=_tissues_
    out=G
    ;
    run;
+ %if &SYS_PROCHTTP_STATUS_CODE=200 %then %do;
    libname J json fileref=G;
    /* proc datasets lib=J; */
    /* run; */
@@ -182,7 +183,7 @@ new_macro_list_var=_tissues_
    set geno_exp&ti._snp&si;
    SNP="&query_snp";
    run;
-   
+   %end;
   %end;
 %end;
 

@@ -1,6 +1,6 @@
 %macro CaculateMulteQTLs_in_GTEx(
 query_snps=rs17425819 rs7850484,
-gene=GAPDH,
+gene=JAK2,
 genoexp_outdsd=genos_and_exps,/*output dataset name in long format for genotype and gene expression across different tissues*/
 eQTLSumOutdsd=AssocSummary,
 rgx4tissues=, /*optional regular expression to select specific tissues for haplotype association;

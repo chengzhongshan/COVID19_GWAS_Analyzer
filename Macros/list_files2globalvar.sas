@@ -1,5 +1,7 @@
+*Note: file_rgx is char insensitive for prxmatch;
 %macro list_files2globalvar(dir,file_rgx,filelistvar);
   %global &filelistvar;
+  %let &filelistvar=;
   /*reset the value of the global macro var*/
   %local filrf rc did memcnt name i;
   %let rc=%sysfunc(filename(filrf,&dir));
@@ -15,7 +17,7 @@
    %let name=%qsysfunc(dread(&did,&i));
 
 /*%if %qupcase(%qscan(&name,-1,.)) = %upcase(&file_rgx) %then %do;*/
-   %if %sysfunc(prxmatch(/&file_rgx/,&name)) %then %do;
+   %if %sysfunc(prxmatch(/&file_rgx/i,&name)) %then %do;
         /*get fullpath, but the global var would be too long*/
         /*%let &filelistvar=&&&filelistvar "&dir/&name"; */
         /*get relative pathes and separate them by ':'*/

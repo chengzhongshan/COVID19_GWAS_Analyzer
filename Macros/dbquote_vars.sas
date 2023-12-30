@@ -7,7 +7,8 @@
 &var_list
 %mend;
 
-/*
+/*Demo codes:;
+
 data y;
 set sashelp.cars;
 where make in (%dbquote_vars(vars=Acura BMW));

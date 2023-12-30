@@ -1,4 +1,10 @@
-%macro number_rows_by_grp(dsdin,grp_var,num_var4sort,descending_or_not,dsdout);
+%macro number_rows_by_grp(
+dsdin,
+grp_var,
+num_var4sort,
+descending_or_not,
+dsdout
+);
 
 %if &descending_or_not %then %do;
 proc sort data=&dsdin;

@@ -16,7 +16,7 @@ dotsize=10
 *A new numberic group, ord, is created in descending order;
 *Note: it is important to sort the group by yval_var ascendingly;
 *as the group order will be used to selected genes or non-gene groups for making scatter plot or gene track;
-%number_rows_by_grp(dsdin=&bed_dsd,grp_var=&grp_var,num_var4sort=&yval_var,desending_or_not=0,dsdout=x1);
+%number_rows_by_grp(dsdin=&bed_dsd,grp_var=&grp_var,num_var4sort=&yval_var,descending_or_not=0,dsdout=x1);
 proc sql noprint;
 select unique(&chr_var) into: chr_name
 from x1;

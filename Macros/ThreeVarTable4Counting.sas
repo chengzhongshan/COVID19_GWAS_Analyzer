@@ -23,8 +23,11 @@ run;
 %mend;
 
 
-/*
+/*Demo codes:;
+
 *If thirdvar="", then only make a two-way table;
 %ThreeVarTable4Counting(dsd=,firstvar=,secondvar=,thirdvar=);
+
+%ThreeVarTable4Counting(dsd=sashelp.cars,firstvar=make,secondvar=type,thirdvar=origin);
 
 */

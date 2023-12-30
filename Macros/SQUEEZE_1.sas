@@ -3,6 +3,8 @@
 , NOCOMPRESS= /* [optional] variables to be omitted from the
 minimum-length computation process                                        */
 );
+*This macro is the original version of SQUEEZE.sas without modification;
+*Because other macros use it, we keept it but rename it;
 
 *Read the paper about SQUEEZE_1.sas;
 *https://www.lexjansen.com/nesug/nesug06/io/io18.pdf;

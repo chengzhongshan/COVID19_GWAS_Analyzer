@@ -2,6 +2,8 @@
 on a disease outcome using logistic kernel machine regression via logistic 
 mixed models.;
 https://content.sph.harvard.edu/xlin/software.html
+Liu, D., Ghosh, D. and Lin, X. (2008) Estimation and Testing for the Effect of a Genetic Pathway on a Disease Outcome Using 
+Logistic Kernel Machine Regression via Logistic Mixed Models. BMC Bioinformatics, 9, 292.
 
 Estimation and testing for the effect of a genetic pathway on a disease 
 outcome using logistic kernel machine regression via logistic mixed models

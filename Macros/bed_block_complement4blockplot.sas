@@ -1,5 +1,20 @@
-
-%macro bed_block_complement4blockplot(dsdin,chr_var,chr_value,st_var,end_var,dsdout,minst,maxend,generate_dsd_only);
+*Note: the colors used to filled bed regions and its complementary regions can be customized;
+*by revising the macro manually;
+%macro bed_block_complement4blockplot(
+dsdin,
+chr_var,
+chr_value,
+st_var,
+end_var,
+dsdout,
+minst,
+maxend,
+generate_dsd_only,
+use_alternate_mode2fill_blocks=1 
+/*When the value is 1, it will use red and white color for 
+bed regions and its complementary regions, respectively;
+Provide 0 to use multicolor to fill blocks*/
+);
 
 *subset data by chr and make st and end into a single;
 *column as pos;
@@ -89,9 +104,20 @@ begingraph / designwidth=1200 designheight=100;
 /*                   extendblockonmissing=true filltype=multicolor;*/
 
 /*Not Display block values and labels*/
-      layout overlay/walldisplay=none xaxisopts=( display=(LINE TICKS TICKVALUES) linearopts=(viewmin=&mindist viewmax=&maxdist  tickvaluesequence=( start=%eval(&mindist-1) end=&maxdist increment=%eval((&maxdist-&mindist+1)/10) )));
+      layout overlay/walldisplay=none xaxisopts=( display=(LINE TICKS TICKVALUES) 
+                             linearopts=(viewmin=&mindist viewmax=&maxdist  tickvaluesequence=( start=%eval(&mindist-1) 
+                             end=&maxdist increment=%eval((&maxdist-&mindist+1)/10) )));
          blockplot x=_POS2 block=_I / name='block' display=(FILL) 
-                   extendblockonmissing=true filltype=multicolor;
+                   extendblockonmissing=true 
+        *This will enable the alternate color mode, which is contronable compared to the multicolor mode;
+        %if &use_alternate_mode2fill_blocks=0 %then %do;
+                   filltype=multicolor
+          %end;
+          %else %do;
+                    filltype=alternate fillattrs=(color=red transparency=0.5) 
+                                                                altfillattrs=(color=white transparency=0.5)
+          %end;
+;
       endlayout;
    endlayout;
 endgraph;
@@ -117,9 +143,13 @@ chr7 150 300
 ;
 run;
 
-%bed_block_complement4blockplot(dsdin=a,chr_var=chr,chr_value=chr7,st_var=st,end_var=end,dsdout=xxx,minst=15,maxend=250,generate_dsd_only=0);
+*Use the multicolor for bed regions and its compementary regions;
+%bed_block_complement4blockplot(dsdin=a,chr_var=chr,
+chr_value=chr7,st_var=st,end_var=end,dsdout=xxx,minst=15,
+maxend=250,generate_dsd_only=1,
+use_alternate_mode2fill_blocks=0);
 
-
+*Use alternate colors for bed regions and its complementary regions;
 data bed;
 input chr $ st end;
 cards;
@@ -127,6 +157,9 @@ chr7 100 200
 chr7 400 800
 ;
 run;
-%bed_block_complement4blockplot(dsdin=bed,chr_var=chr,chr_value=chr7,st_var=st,end_var=end,dsdout=yyy,minst=1,maxend=1000,generate_dsd_only=1);
+%bed_block_complement4blockplot(dsdin=bed,chr_var=chr,
+chr_value=chr7,st_var=st,end_var=end,dsdout=yyy,minst=1,maxend=1000,
+generate_dsd_only=1,
+use_alternate_mode2fill_blocks=1);
 
 */

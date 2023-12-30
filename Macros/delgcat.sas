@@ -55,7 +55,7 @@ are read in with a CARDS statement.
     Purpose  :  Delete all entries from the graphics catalog specified
                 as a parameter.
      ------------------------------------------------------------------- */
-%macro DelGCat(CatName);
+%macro delgcat(CatName);
   %if %sysfunc(cexist(&CatName)) %then
     %do;
        proc greplay igout=&CatName nofs;
@@ -63,4 +63,4 @@ are read in with a CARDS statement.
        run;
        quit;
     %end;
-%mend DelGCat;
+%mend delgcat;

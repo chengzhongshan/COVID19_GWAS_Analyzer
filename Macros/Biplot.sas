@@ -1,3 +1,4 @@
+*https://blogs.sas.com/content/iml/2019/11/13/create-biplots-sas.html;
 
 %macro Biplot(
         data=_LAST_,     /* Data set for Biplot                      */
@@ -137,26 +138,26 @@ data &anno;
 %done:
 
 %mend;
+/*Demo codes:;
+data a;
+do ID='A','B','C','D','E','F','H';
+ do rep=1 to 5;
+  value=rannor(100);
+  output;
+  end;
+end;
 
-*data a;
-*do ID='A','B','C','D','E','F','H';
-* do rep=1 to 5;
-*  value=rannor(100);
-*  output;
-*  end;
-*end;
-*
-*run;
-*%Biplot(
-*        data=_LAST_,     /* Data set for Biplot                      */
-*        var =value rep,  /* Variables for Biplot                     */
-*        id  =ID,         /* Observation ID variable                  */
-*        dim =2,          /* Number of Biplot dimensions              */
-*        factype=SYM,     /* Biplot factor type: GH, SYM, or JK       */
-*        scale=1,         /* Scale factor for variable vectors        */
-*        out =BIPLOT,     /* Output dataset: Biplot coordinates       */
-*        anno=BIANNO,     /* Output dataset: annotate labels          */
-*        std=STD,        /* How to standardize columns: NONE|MEAN|STD*/
-*        pplot=YES);      /* Produce printer plot?                    */
-*  
-*
+run;
+%Biplot(
+        data=_LAST_,    
+        var =value rep, 
+        id  =ID,        
+        dim =2,          
+        factype=SYM,     
+        scale=1,        
+        out =BIPLOT,    
+        anno=BIANNO,   
+        std=STD,       
+        pplot=YES);    
+  */
+

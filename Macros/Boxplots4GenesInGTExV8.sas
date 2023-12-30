@@ -1,5 +1,5 @@
 %macro Boxplots4GenesInGTExV8(
-genes=MAP3K19 R3HDM1 CXCR4 DARS LCT UBXN4 MCM6 ZRANB3 RAB3GAP1 CCNT2 ACMSD TMEM163;,
+genes=MAP3K19 R3HDM1,
 dsdout=exp,
 bysex=1,
 UseGeneratedDsd=0,

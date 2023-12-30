@@ -1,4 +1,13 @@
-%macro bed_region_plot_by_grp_splitted(bed_dsd,chr_var,st_var,end_var,grp_var,val_var4bed_reg,indv_var,linethickness=20);
+%macro bed_region_plot_by_grp_splitted(
+bed_dsd,
+chr_var,
+st_var,
+end_var,
+grp_var,/*bed regions will be colored according to the group membership*/
+val_var4bed_reg,
+indv_var,/*If empty, the macro will draw bed regions without considering individual information*/
+inethickness=20
+);
 *Note: this macro will make bed plot for each individual and color each bed region by group!;
 
 /*Get the unique individual elements*/
@@ -32,7 +41,9 @@ from &bed_dsd;
  %end;
  run;
 
-%number_rows_by_grp(dsdin=&bed_dsd.&indi,grp_var=&grp_var,num_var4sort=&st_var,desending_or_not=0,dsdout=x1);
+%number_rows_by_grp(dsdin=&bed_dsd.&indi,
+grp_var=&grp_var,num_var4sort=&st_var,
+descending_or_not=0,dsdout=x1);
 
 data x1(keep=&chr_var pos &val_var4bed_reg &grp_var ord);
 set x1;

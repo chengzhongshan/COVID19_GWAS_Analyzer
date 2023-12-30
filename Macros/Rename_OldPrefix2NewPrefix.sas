@@ -18,7 +18,7 @@ run;
 
 data a ;
   set faminc;
-  %Rename_OldPrefix2NewPrefix(faminc, oldfaminc, 12);
+  %Rename_OldPrefix2NewPrefix(faminc, newfaminc, 12);
 run;
 proc print data = a heading= h noobs;
 run;

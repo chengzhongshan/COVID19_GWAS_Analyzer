@@ -1,4 +1,4 @@
-%macro grep_keyword_in_gzfile(
+%macro grep_keyword_in_gzfile(/*Only return the 1st matched record*/
 /*If no https in the url, the macro assumes that the input would be a local gz file;
 if the input file does not contain .zip or .gz, it still can grep it by treating
 the file as a plain text file!*/

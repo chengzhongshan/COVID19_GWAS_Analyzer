@@ -35,7 +35,8 @@ data &target_dsd;
 run;
 
 %mend;
-/*
+/*Demo codes:;
+
 data toy;
 set sashelp.cars;
 label MPG_City="x";

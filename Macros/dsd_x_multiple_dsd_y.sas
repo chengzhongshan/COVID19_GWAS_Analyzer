@@ -30,7 +30,8 @@ run;
 
 %mend;
 
-/*
+/*Demo codes:;
+
 data x;
 input a b c;
 cards;

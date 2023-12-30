@@ -1,8 +1,8 @@
-%macro Sampling(indsd,n,nperm,dsdout);
+%macro Sampling(indsd,n,nperm,dsdout,seed_value=2718);
 options nonotes compress=yes;
 %let i=1;
 %do %while(&i<=&nperm);
-proc surveyselect data=&indsd
+proc surveyselect data=&indsd seed=&seed_value
    method=srs n=&n out=&dsdout.s&i noprint;
 run;
 data &dsdout.s&i;

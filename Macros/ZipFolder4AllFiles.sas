@@ -1,4 +1,5 @@
-%macro ZipFolder4AllFiles(target_dir,outzip,outdir);
+*https://communities.sas.com/t5/ODS-and-Base-Reporting/ODS-PACKAGE-with-CALL-EXECUTE-not-quot-releasing-quot-created/td-p/720928;
+%macro ZipFolder4AllFiles(target_dir,outzip,outdir,rgx2keep_file=.);
 /*
 This macro will try to get all files without spaces and compress
 them into a single zip file;
@@ -16,9 +17,9 @@ data _null_;
 rc=dlgcdir("&target_dir");
 put rc=;
 run;
-
+*Note: file_rgx is char insensitive for prxmatch;
 %list_files2globalvar(dir=&target_dir,
-file_rgx=.,filelistvar=allfiles);
+file_rgx=&rgx2keep_file,filelistvar=allfiles);
 %put All files in the dir &target_dir: &allfiles;
 %let nfiles=%eval(%sysfunc(countc(&allfiles,:))+1);
 

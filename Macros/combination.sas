@@ -1,6 +1,5 @@
 
 %macro combination(r)/parmbuff;
-
       %let i=2;
       %let things=;
       %do %while (%Qscan(&syspbuff,&i,%STR(,%))) ne );
@@ -38,3 +37,14 @@
             title "combinations of &n items taken &r at a time ";
             run;
 %mend;
+
+/*Demo codes;
+
+*Note: the 1st parameter is for the variable r, representing the combination of r variables;
+*other input parameters will be captured by parabuff and saved into the macro variable sysbuff;
+
+%combination(2,a,b,c,d,e);
+
+%combination(3,a,b,c,d,e);
+
+*/

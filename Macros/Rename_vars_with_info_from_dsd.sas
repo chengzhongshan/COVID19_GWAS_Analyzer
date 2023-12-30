@@ -1,4 +1,10 @@
-%macro Rename_vars_with_info_from_dsd(dsdin,var_info_dsd,old_var_info,new_var_info,outdsd);
+%macro Rename_vars_with_info_from_dsd(
+dsdin,
+var_info_dsd,
+old_var_info,/*a variable containing old variable names in the dsd var_info_dsd*/
+new_var_info,/*a variable containing new variable names for renaming the old variable names 
+ in the dsd var_info_dsd*/
+outdsd);
 proc sql noprint;
 select &old_var_info,&new_var_info into: old_vars separated by ' ', : new_vars separated by ' '
 from &var_info_dsd;

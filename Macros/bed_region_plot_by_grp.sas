@@ -10,7 +10,7 @@ track_width=800,
 track_height=400,
 dist2st_and_end=0
 );
-%number_rows_by_grp(dsdin=&bed_dsd,grp_var=&grp_var,num_var4sort=&st_var,desending_or_not=0,dsdout=x1);
+%number_rows_by_grp(dsdin=&bed_dsd,grp_var=&grp_var,num_var4sort=&st_var,descending_or_not=0,dsdout=x1);
 data x1(keep=&chr_var pos &yval_var &grp_var ord st end);
 set x1;
 array X{2} &st_var &end_var;

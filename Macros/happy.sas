@@ -196,9 +196,9 @@
   run;
   ods html close;
   proc datasets library=work nolist;
-     delete &stratum.tmp &stratum.fit1 &stratum.df1 
-            &stratum.fit2 &stratum.df2 &stratum.parm
-            &stratum.odds inter&stratum n&stratum;
+/*     delete &stratum.tmp &stratum.fit1 &stratum.df1 */
+/*            &stratum.fit2 &stratum.df2 &stratum.parm*/
+/*            &stratum.odds inter&stratum n&stratum;*/
   quit;
 %mend hap_strata;
 /***********************************************
@@ -748,7 +748,7 @@
 
    /* delete the extra datasets */
    proc datasets library=work nolist;
-     delete out out1 out2 outnew hpool;
+     *delete out out1 out2 outnew hpool;
    quit;
    %exit:
 %mend happy;

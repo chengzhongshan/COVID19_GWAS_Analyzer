@@ -1,19 +1,21 @@
 %macro macroparas(
 macrorgx=.,
 dir=%sysfunc(pathname(HOME))/Macros 
+H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros
 ~/shared/Macros
 /home/zcheng/SAS-Useful-Codes/Macros 
 F:/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros
 /home/zhongshan/SAS-Useful-Codes/Macros
-H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros
 ,
 verbose=0,
 IsSASOnDemand=0,
-numlines2print=10000
+numlines2print=10000,
+output_macropara_dsd=Macro_paras,
+print_outdsd=0
 );
 
 %if &sysscp=WIN %then %do;
- %put Find your system is WIN, so we will make the value for your input var IsSASOnDemand=1;
+ %put Find your system is WIN, so we will change the value of your input var IsSASOnDemand as 0 if it is asigned as 1 at the beginning;
 	%let IsSASOnDemand=0;
 %end;
 
@@ -110,19 +112,20 @@ from macroparas;
 %put &&path&i;
 %put ;
 
-%if %eval(&IsSASOnDemand=0 and %sysfunc(prxmatch(/LIN/,&sysscp))) %then %do;
-*x cat &&path&i|head -n 20;
-x getsasmacrodemo &&path&i;
-%end;
-%else %do;
-data macros;
+/*%if %eval(&IsSASOnDemand=0 and %sysfunc(prxmatch(/LIN/,&sysscp))) %then %do;*/
+/**x cat &&path&i|head -n 20;*/
+/*x getsasmacrodemo &&path&i;*/
+/*%end;*/
+/*%else %do;*/
+
+data _macros_;
 infile "&&path&i" lrecl=10000 obs=&numlines2print;
 input;
 Macro_Info=_infile_;
 run;
 *Print macro with specific style;
 title "Contents of first &numlines2print lines of SAS macro: &&path&i";
-proc print data=macros noobs;
+proc print data=_macros_ noobs;
 var Macro_Info/style =[width=15in] 
          style(data)=[font_face=arial font_weight=bold foreground=darkblue background=cxedf2f9 font_size=10pt];
 *background=linen;
@@ -130,10 +133,50 @@ label Macro_Info="SAS Macro information";
 run;
 run;
 
-%end;
+*Output macro parameters as a sas data set;
+%let _macro_=%sysfunc(prxchange(s/.*\/([^\/]+).sas/$1/i,-1,&&path&i));
+data _mparas&i(drop=tag Macro_info);
+length macro_paras $1000.;
+retain tag 0 macro_paras '';
+set _macros_;
+macro="&_macro_";
+if prxmatch("/.macro\s+&_macro_/i",macro_info) then do;
+  tag=1;
+  macro_paras=prxchange("s/.*(&_macro_.*)/$1/i",-1,macro_info);
+  if prxmatch("/&_macro_[\(][^\)]+[\)][;\s]*$/",macro_paras) then do;
+     tag=0;output;
+  end;
+end;
+else if (tag=1) then do;
+   macro_paras=catx(
+   '',
+   macro_paras,
+   macro_info
+  );
+  if prxmatch("/[\)][;\s]*$/",macro_paras) then do;
+     tag=0;output;
+  end;   
+end;
+
+*Now make both Linux and Windows use the same pure SAS codes to get SAS parameters;
+/*%end;*/
 
 %put **********************************************;
 %put ;
+%end;
+
+*Combine all macro parameters into a single dataset;
+data &output_macropara_dsd;
+set _mparas:;
+run;
+proc datasets lib=work nolist;
+delete _mparas: _macros_ Macroparas;
+run;
+title "Matched macro and its parameters";
+%if &print_outdsd=1 %then %do;
+proc print data=&output_macropara_dsd;
+%print_nicer;
+run;
 %end;
 
 %mend;
@@ -141,12 +184,19 @@ run;
 /*
 options mprint mlogic symbolgen;
 x cd F:\360yunpan\SASCodesLibrary\SAS-Useful-Codes;
+%debug_macro;
+
 %macroparas(
-macrorgx=import,
-dir=/home/cheng.zhong.shan/Macros F:/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros /zcheng/Macros ~/shared/Macros /home/zcheng/SAS-Useful-Codes/Macros /LocalDisks/F/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros,
+macrorgx=.,
+dir=/home/cheng.zhong.shan/Macros 
+F:/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros /zcheng/Macros 
+~/shared/Macros /home/zcheng/SAS-Useful-Codes/Macros /LocalDisks/F/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros
+H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros,
 verbose=0,
 IsSASOnDemand=0,
-numlines2print=100
+numlines2print=50,
+output_macropara_dsd=Macro_paras,
+print_outdsd=1
 );
 
 */
