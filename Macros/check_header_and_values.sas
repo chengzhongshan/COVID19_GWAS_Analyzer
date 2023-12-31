@@ -9,19 +9,25 @@ value_line=10,
 use_zcat=0,
 deleteZIP=0
 );
-
+ %let wkdir=%sysfunc(getoption(work));
 ***************************************Prepare dsd from gz, zip, dsd, or url*************;
 %if %sysfunc(prxmatch(/^http/,&input_dsd_or_file_or_url)) %then %do;
-  %let wkdir=%sysfunc(getoption(work));
   %dwn_http_file(httpfile_url=&input_dsd_or_file_or_url,outfile=gwas_gz_file.gz,outdir=&wkdir);
 %end;
 
 %if (%sysfunc(prxmatch(/^http/i,&input_dsd_or_file_or_url)) or 
      %sysfunc(prxmatch(/.(gz|zip)/i,&input_dsd_or_file_or_url))
      ) %then %do;
+  *If the input is a fullpath to to the zip or gz file;
+   %if %FileOrDirExist(&input_dsd_or_file_or_url) %then %do;
+      %let inputfile=&input_dsd_or_file_or_url;
+   %end;
+   %else %do;
+      %let inputfile=&wkdir/gwas_gz_file.gz;      
+    %end;
   %ImportFileHeadersFromZIP(
-  zip=&wkdir/gwas_gz_file.gz,
-  /*Only provide file with .gz, .zip, or common text file without comporession*/
+  zip=&inputfile,
+  /*Only provide file with .gz, .zip, or common plain text file*/
   filename_rgx=.,
   obs=max,
   sasdsdout=&dsdout,
@@ -30,6 +36,10 @@ deleteZIP=0
   use_zcat=0
   );
 %end;
+title "First %eval(&value_line-&header_line+1) lines from the input file:";
+proc print data=&dsdout;
+run;
+title;
 
 %let sep='09'x;
 %if (&linesep^='09'x and &linesep^=\t) %then %let sep=&linesep;
@@ -45,6 +55,7 @@ deleteZIP=0
 %end;
 
 *********************Process extracted or existing dsd******************************;
+/*%abort 255;*/
 
 data x_header(keep=Column) x_contents(keep=Value);
 set &dsdout;

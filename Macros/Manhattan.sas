@@ -301,6 +301,13 @@ plot logp*Fake_position=&chr_var / haxis = axis1
 run;
 %end;
 
+*This will enable the macro generate one figure by proc gplot in SAS OnDemand for Academics;
+*Otherwise, there would be two duplicated Manhattan plots;
+/* %return; */
+*return does not work, and only quit dose!;
+%put The macro will quit to prevent from two duplicated Manhattan plots printed!;
+quit;
+
 %mend;
 
 /*

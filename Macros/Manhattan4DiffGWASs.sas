@@ -56,13 +56,14 @@ fontsize=3,
 flip1stGWAS_signal=1, /*When providing value 1, which will draw the 1st GWAS at the bottom in reverse order for the yaxis, 
 which means the most significant association will be put close to bottom;
 provide value 0 to draw the 1st GWAS in vertical mode!*/
-refline_color_4zero=dark, /*Color the manhattan bottom line*/
+refline_color_4zero=gray, /*Color the manhattan bottom line*/
 rm_signals_with_logP_lt=0.5, /*To make the manhattan plot have reference line at association signal of zero,
 it is better to remove associaiton signal logP for all GWASs less than the cutoff*/
 use_uniq_colors=1, /*Draw scatter plots with different colors for chromosomes;
 provide value 0 to use SAS default color scheme;*/
-gwas_sortedby_numchrpos=0 /*Ideally the input GWAS dsdin should be sorted by numchr and pos;
+gwas_sortedby_numchrpos=0, /*Ideally the input GWAS dsdin should be sorted by numchr and pos;
 if the GWAS dsdin is not, the macro will sort it accordingly but will require more memory and disk space*/
+outputfigname=Manhattan /*a prefix used to label the output figure*/
 );
 
 /**fake data;*/
@@ -283,8 +284,10 @@ run;
 %let max_yaxis_val=%sysevalf(%ntokens(&Other_P_vars)*&_logP_topval + &_logP_topval);
 *If put reset=all inside the command of goptions, the title will be removed;
 *It is necessary to reset all here, otherwise, the figure may be distorted;
-goptions reset=all ftext='arial' htext=&fontsize gunit=pct 
+*Albany AMT is equivalent to Arial in SAS;
+goptions reset=all ftext='Albany AMT' htext=&fontsize gunit=pct 
          dev=gif xpixels=&fig_width ypixels=&fig_height gsfname=gout;
+
  
 * make some room around the plot (white space);
 title1 ls=2;
@@ -310,9 +313,9 @@ symbol1 v=dot r=22 h=&dotsize;
 * suppress drawing of any x-axis feature;
 axis1 value=none major=none minor=none label=none style=0;
 * rotate y-axis label;
-axis2 label=(angle=90 "-Log10(p)" f='arial' h=&fontsize) 
+axis2 label=(angle=90 "-Log10(p)" f='Albany AMT' h=&fontsize) 
      order=(0 to  &max_yaxis_val by 2)
-      value=(f='arial' h=&fontsize
+      value=(f='Albany AMT' h=&fontsize
              %do _pi_=0 %to %ntokens(&Other_P_vars);
                 %if (&flip1stGWAS_signal=1 and &_pi_=0) %then %do;
                   %do _ti_=&_logp_topval %to 2 %by -2;
@@ -329,7 +332,7 @@ axis2 label=(angle=90 "-Log10(p)" f='arial' h=&fontsize)
                   );
  
 * destination for the plot;
-filename gout './manhattan1.gif';
+filename gout "./&outputfigname..gif";
  
 * use PROC GPLOT to create the plot;
 *Add format for customized &chr_var labels;
@@ -361,7 +364,6 @@ by &chr_var Fake_position;
 run;
 
 
-
 %if "&var_type"="2" %then %do;
 /*Note: the offset setting will make the legend move left when value is negative!*/
 *https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/graphref/p0anvu6ux4d0ijn1mt06fn9yl0wx.htm#p18f31f18e6elan1ge5bb2pjiv34;
@@ -388,6 +390,8 @@ format &chr_var Xaxis_var_label.;
 label Fake_position="Groups"
       &chr_var="Legends of groups";
 run;
+
+
 %end;
 
 %else %do;
@@ -403,6 +407,13 @@ plot1 logp*Fake_position=&chr_var
 ;
 run;
 %end;
+
+*This will enable the macro generate one figure by proc gplot in SAS OnDemand for Academics;
+*Otherwise, there would be two duplicated Manhattan plots;
+/* %return; */
+*return does not work, and only quit dose!;
+%put The macro will quit to prevent from two duplicated Manhattan plots printed!;
+quit;
 
 %mend;
 
