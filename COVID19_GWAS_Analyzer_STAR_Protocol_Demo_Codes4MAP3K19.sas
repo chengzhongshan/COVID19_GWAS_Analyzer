@@ -24,25 +24,25 @@ Other_P_vars=GWAS2_P Pval
 libname D "%sysfunc(pathname(HOME))";
 *It is only needed to run once for importing the hg19 GTF file;
 %let gtf_gz_url=https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz;
-%debug_macro;
+/* %debug_macro; */
 %get_genecode_gtf_data(
 gtf_gz_url=&gtf_gz_url,
 outdsd=D.GTF_HG19
 );
 
 *************Step4***********************;
-*Previously generated SAS data set GWAS1_vs_2 is stored in the SAS library D;
-%SNP_Local_Manhattan_With_GTF(
+*Previously generated SAS data set GWAS1_vs_2 is stored in the SAS library ‘D’.;
+%SNP_Local_Manhattan_With_GTF
 gwas_dsd=D.GWAS1_vs_2,
 chr_var=chr,
 AssocPVars=GWAS1_P GWAS2_P pval,
 SNP_IDs=rs16831827,
-/*if providing chr:pos or chr:st:end, it will query by pos!*/
+/*if providing chr:pos or chr:st:end, it will query by positions ranging from start to end positions on the specific chromosome!*/
 SNP_Var=rsid,
 Pos_Var=pos,
 gtf_dsd=D.GTF_HG19,
-ZscoreVars=GWAS1_z GWAS2_z diff_zscore ,
-/*Can be beta1 beat2 or other numberic vars indicating assoc or other +/- directions*/ 
+ZscoreVars=GWAS1_z GWAS2_z diff_zscore,
+/*Can be beta1 beat2 or other numeric vars indicating assoc or other +/- directions*/ 
 gwas_labels_in_order=HGI_B1 HGI_B2 HGI_B1_vs_B2,
 design_width=1300, 
 design_height=750
@@ -57,29 +57,31 @@ eQTLSumOutdsd=AssocSummary,
 create_eqtl_boxplots=1
 );
 
-
-****Note: it is necessary to release space in SAS studio;
-****delete previous GWAS data sets;
-proc datasets nolist lib=D;
-delete GWAS1 GWAS2 GWAS1_vs_2;
-run; 
-
 *************Step6***********************;
+*Download the following single-cell data from UCSC Cell Browser into a local computer and then upload them into the HOME directory of SAS OnDemand for Academics;
+* https://cells.ucsc.edu/covid-hypertension/Seurat_umap.coords.tsv.gz;
+* https://cells.ucsc.edu/covid-hypertension/meta.tsv;
+* https://cells.ucsc.edu/covid-hypertension/exprMatrix.tsv.gz;
+
 %import_sc_mtex_meta_umap_data(
-umap_file=https://cells.ucsc.edu/covid-hypertension/Seurat_umap.coords.tsv.gz,
-meta_file=https://cells.ucsc.edu/covid-hypertension/meta.tsv,
+umap_file=%sysfunc(pathname(HOME))/Seurat_umap.coords.tsv.gz,
+meta_file=%sysfunc(pathname(HOME))/meta.tsv,
 cell_id_in_meta=cell,
-exp_matrix_file=https://cells.ucsc.edu/covid-hypertension/exprMatrix.tsv.gz,
+exp_matrix_file=%sysfunc(pathname(HOME))/exprMatrix.tsv.gz,
 outdir=%sysfunc(pathname(HOME)), 
 /*Three sas data sets will be created and put into the dir:
 exp (read matrix with column headers, and the last column is for genesymbol), 
 umap (umap coordinates with sample meta data merged), 
-headers (column headers for the exp matrix)
-*/
-target_genes= 
+headers (cell barcodes corresponding to column headers for the exp matrix)*/
+target_genes=, 
 /*Provide genesymbols separated by | for parsing lines match with these genes;
 when the single cell data set is too large, this will save disk space in SAS OnDemand for Academics*/
+mean_exp_cutoff=0.01, /*Only keep row records with mean read of gene expression > mean_exp_cutoff*/
+max_cells2import=1000000 /*Maximum number of cells to be imported;
+if there are more than 1 million cells in the input cell matrix, only 1 million cells
+will be randomly selected.*/
 );
+*Note: if the total number of cells in the matrix is more than 1 million, the macro will randomly select 1 million cells automatically, which will avoid using up the limited disk space (~5GB) in SAS OnDemand for Academics.
 
 *************Step7***********************;
 libname sc "%sysfunc(pathname(HOME))";
