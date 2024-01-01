@@ -20,6 +20,7 @@ Demonstration codes for the investigation of a regulatory SNP of MAP3K19 predisp
 %importallmacros_ue;
 
 *Step1;
+
 %GRASP_COVID_Hosp_GWAS_Comparison(
 gwas1=https://grasp.nhlbi.nih.gov/downloads/COVID19GWAS/10202020/COVID19_HGI_B1_ALL_20201020.b37.txt.gz,
 gwas2=https://grasp.nhlbi.nih.gov/downloads/COVID19GWAS/10202020/COVID19_HGI_B2_ALL_leave_23andme_20201020.b37.txt.gz,
@@ -28,6 +29,7 @@ mk_manhattan_qqplots4twoGWASs=0
 );
 
 *Step2;
+
 libname D "%sysfunc(pathname(HOME))";
 %Manhattan4DiffGWASs(
 dsdin=D.GWAS1_vs_2,
@@ -38,6 +40,7 @@ Other_P_vars=GWAS2_P Pval
 );
 
 *Step3;
+
 libname D "%sysfunc(pathname(HOME))";
 *It is only needed to run once for importing the hg19 GTF file;
 %let gtf_gz_url=https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_19/gencode.v19.annotation.gtf.gz;
@@ -48,6 +51,7 @@ outdsd=D.GTF_HG19
 );
 
 *Step4;
+
 *Previously generated SAS data set GWAS1_vs_2 is stored in the SAS library ‘D’.;
 %SNP_Local_Manhattan_With_GTF
 gwas_dsd=D.GWAS1_vs_2,
@@ -66,6 +70,7 @@ design_height=750
 );
 
 *Step5;
+
 %CaculateMulteQTLs_in_GTEx(
 query_snps=rs16831827,
 gene=MAP3K19,
@@ -75,6 +80,7 @@ create_eqtl_boxplots=1
 );
 
 *Step6;
+
 *Download the following single-cell data from UCSC Cell Browser into a local computer and then upload them into the HOME directory of SAS OnDemand for Academics;
 * https://cells.ucsc.edu/covid-hypertension/Seurat_umap.coords.tsv.gz;
 * https://cells.ucsc.edu/covid-hypertension/meta.tsv;
@@ -101,6 +107,7 @@ will be randomly selected.*/
 *Note: if the total number of cells in the matrix is more than 1 million, the macro will randomly select 1 million cells automatically, which will avoid using up the limited disk space (~5GB) in SAS OnDemand for Academics.
 
 *Step7;
+
 libname sc "%sysfunc(pathname(HOME))";
 %sc_umap(
 umap_ds=sc.umap,
@@ -110,6 +117,7 @@ cluster_var=cluster
 );
 
 *Step8;
+
 libname sc "%sysfunc(pathname(HOME))";
 *Modify phenotype categories;
 data sc.umap;
