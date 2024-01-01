@@ -85,7 +85,7 @@ AssocPVars=GWAS1_P GWAS2_P pval,
 
 SNP_IDs=rs16831827,
 
-/*if providing chr:pos or chr:st:end, it will query by positions ranging from start to end positions on the specific chromosome!*/
+/**if providing chr:pos or chr:st:end, it will query by positions ranging from start to end positions on the specific chromosome!**/
 
 SNP_Var=rsid,
 
@@ -95,7 +95,7 @@ gtf_dsd=D.GTF_HG19,
 
 ZscoreVars=GWAS1_z GWAS2_z diff_zscore,
 
-/*Can be beta1 beat2 or other numeric vars indicating assoc or other +/- directions*/ 
+/**Can be beta1 beat2 or other numeric vars indicating assoc or other +/- directions**/ 
 
 gwas_labels_in_order=HGI_B1 HGI_B2 HGI_B1_vs_B2,
 
