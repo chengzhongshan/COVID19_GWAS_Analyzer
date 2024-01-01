@@ -75,9 +75,9 @@ outdsd=D.GTF_HG19
 
 *Previously generated SAS data set GWAS1_vs_2 is stored in the SAS library ‘D’.;
 
-/**For SNP_IDs, if providing chr:pos or chr:st:end, it will query by positions ranging from start to end positions on the specific chromosome**/
+*For SNP_IDs, if providing chr:pos or chr:st:end, it will query by positions ranging from start to end positions on the specific chromosome;
 
-/**For ZscoreVars, it can be beta1 beat2 or other numeric vars indicating assoc or other +/- directions**/ 
+*For ZscoreVars, it can be beta1 beat2 or other numeric vars indicating assoc or other +/- directions;
 
 
 %SNP_Local_Manhattan_With_GTF(
