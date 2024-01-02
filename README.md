@@ -122,7 +122,7 @@ design_height=750
 
 );
 
-*Expected figures for Step 2 and 3;
+*Expected figures for Step 2 to 4;
 ![Slide6](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/983ffe35-e137-4eb4-b48b-0edb992bb1d0)
 
 
