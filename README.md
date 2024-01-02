@@ -84,8 +84,6 @@ outdsd=D.GTF_HG19
 
 );
 
-*Expected figures for Step 2 and 3;
-![Slide6](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/983ffe35-e137-4eb4-b48b-0edb992bb1d0)
 
 *Step4;
 
@@ -124,8 +122,8 @@ design_height=750
 
 );
 
-*Expected figures:;
-![Slide7](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/88b6ef9a-0e7d-4e5a-bf6b-02be42ffd9c8)
+*Expected figures for Step 2 and 3;
+![Slide6](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/983ffe35-e137-4eb4-b48b-0edb992bb1d0)
 
 
 *Step5;
@@ -143,6 +141,9 @@ eQTLSumOutdsd=AssocSummary,
 create_eqtl_boxplots=1
 
 );
+
+*Expected figures:;
+![Slide7](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/88b6ef9a-0e7d-4e5a-bf6b-02be42ffd9c8)
 
 *Step6;
 
@@ -349,7 +350,7 @@ aggre_sc_glm_pdiff_dsd=all_sc
 
 );
 
-*Expected figures from Step 5 to 8:;
+*Expected figures from Step 6 to 8:;
 ![Slide8](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/eb03e911-ebe9-4f47-8b95-7ac111f6bf23)
 
 
