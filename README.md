@@ -40,6 +40,10 @@ mk_manhattan_qqplots4twoGWASs=0
 );
 
 *Expected figures:;
+![Slide1](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/39574778-3671-4135-83ae-56af551dea70)
+![Slide2](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/c0284a36-1bfb-43b2-ac86-ea6e2e433ea1)
+![Slide3](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/8b2e5cfe-afca-4a9e-a67c-a900c9e36ade)
+![Slide4](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/2b52f7dd-9ea9-4615-8077-54e545f73b29)
 ![Slide5](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/31e65af4-fcec-465d-a52d-88f059964fe6)
 
 
@@ -61,6 +65,7 @@ Other_P_vars=GWAS2_P Pval
 
 );
 
+
 *Step3;
 
 libname D "%sysfunc(pathname(HOME))";
@@ -78,6 +83,9 @@ gtf_gz_url=&gtf_gz_url,
 outdsd=D.GTF_HG19
 
 );
+
+*Expected figures for Step 2 and 3;
+![Slide6](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/983ffe35-e137-4eb4-b48b-0edb992bb1d0)
 
 *Step4;
 
