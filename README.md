@@ -39,6 +39,10 @@ mk_manhattan_qqplots4twoGWASs=0
 
 );
 
+*Expected figures:;
+![Slide5](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/31e65af4-fcec-465d-a52d-88f059964fe6)
+
+
 *Step2;
 
 libname D "%sysfunc(pathname(HOME))";
