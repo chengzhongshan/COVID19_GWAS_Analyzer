@@ -35,7 +35,7 @@ gwas2=https://grasp.nhlbi.nih.gov/downloads/COVID19GWAS/10202020/COVID19_HGI_B2_
 
 outdir=%sysfunc(pathname(HOME)),
 
-mk_manhattan_qqplots4twoGWASs=0 
+mk_manhattan_qqplots4twoGWASs=1 
 
 );
 
