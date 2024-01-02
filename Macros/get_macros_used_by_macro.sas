@@ -445,7 +445,7 @@ x cd F:\360yunpan\SASCodesLibrary\SAS-Useful-Codes;
 *Change the macrorgx to . for searching all macros;
 
 %get_macros_used_by_macro(
-macrorgx=eQTL,
+macrorgx=.,
 dir=/home/cheng.zhong.shan/Macros 
 F:/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros 
 /zcheng/Macros ~/shared/Macros /home/zcheng/SAS-Useful-Codes/Macros 
@@ -455,7 +455,7 @@ H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros
 verbose=1,
 outdsd=macros,
 IsSASOnDemand=0,
-OnlySearchSubMacroIn1stLevel=1 
+OnlySearchSubMacroIn1stLevel=0
 );
 
 *The following has been implemented into the above sas macro;
