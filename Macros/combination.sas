@@ -44,7 +44,7 @@
 *other input parameters will be captured by parabuff and saved into the macro variable sysbuff;
 
 %combination(2,a,b,c,d,e);
-
+%debug_macro;
 %combination(3,a,b,c,d,e);
 
 */

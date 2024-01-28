@@ -8,7 +8,7 @@
                 
  input           id           : id
                  indsn        : input data
-                 keep         : only keep the variables that are needed
+                 keep         : only keep the variables that are needed, and the input order of snps will be the same as alleles of snps in the final haplotypes
                  style        : 0-1-2 count input (SNP) or m1 m2 two-marker (MAR) input
                  outdsn1      :
                  outdsn2      :
@@ -370,7 +370,7 @@
 /* MAIN BODY OF HAPPY */
 %macro happy(id=id,
              indsn=in,
-             keep=, 
+             keep=, /*SNPs, as well as its order, will be used to generate haplotypes*/
              style=SNP,
              outdsn1=happlotb,
              outdsn2=origfreq,
@@ -399,6 +399,13 @@
    run;
    %let num=%numargs(&keep);
 
+	 *Updated to make the original input dataset with the designated orders for these input snps;
+	 *This is necessary;
+	 data &indsn;
+	 retain &keep;
+	 set &indsn;
+	 run;
+
 /************************************************/
 /* ORIGINAL RONG FORMAT - ONLY IF STYLE="SNP"   */
 /************************************************/
@@ -408,18 +415,34 @@
      %let tot=%eval(&num*2);
      %put &num;
 
+/*		 %idx4list_in_alphabet_ord(*/
+/*     list=&keep, */
+/*     outdsd=snplist_order, */
+/*     index_list_var=snpidx4list*/
+/*     );*/
+/*    %put The index for the input snp list sorted in alphabet order is:;*/
+/*    %put &snpidx4list;*/
+
+		 *It is confirmed that the array function will not automatically sort the snp names in the array function;
+      *Thus, there is no need to use the macro var snpidx4list;
+
      data tmp&indsn(keep=&id snp1-snp&num m1-m&tot) n&indsn(drop=snp1-snp&num m1-m&tot);
         set &indsn;
-
+				*Note: array function will sort snp column names automatically;
+				*So the order of snps columns in the original input sas dataset will be lost;
         array snps{&num} &keep;
         array snpname{&num} snp1 - snp&num; /* this for renaming the snps */
         array ms{&tot} $1. m1 - m&tot;
- 
+ 				*No need to use the snpidx4list as the array function will not sort the snp column names automatically!;
+				*So the var xi is not necessary, but for learning purpose, let us keep it;
+				xi=1;
         do i= 1 to dim(snps);
-
-          snpname{i}=snps{i};
-          j =2*i-1;
-          k =2*i;   
+/*				 do i= &snpidx4list;*/
+					*Note that the snps array has been sorted for these columns in the sas dataset &indsn;
+				  *By using xi to for assigning data from the array snps to snpname, it will keep the original snp order;
+          snpname{xi}=snps{i};
+          j =2*xi-1;
+          k =2*xi;   
           if snps{i} =0 then do;
              ms{j}="0";
              ms{k}="0";
@@ -438,11 +461,14 @@
           end;
 
           if snps{i} in (99, .) then snpname{i}=.;
+
+					xi=xi+1;
         end;
 
         /* only keep the obs that are needed for proc haplotype */
         if sum(of snp1 - snp&num)=. then delete;
      run;
+
    %end; /*massage input data, style=SNP */
 
 /************************************************/
@@ -477,7 +503,7 @@
   /* output the raw haplotype result in the form of per subject per line */
   ods listing;
   proc print data=out(obs=50);
-     title " Raw proc haplotype result";
+     title " Raw proc haplotype result (first 50 obs)";
   run;
 
   data out1;
@@ -742,7 +768,7 @@
     run;
 
     proc print data=&outcodomnant(obs=50) label;
-        title "co-dominant model";
+        title "co-dominant model for 1st 50 obs";
     run;
   %end;
 

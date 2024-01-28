@@ -1,39 +1,88 @@
-%macro FisherTestGenomeWide(/*Note: this macro will use unique sampleID and pheno_var to make all to all combinations, please make sure the input table contain all target sampleID and pheno_var*/
+%macro FisherTestGenomeWide(
+/*Note: this macro will use unique sampleID and pheno_var to make all to all combinations, 
+please make sure the input table contain all target sampleID and pheno_var;
+If not, please supply a sas dataset containing all target samples and its 
+corresponding grp4fisher variable, and the macro will add these missing samples
+into the input dsdin and make all other variables as missing!*/
 dsdin=_last_,
-vars4assoc=%str(chrom, Pos, ref), /*These vars will be concatenate into a single var, and the data of each will be subjected to fisher test by grp4fisher and phenotype var*/
-grp4fisher=subtype, /*This var will be used to perform 2x2 fisher test, which will be included in the column names in the output table*/
+vars4assoc=%str(chrom, Pos, ref), /*These vars will be concatenate into a single var, and the data of each will be 
+                                  subjected to fisher test by grp4fisher and phenotype var*/
+grp4fisher=subtype, /*This var will be used to perform 2x2 fisher test, which will be 
+                     included in the column names in the output table*/
 SampleID=SampleID,  /*Patient ID*/
 pheno_var= ,    /*phenotype for fisher test with grp4fisher; in the output the pheno and grp4fisher will be put on row- and column-wide, respectively
-                            the default is to use &grp4fisher, and the macro will use &grp4fisher to make pheno, i.e., samples with records of the var vars4assoc in the long format data will be assigned as pheno=1,
-                            and samples without records for the vars4assoc will be defined as pheno=0*/
-fisher_dsdout=fisherout, /*All fisher test results for vars4assoc; only when the pheno*grp is a 2x2 table, the OR table RelativeRisks will be generated!*/
+                  the default is to use &grp4fisher, and the macro will use &grp4fisher to make pheno, i.e., 
+                  samples with records of the var vars4assoc in the long format data will be assigned as pheno=1,
+                  and samples without records for the vars4assoc will be defined as pheno=0*/
+pheno_case_rgx=,/*A perl regular expression to match with target phenotype and treat all matched elements as 
+                   Case, and all other phenotype names will be treated as Other*/
+Name4Case=Case,/*A name used to label these cases when the phenotype matching with the pheno_case_rgx*/                                   
+all_sample_grp_info=,/*Default is empty; When the input dsdin only contains partial samples that
+                       have mutations or rare variants, which usually is the case,
+                       then user can supply a sas dataset containing two columns, 
+                       including sampleID and grp4fisher for enabling
+                       the input dsdin has all target samples and its grp4fisher*/
+grp4infodsd=,/*The corresponding variable in the all_sample_grp_info as the var grp4fisher from the input dsdin*/
+SampleID4infodsd=,  /*Patient ID variable in the all_sample_grp_info dataset*/                    
+fisher_dsdout=fisherout, /*All fisher test results for vars4assoc; only when the pheno*grp is 
+                          a 2x2 table, the OR table RelativeRisks will be generated!*/
 value4misspheno=0, /*assign a specific value to samples without records of the vars4assoc*/
 grp_condition4pheno_var= %str(subtype^=""), /*use the value of &grp4fisher as group here!
                                           use the condition to separate pheno_var into two groups for fisher test
                                           The default condition is set when the pheno_var is empty*/
 new_pheno=pheno,   /*new pheno variable name for the fisher test, which will be used to label the fisher table*/
-
 /*The following are optional parameters for the output of csv files for summary statistics; 
 no appendix of .csv is required to added; Default output dir will be in current dir!*/
 outcsvname4measures=Measures,
 outcsvname4OR=fisherout.OR,
 outcsvname4fisher=fisherout,
 outcsvname4crossfrqtb=CrossTabFreqs
-
 );
-
-*When pheno_var is empty, use &grp4fisher to define pheno as 0 or 1;
-%if %length(&pheno_var)=0 %then %let pheno_var=&grp4fisher;
 
 data _x_;
 length vars $150;
 set &dsdin;
 vars=catx(':',&vars4assoc);
-if vars^="";
+*Keep these empty vars as their sample ids and subtypes info are needed to get all the combination of sample ids and subtypes;
+/* if vars^=""; */
+run;
+
+%if %length(&all_sample_grp_info)>0 and %sysfunc(exist(&all_sample_grp_info)) %then %do;
+%put The all sample information from the dataset &all_sample_grp_info will be used to fill these missing samples into the input dataset &dsdin;
+*Add missing data for these samples that are not included in the input dataset;
+data allsampleinfo;
+set &all_sample_grp_info;
+%if "&grp4infodsd"^="&grp4fisher" %then %do;
+   &grp4fisher=&grp4infodsd;
+%end;
+%if "&SampleID4infodsd"^="&SampleID" %then %do;
+   &SampleID=&SampleID4infodsd;
+%end;
+run;
+*Use full outer join to keep all records from two tables;
+*https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.4/casfedsql/n1jstfybqg5boxn1odnb9gfacszq.htm;
+proc sql;
+create table _x_ as 
+select a1.*,a2.vars 
+from allsampleinfo as a1
+full outer join 
+_x_ as a2
+on a1.&grp4fisher=a2.&grp4fisher and a1.&SampleID=a2.&SampleID;
+/* %abort 255; */
+%end;
+
+
+*When pheno_var is empty, use &grp4fisher to define pheno as 0 or 1;
+%if %length(&pheno_var)=0 %then %let pheno_var=&grp4fisher;
+
+data _x_;
+set _x_;
+if prxmatch("/&pheno_case_rgx/i",&pheno_var) then &pheno_var="&Name4Case";
+else &pheno_var="Other";
 run;
 
 *remove duplicates;
-proc sort data=_x_ nodupkeys;by vars SampleID &pheno_var;
+proc sort data=_x_ nodupkeys;by vars &SampleID &pheno_var;
 run;
 
 proc sql;

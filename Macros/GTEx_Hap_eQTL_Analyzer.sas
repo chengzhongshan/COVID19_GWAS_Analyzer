@@ -1,12 +1,14 @@
 %macro GTEx_Hap_eQTL_Analyzer(
-SNPs4Haplotype=rs7872943 rs1887428 rs1887429 rs59679286 rs5938437 rs10974914 rs1576271,
+/*If there is not plink prunned snps available, please use SAS macro Haplotype_Analysis4SNPs_in_GTEx by following its demo codes*/
+SNPs4Haplotype=rs7872943 rs1887428 rs1887429 rs59679286 rs5938437 rs10974914 rs1576271,	/*SNPs for haplotype eQTL analysis*/
 plink_prunned_snp_file=H:\D_Queens\SASGWASDatabase\Important_Analysis_Codes\PExFInS_SAS\Databases\1KG_Phase3\JAK2_up_down_1Mb.prune.in,
-/*Plink generated prune in file containing SNP rsids*/
+/*Plink generated prune in file containing SNP rsids, which will be used for PCA analysis*/
 genesymbol=JAK2,/*Target gene for haplotype eQTL analysis*/
 GTEx_tissue_rgx=blood, /*regular expression without wrapping us in two forward slashes  to match target GTEx tissue for eQTL analysis at haplotype level*/
 exp_hap_outdsd=exp_hap_out,
 max_num_snps4PCA=500, /*Largest number of SNPs used for PCA analysis*/
-drop_PCAs_and_its_snps=1 /*To simplify the final output dsd, drop SNPs used to generate these PCAs and the final PCAs*/
+drop_PCAs_and_its_snps=1, /*To simplify the final output dsd, drop SNPs used to generate these PCAs and the final PCAs*/
+snp_eQTL_rst=eQTL_rst /*Output a sas dataset with the input name for SNPs included in the haplotype analysis*/
 );
 
 *Demo 1:;
@@ -69,6 +71,18 @@ from geno_snp_ids (where = (name not in (%quotelst(&tgt_snps))));
 select name into: hap_snps separated by ' '
 from geno_snp_ids (where = (name in (%quotelst(&tgt_snps))));
 
+*Need to keep the order of hap_snps as that in the &tgt_snps;
+*This will ensure the final haplotypes are generated for these snps in the same order!;
+*Here it is necessary to get these tgt snps in the newly created hap_snps;
+*This will keep the original order of tgt snps but exclude these tgt snps used by PCA;
+%let hap_snps=%list_in_list(/*a sas function keeps these query_list that exist in the base_list in the original order*/
+query_list=&tgt_snps,/*blank space separated elements for querying in the following base_list*/
+base_list=&hap_snps /*blank space separated elements treated as a base list to be searched for elements in the query list*/
+);
+%put target haplotype snps are in the following order;
+%put &hap_snps;
+
+
 proc hpprincomp data=genos_trans cov out=Scores noprint;
    var &pca_snps;
    id tag;
@@ -117,6 +131,7 @@ proc sgplot data=genos_trans;
 scatter x=exp y=adj_exp;
 run;
 
+
 %happy(indsn=genos_trans,  
        id=id,  
        keep=&hap_snps, 
@@ -134,6 +149,11 @@ select *
 from genos_trans 
 natural join
 test_add;
+*Maintain the order of input snps;
+data &exp_hap_outdsd;
+retain &hap_snps;
+set &exp_hap_outdsd;
+run;
 
 %if &drop_PCAs_and_its_snps=1 %then %do;
 data &exp_hap_outdsd;
@@ -141,6 +161,28 @@ set &exp_hap_outdsd;
 drop Prin:;
 run;
 %end;
+
+*Get eQTL and allele information for tgt snps;
+%rank4grps(
+grps=&SNPs4Haplotype,
+dsdout=_eqtls_
+);
+proc sql;
+create table &snp_eQTL_rst as
+select num_grps as hap_snp_order, 
+           SNP, 
+           scan(variantid,3,'_') as ref,
+					 scan(variantid,4,'_') as alt,
+           variantid,maf,genesymbol,nes,pvalue,gencodeId
+from AssocSummary as a,
+        _eqtls_ as b
+where a.SNP=b.grps
+order by num_grps;
+
+*Final combined haplotype names and its frequencies;
+*which can be matched with the haplotype z1-zn;
+proc print data=Haps_frq;
+run;
 
 %mend;
 

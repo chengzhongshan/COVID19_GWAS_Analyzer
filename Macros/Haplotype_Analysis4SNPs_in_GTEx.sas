@@ -126,6 +126,19 @@ new_macro_list_var=_tissues_
    if exp^=.;
    run;
 
+	 %have_dups4var(
+   dsdin=exp,
+   var=exp,
+   dup_indicator=dup_exp_tag,
+   dupdsdout=dups,
+   nodupdsdout=nodups 
+   );
+	 %if &dup_exp_tag=1 %then %do;
+				%put There are identical expression values in the dataset exp from GTEx for the gene &gene in the tissue &tissue;
+				%put It is necessary to delete individuals with identical gene expression values;
+				%abort 255;
+	 %end;
+
 /*   %abort 255;*/
 
    proc sql;
@@ -156,6 +169,9 @@ new_macro_list_var=_tissues_
  *It is necessary to change imagename for different SNPs, otherwise the figure will be the same for all SNPs;
    ods graphics on/reset=all height=300 width=200 imagename="geno_exp&ti._snp&si";
   title "eQTL analysis of &query_snp in &tissue";
+
+	*In order to make the boxplot with fixed colors for genotypes, it is necessary to sort the dataset by geno;
+	proc sort data=geno_exp&ti._snp&si;by geno;run;
 
    proc sgplot data=geno_exp&ti._snp&si noborder nowall;
    vbox exp/group=geno groupdisplay=cluster category=geno
@@ -236,6 +252,53 @@ run
 %debug_macro;
 
 *Demo 1:;
+%let snps=rs1131454 rs10774671 rs2660 rs4766664;
+%Haplotype_Analysis4SNPs_in_GTEx(
+query_snps=&snps,
+gene=OAS1,
+genoexp_outdsd=genos,
+eQTLSumOutdsd=AssocSummary,
+rgx4tissues=%str(blood)
+);
+
+data genos_trans;
+length id $8.;
+set genos_trans;
+id="S"||trim(left(put(_n_,3.)));
+run;
+
+%VarnamesInDsd(indsd=genos_trans,Rgx=geno_,match_or_not_match=1,outdsd=geno_snps);
+proc sql noprint;select name into: geno_snp_ids separated by ' ' 
+from geno_snps;
+
+*Note: the sql sorted snp ids and its order will be used to perform haplotype phase and association analysis!;
+*So it would be better reasign these snps manually;
+%let geno_snp_ids=%sysfunc(prxchange(s/rs/geno_rs/,-1,rs1131454 rs10774671 rs2660 rs476666);
+
+%happy(indsn=genos_trans,  
+       id=id,  
+       keep=&geno_snp_ids, 
+       outdsn2=test_haps,
+       outadd=test_add
+);
+
+proc sql;
+create table final as 
+select *
+from genos_trans 
+natural full join
+test_add;
+
+*Print tested haplotypes;
+proc print data=test_haps;
+
+*Test the associations between haplotypes and gene expression;
+proc glm data=final;
+model exp=z: /ss1;
+run;
+
+
+*Demo 2:;
 *rs113819742 and rs142410894 are in high LD with rs76929059 (R2>=0.92 in AFR);
 %let snps=rs7872943 rs1887428 rs1887429 rs59679286 rs5938437 rs10974914 rs1576271 rs7859390 rs7034539 rs12339666 rs10974944 rs12340895 rs111793659 rs17425819 rs7038687 rs7469563 rs7850484 rs10815157 rs17425637;
 %Haplotype_Analysis4SNPs_in_GTEx(

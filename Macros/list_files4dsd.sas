@@ -16,7 +16,7 @@ run;
 %del_file_with_fullpath(fullpath=&dir/list_files.tmp);
 %mend;
 
-/*Demo:
+/*Demo codes:;
 
 %list_files4dsd(
 dir=E:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros,

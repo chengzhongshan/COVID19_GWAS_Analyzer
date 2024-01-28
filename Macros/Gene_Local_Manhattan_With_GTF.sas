@@ -16,7 +16,7 @@ GTF_Chr_Var=chr,/*GTF uses numeric chr notation; ensure the type of chr is consi
 GTF_ST_Var=st,
 GTF_End_Var=end,
 ZscoreVars=zscore1 zscore2,/*Can be beta1 beat2 or other numberic vars indicating assoc or other +/- directions*/ 
-gwas_labels_in_order=gwas1 gwas2,/*scatterplot headers*/
+gwas_labels_in_order=,/*scatterplot headers; if left empty, the values of &gwas_AssocPVars will be used*/
 design_width=800, 
 design_height=600, 
 barthickness=15, /*gene track bar thinkness*/
@@ -124,6 +124,11 @@ run;
   in the order of the input GWAS pvalues
   ";
   %put You query region for the gene &qGene is %left(&chr:&minst - &maxend) (hg19);
+  
+  %if %length(&gwas_labels_in_order)=0 %then %do;
+     %put the macro var gwas_labels_in_order is empty, and the values of macro var gwas_AssocPVars will be used to label scatterplot headers;
+     %let gwas_labels_in_order=&gwas_AssocPVars;
+  %end;
   
   %map_grp_assoc2gene4covidsexgwas( 
   gwas_dsd=&gwas_dsd, 

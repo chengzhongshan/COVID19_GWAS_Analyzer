@@ -196,6 +196,12 @@ new_macro_list_var=_tissues_
  %if &create_eqtl_boxplots=1 %then %do;
    title "eQTL analysis of &query_snp in &tissue";
    ods graphics on/reset=all height=300 width=200 imagename="T&ti._snp&si";
+
+	*In order to make the boxplot with fixed colors for genotypes, it is necessary to sort the dataset by geno;
+	proc sort data=_geno_exp&ti._snp&si;
+  by geno;
+  run; 
+
    proc sgplot data=_geno_exp&ti._snp&si noborder nowall;
    vbox exp/group=geno groupdisplay=cluster category=geno
    groupdisplay=cluster boxwidth=0.8 fillattrs=(transparency=0.5) 
@@ -339,7 +345,7 @@ proc sql;
 create table snp_exp&_bs_ as
 select a.*
 from snp_exp&_bs_ as a,
-     (select uniuqe(tissue) from eqtl_summ&_bs_) as b
+     (select unique(tissue) from eqtl_summ&_bs_) as b
 where a.tissue=b.tissue;
 
 proc sql noprint;select count(unique(tissue)) into: avail_tissues_n 
@@ -414,6 +420,7 @@ title;
 query_snps=rs17425819 rs7850484,
 gene=GAPDH,
 genoexp_outdsd=genos,
+create_eqtl_boxplots=1,
 eQTLSumOutdsd=AssocSummary,
 rgx4tissues=%str(lung|liver)
 );

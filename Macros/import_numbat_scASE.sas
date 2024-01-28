@@ -30,6 +30,9 @@ order by cell,gene;
 /*set sc(obs=1000);*/
 /*run;*/
 
+*It may be necessary to consider the haplotype these het SNPs mapped to, such as 0|1 and 1|0 haplotypes;
+*when generate sum for alternative reads by cell gene;
+*However, if using absolute -log2 ASE on SNP level, the above concern is not necessary;
 proc summary data=sc mean sum;
 var AD DP;
 by cell gene;

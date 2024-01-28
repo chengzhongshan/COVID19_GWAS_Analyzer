@@ -119,6 +119,7 @@ from macroparas;
 /*%else %do;*/
 
 data _macros_;
+length Macro_Info $500.;
 infile "&&path&i" lrecl=10000 obs=&numlines2print;
 input;
 Macro_Info=_infile_;
@@ -136,7 +137,7 @@ run;
 *Output macro parameters as a sas data set;
 %let _macro_=%sysfunc(prxchange(s/.*\/([^\/]+).sas/$1/i,-1,&&path&i));
 data _mparas&i(drop=tag Macro_info);
-length macro_paras $1000.;
+length macro_paras $1000. macro $500.;
 retain tag 0 macro_paras '';
 set _macros_;
 macro="&_macro_";

@@ -1,4 +1,4 @@
-%macro obsnvars(ds);
+%macro obsnvars(ds= /*This macro will only print out message to indicate the number of records in a dataset!*/);
    %global dset nvars nobs;
    %let dset=&ds;
    %let dsid = %sysfunc(open(&dset));

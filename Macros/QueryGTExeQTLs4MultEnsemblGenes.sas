@@ -8,7 +8,8 @@ outdsd=gene_eqtls
    %let url_link=%str(https://gtexportal.org/api/v2/association/singleTissueEqtl?gencodeId=&ensembl_gene_id);
    filename out temp;
    proc http url="&url_link"
-   method=get
+/*   for windows SAS9.4, the default method is get and the method parameter is not available in local windows SAS9.4*/
+/*   method=get*/
    out=out ;
    debug level=2;
    run;

@@ -68,5 +68,18 @@ new_macro_list_var=newlist
 %put The newly created macro var newlist contains:;
 %put &newlist;
 
+*This will get matched var indices in the macro_list;
+*the value will be recorded by the macro var &new_macro_list_var;
+%match_elements_in_macro_list(
+macro_list=A B C EEEE FFFF GGGG,
+rgx4match=%str(%(E|B%)),
+reversematch=0,
+output_idx=1, 
+new_macro_list_var=newlist 
+);
+
+%put The newly created macro var newlist contains:;
+%put &newlist;
+
 */
 

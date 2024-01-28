@@ -403,6 +403,9 @@ left join
 macro_anno as b 
 on a.Macro=b.Macro;
 
+*Remove duplicated records by macro name;
+proc sort data=&outdsd.Linked nodupkeys;by Macro;run;
+
 title "Main macro and its corresponding submacros in linked format in the dsd &outdsd.Linked";
 proc print data=&outdsd.Linked;
 %print_nicer;

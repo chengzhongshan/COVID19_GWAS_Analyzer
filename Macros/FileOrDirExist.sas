@@ -6,7 +6,8 @@
 /*    &return */
 %*The above failed in SAS OnDemand but works in Windows;
 %*The reason is because the sas funciton will return these sas comments if not escaped by %;
-   %if %sysevalf(&rc=0 and %sysfunc(fexist(&fileref)))  %then %do;
+%*Note: it is necessary to assign &fileref but no filerefto fexist here!;
+   %if %sysevalf(&rc=0 and %symexist(fileref) and %sysfunc(fexist(&fileref)))  %then %do;
        1
    %end;
    %else %do;
@@ -16,6 +17,6 @@
 
 /*
 options mprint mlogic symbolgen;
-%let  ext=%FileOrDirExist(F:\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros\FileOrDirExist.sas);
+%let  ext=%FileOrDirExist(H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros\FileOrDirExist.sas);
 %put &ext;
 */

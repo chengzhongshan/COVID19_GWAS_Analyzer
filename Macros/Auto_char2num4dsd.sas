@@ -26,15 +26,18 @@
 	set _vars_;
 	_NAME_=compress('n'||VARNUM);
 	run;
+	proc sql noprint;
+	select _NAME_ into: tgt_vars_nums separated by ' '
+	from _vars_;
 
    /*Guess the percentage of each char col are actually numbers*/
    data _tmp_;
    set &dsdin end=eof;
-   retain n1-&n_char_vars 0;
+   retain &tgt_vars_nums 0;
    tot=_n_;
    patternID = prxparse("/^[\s\.]*\d+[\.\d]*\s*$/");
    array C{*} $ &ALL_Char_Vars;
-   array N{*} n1-&n_char_vars;
+   array N{*} &tgt_vars_nums;
 
    do i=1 to dim(C);
       if prxmatch(patternID,C{i}) and not prxmatch("/[a-z]/i",C{i}) then do;
@@ -47,7 +50,7 @@
    if not eof then do;
     delete;
    end;
-   keep n1-&n_char_vars;
+   keep &tgt_vars_nums;
    run;
 
    proc transpose data=_tmp_ out=_tmp_tr;

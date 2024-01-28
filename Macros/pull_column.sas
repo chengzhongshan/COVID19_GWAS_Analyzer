@@ -1,6 +1,6 @@
-%macro pull_column(dsd,dsdout,cols2pull);
+%macro pull_column(dsd,dsdout,cols2pull,exclude_pulled_cols=0);
 
-%check_col_orders(dsd=&dsd,colorder_info_out=colinfo,print_colobs=10);
+%check_col_orders(dsd=&dsd,colorder_info_out=colinfo,print_colobs=0);
 
 proc sql noprint;
 select count(*) into: tot
@@ -22,18 +22,34 @@ from colinfo;
   %let x=%eval(&x+1);
 %end;
 
+%if &exclude_pulled_cols=1 %then %do;
+*drop these targeted columns;
+data &dsdout;
+set &dsd;
+drop &columnsInOrder;
+run;
+%end;
+%else %do;
+*keep these targeted columns;
 data &dsdout;
 retain &columnsInOrder;
 set &dsd;
 keep &columnsInOrder;
 run;
-
-
+%end;
 %mend;
 
 
 /*Demo:;
 
-%pull_column(dsd=A,dsdout=x,cols2pull=1 2 3-4 6 7-9 10);
+*This hypoDat.txt is from the R package hapassoc, which is modified by adding the ID to its header;
+proc import datafile="C:\Users\cheng\Downloads\hapassoc\data\hypoDat.txt"
+dbms=dlm out=geno_pheno replace;
+delimiter=' ';
+getnames=yes;
+guessingrows=max;
+run;
+
+%pull_column(dsd=A,dsdout=x,cols2pull=1 2 3-4 6 7-9 10,exclude_pulled_cols=0);
 
 */
