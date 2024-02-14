@@ -1,0 +1,240 @@
+https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/hostwin/p16ywagdygnb6ln1kcy3bisxvbm2.htm
+
+Keyboard Shortcuts within the SAS Main Window
+The keys that are listed here are not listed in the KEYS window. You might find these keys to be useful as shortcuts for editing and other tasks.
+
+Key Settings for the Main SAS Window
+Category
+
+Key Combination
+
+Action
+
+Dialog Boxes and Entry Fields
+
+Tab
+
+move to next field
+
+Shift + Tab
+
+move to previous field
+
+Navigate around Text
+
+Ctrl + -> (right arrow)
+
+move to next word
+
+Ctrl + <- (left arrow)
+
+move to previous word
+
+Home
+
+move to beginning of line
+
+End
+
+move to end of line
+
+Ctrl + Home
+
+move to top
+
+Ctrl + End
+
+move to bottom
+
+Page Up
+
+page up
+
+Page Down
+
+page down
+
+Ctrl + Page Up
+
+move to top
+
+Ctrl + Page Down
+
+move to bottom
+
+Ctrl + Tab
+
+navigate to the next open SAS window (NEXTWIND command)
+
+Ctrl + Shift + Tab
+
+navigate to the previous open SAS window (PREVWIND command)
+
+Mark Text
+
+Shift + -> (right arrow)
+
+mark while going to the right
+
+Shift + <- (left arrow)
+
+mark while going to the left
+
+Shift + Home
+
+mark to beginning of line
+
+Shift + End
+
+mark to end of line
+
+Shift + Ctrl + Home
+
+mark to top
+
+Shift + Ctrl + End
+
+mark to bottom
+
+Shift + Page Up
+
+page up and mark
+
+Shift + Page Down
+
+page down and mark
+
+Shift + Ctrl + Page Up
+
+mark to top
+
+Shift + Ctrl + Page Down
+
+mark to bottom
+
+Shift + MB1
+
+extend the current marked text selection to the click position
+
+Cut, Copy, and Paste
+
+Delete
+
+delete the next character (or marked text)
+
+Ctrl + Delete
+
+delete from the insertion point position to the end of the current word
+
+Ctrl + Backspace
+
+delete from the insertion point position to the start of the current word
+
+Ctrl + MB1
+
+selects the entire line (clicked line)
+
+Ctrl + Z
+
+undo previous action
+
+Ctrl + X
+
+cut selected text
+
+Ctrl + C
+
+copy selected text to paste buffer
+
+Ctrl + V
+
+paste text
+
+Window Control
+
+Alt
+
+switch focus to or from the main menu bar
+
+Alt + F4
+
+exit SAS
+
+Shift + F5
+
+cascade the windows
+
+Shift + F4
+
+tile the windows vertically
+
+Shift + F3
+
+tile the windows horizontally
+
+Shift + F10
+
+open pop-up menu
+
+Ctrl + F6
+
+next window
+
+Ctrl + F4
+
+close the active window
+
+Ctrl + W
+
+access new SAS explorer window
+
+Resizing the Docking View
+
+Alt + W + S
+
+start docking view resizing
+
+-> (right arrow)
+
+move the split bar a small amount to the right
+
+<- (left arrow)
+
+move the split bar a small amount to the left
+
+Ctrl + -> (right arrow)
+
+move the split bar a larger amount to the right
+
+Ctrl + <- (left arrow)
+
+move the split bar a larger amount to the left
+
+Home
+
+move the split bar all the way to the left
+
+End
+
+move the split bar all the way to the right
+
+Return
+
+accept the current size of the docking view and exit docking view resizing
+
+Esc
+
+end docking view resizing without resizing the docking view
+
+Miscellaneous
+
+Alt + Enter
+
+open the Properties dialog box for a selected object
+
+This command is valid only in a Tree view or a List view.
+
+Esc + letter (or number)
+
+color or highlighting attributes in NOTEPAD window
+

@@ -144,7 +144,7 @@ macro="&_macro_";
 if prxmatch("/.macro\s+&_macro_/i",macro_info) then do;
   tag=1;
   macro_paras=prxchange("s/.*(&_macro_.*)/$1/i",-1,macro_info);
-  if prxmatch("/&_macro_[\(][^\)]+[\)][;\s]*$/",macro_paras) then do;
+  if prxmatch("/&_macro_[\(][^\)]+[\)][;\s]*$/i",macro_paras) then do;
      tag=0;output;
   end;
 end;

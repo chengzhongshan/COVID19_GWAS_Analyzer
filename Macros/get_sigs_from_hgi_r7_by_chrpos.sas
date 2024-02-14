@@ -13,7 +13,8 @@ hg19 position or rsid, such as rs2564978
 %macro get_sigs_from_hgi_r7_by_chrpos(
 gwas_names=A1_ALL B1_ALL,
 chrpos_or_rsids=%str(chr1:10000-20000000),
-dsdout=combined_signals
+dsdout=combined_signals,
+dist2each_marker=0 /*extend the region with up/down of a specific distance in bp (>0) to search for all snps*/
 );
 %let gi=1;
 %do %while(%scan(&gwas_names,&gi,%str( )) ne);
@@ -23,7 +24,7 @@ dsdout=combined_signals
   hgi_gwas=hgi_gwas&gwas
   );
   %let ncnds=%ntokens(&chrpos_or_rsids);
-  data hgi_gwas&gwas;
+  data tmp4&gwas;
   set hgi_gwas&gwas;
   where 
   %do _mi_=1 %to &ncnds;
@@ -57,6 +58,23 @@ dsdout=combined_signals
   %end;
   ;
   run;
+  %if %sysfunc(prxmatch(/rs\d+/,&tgt)) and &dist2each_marker>0 %then %do;
+          proc sql;
+          create table hgi_gwas&gwas as
+          select a.*
+          from hgi_gwas&gwas as a,
+               tmp4&gwas as b
+          where a.chr=b.chr and (
+          a.pos between (b.pos-&dist2each_marker) and (b.pos+&dist2each_marker)
+          );
+  %end;
+  %else %do;
+         proc sql noprint;
+         drop table hgi_gwas&gwas;
+         proc datasets nolist;
+         change tmp4&gwas=hgi_gwas&gwas;
+         run;
+  %end;
   
  %let gi=%eval(&gi+1);
 %end;
