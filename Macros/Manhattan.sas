@@ -117,6 +117,12 @@ by &chr_var &pos_var;
 run;
 %end;
 
+%if %sas_dsd_exist(sasdsd=&dsdin)=0 %then %do;
+    %put Your input dataset &dsdin does not exist or is broken;
+    %abort 255;
+%end;
+ 
+
 %let nrows=%rows_in_sas_dsd(test_dsd=&dsdin);
 %put There are &nrows in your dataset;
 
