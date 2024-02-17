@@ -7,7 +7,7 @@
 gwas1=https://grasp.nhlbi.nih.gov/downloads/COVID19GWAS/10202020/COVID19_HGI_B1_ALL_20201020.b37.txt.gz,
 gwas2=https://grasp.nhlbi.nih.gov/downloads/COVID19GWAS/10202020/COVID19_HGI_B2_ALL_leave_23andme_20201020.b37.txt.gz,
 outdir=%sysfunc(pathname(HOME)),
-mk_manhattan_qqplots4twoGWASs=0 
+mk_manhattan_qqplots4twoGWASs=1 
 );
 
 *************Step2***********************;
