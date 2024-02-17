@@ -6,6 +6,17 @@ mk_manhattan_qqplots4twoGWASs=0, /*Generate GWAS manhattan and qq plots*/
 maf_cutoff=0.01 /*MAF cutoff of SNPs from both GWASs*/
 );
 
+%if %sysfunc(prxmatch(/https/,&gwas1)) %then %do;
+  *Note: sas will automatically treats newline as space when creating a macro var;
+  %let gwas1=%sysfunc(prxchange(s/ //,-1,&gwas1));
+  %put GWAS1 url link is updated by removing spaces and newlines as &gwas1;
+%end;
+
+%if %sysfunc(prxmatch(/https/,&gwas2)) %then %do;
+  %let gwas2=%sysfunc(prxchange(s/ //,-1,&gwas2));
+  %put GWAS2 url link is is updated by removing spaces and newlines as &gwas2;
+%end;
+
 libname D "&outdir";
 
 /* proc print data=D.GWAS2; */
@@ -121,6 +132,7 @@ title;
 
 data GWAS1;set GWAS1;where AF>&maf_cutoff;run;
 data GWAS2;set GWAS2;where AF>&maf_cutoff;run;
+
 
 /*
 proc print data=D.GWAS2(obs=10);

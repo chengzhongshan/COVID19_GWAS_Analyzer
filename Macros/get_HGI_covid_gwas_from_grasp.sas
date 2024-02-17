@@ -19,6 +19,14 @@ globalvar4finalfile=finalfilepath
 /* extra_proc_import_codes=%str(getnames=yes),deleteZIP=1); */
 %ImportHGICovidGWASFromZIP(zip=&wkdir/&gwas_gz_file,filename_rgx=gz,sasdsdout=&outdsd,deleteZIP=1);
 %end;
+
+%if %rows_in_sas_dsd(test_dsd=&outdsd)=0 %then %do;
+  %put There are no records in the GWAS dataset &outdsd;
+  %put Please check the download link for the GWAS is correct:;
+  %put &gwas_url;
+  %abort 255;
+%end;
+
 /*print the first 10 records for the imported gwas*/
 title "First 10 records in &outdsd derived from the gwas: &gwas_gz_file";
 proc print data=&outdsd(obs=10);run;

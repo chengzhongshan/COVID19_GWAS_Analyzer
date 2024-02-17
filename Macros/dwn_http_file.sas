@@ -13,6 +13,17 @@ proc http
  url="&httpfile_url"
  method="get" out=out;
 run;
+filename out clear;
+
+%put &SYS_PROCHTTP_STATUS_CODE;
+%if "&SYS_PROCHTTP_STATUS_CODE"^="200" %then %do;
+ %put SYS_PROCHTTP_STATUS_CODE is &SYS_PROCHTTP_STATUS_CODE;
+ %put Please check your provided URL:;
+ %put &httpfile_url;
+ %put You may test it directly in any browser to ensure it works!;
+ %abort 255;
+%end;
+
 %mend;
 
 /*Demo:
