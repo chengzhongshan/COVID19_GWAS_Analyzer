@@ -176,6 +176,10 @@ dsdin=&sasdsdout,
 char2num=1,
 chr_var=chr,
 dsdout=&sasdsdout);
+*Need to sort the GWAS by numeric chr again;
+proc sort data=&sasdsdout;
+by chr;
+run;
 
 options compress=no;
 %mend;

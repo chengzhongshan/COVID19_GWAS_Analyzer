@@ -207,6 +207,7 @@ text=%str(GWAS Manhattan and QQ Plots for differential GWAS after standardizatio
 /*run;*/
 %QQplot(dsdin=both,P_var=Pval);
 %Lambda_From_P(P_dsd=both,P_var=Pval,case_n=,control_n=,dsdout=lambdaout);
+title "";
 %end;
 
 /*output the dataset both as gwasout*/
@@ -234,7 +235,7 @@ run;
    /*run;*/
    %QQplot(dsdin=&gwas1dsd,P_var=&p_varname);
    %Lambda_From_P(P_dsd=&gwas1dsd,P_var=&p_varname,case_n=,control_n=,dsdout=lambdaout);
-
+   title "";
    *Make Manhattan plot and QQplot for each of the two single GWAS;
    %print_text_as_title(
    text=%str(GWAS Manhattan and QQ Plots for &gwas2dsd!)
@@ -252,7 +253,7 @@ run;
    /*run;*/
    %QQplot(dsdin=&gwas2dsd,P_var=&p_varname);
    %Lambda_From_P(P_dsd=&gwas2dsd,P_var=&p_varname,case_n=,control_n=,dsdout=lambdaout);
-
+   title "";
 %end;
 
 %mend;

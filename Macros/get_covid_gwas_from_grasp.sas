@@ -9,6 +9,7 @@
 /*print the first 10 records for the imported gwas*/
 title "First 10 records in &outdsd derived from the gwas: &gwas_gz_file";
 proc print data=&outdsd(obs=10);run;
+title "";
 
 %mend;
 

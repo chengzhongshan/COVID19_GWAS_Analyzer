@@ -1,4 +1,7 @@
 %macro UKB_Female_vs_Male_GWAS_GRASP(
+/*this macro is ONLY able to process GWASs regardless of sex from both GRASP COVID-19 database;
+This means the two input GWASs can be any GRASP GWASs with potential biological differences for further investigation;
+for example, it can be used to perform differential GWAS between AFR and EUR!*/ 
 female_gwas_url,
 male_gwas_url,
 female_male_gwas_url,
@@ -21,7 +24,7 @@ libname FM "&outdir";
 
 %if %sysfunc(exist(FM.F_vs_M_gwas)) and %eval(&forece^=1) %then %do;
 
-%put Previous GWAS results V_vs_M_gwas exists in your target dir &outdir;
+%put Previous GWAS results F_vs_M_gwas exists in your target dir &outdir;
 %put We will not generate the gwas dataset again but use it directly;
 
 %end;
@@ -29,6 +32,12 @@ libname FM "&outdir";
 %else %do;
 *Better to use EUR samples, as only ~500 samples out of 3260 sam-ples are from other ancestries;
 *This will lead to more reliable results without of potential effect from opulation effect!;
+ %if %sysfunc(exist(FM.F_vs_M_gwas)) %then %do;
+   %put We are going to delete previously generated sas datasets;
+   proc datasets lib=FM;
+   delete ukb_F_gwas ukb_M_gwas ukb_FM_gwas;
+   run;
+ %end;
 
 %get_covid_gwas_from_grasp(gwas_url=&GWAS_F_url,outdsd=ukb_F_gwas);
 %get_covid_gwas_from_grasp(gwas_url=&GWAS_M_url,outdsd=ukb_M_gwas);
@@ -66,6 +75,7 @@ run;
 
 title "UBK &label4female_gwas gwas first 3 observations for evaluation";
 proc print data=FM.ukb_F_gwas(obs=3);run;
+title "";
 
 *Step2: diff GWAS between Female and Male; 
 *Perform Femal vs. Male GWAS diff-zscore analysis;
@@ -118,10 +128,16 @@ run;
 /* Needle plot for top independent signals */
 /* Get top independent signals */
 *Check z-score distribution for the two GWASs;
-proc print data=fm.f_vs_m_gwas(obs=10);run;
+
+title "Top SNPs display differential association pval < 5e-5";
+proc print data=fm.f_vs_m_gwas(pval<5e-5);run;
+title "";
+
+title "Check z-score distribution for the two GWASs";
 proc univariate data=fm.f_vs_m_gwas plots;
 var diff_zscore gwas1_z gwas2_z;
 run;
+title "";
 
 *********************Get top snps from 3 GWASs*****************;
 data a;
@@ -151,8 +167,9 @@ run;
                            ,pos_var=pos
                            ,pos_dist_thrshd=10000000
                            ,dsdout=tops4female); 
-title "Top snps from &label4female_gwas.-GWAS along: gwas1 for &label4female_gwas and gwas2 for &label4male_gwas";                           
+title "Top snps from &label4female_gwas.-GWAS alone: gwas1 for &label4female_gwas and gwas2 for &label4male_gwas";                           
 proc print data=tops4female;run;
+title "";
 
 data c;
 set FM.F_vs_M_gwas;
@@ -166,8 +183,9 @@ run;
                            ,pos_var=pos
                            ,pos_dist_thrshd=10000000
                            ,dsdout=tops4male);
-title "Top snps from &label4male_gwas.-GWAS along: gwas1 for &label4female_gwas and gwas2 for &label4male_gwas";                            
+title "Top snps from &label4male_gwas.-GWAS alone: gwas1 for &label4female_gwas and gwas2 for &label4male_gwas";                            
 proc print data=tops4male;run;
+title "";
 
 /* proc sql noprint; */
 /* select rsid into: topsnps separated by " " */
@@ -243,6 +261,7 @@ quit;
 /* %let maxend=16618161; */
 /* %let chr=23; */
 
+/*
 ods graphics on /reset=all;
 %map_grp_assoc2gene4covidsexgwas(
 gwas_dsd=FM.f_vs_m_gwas,
@@ -254,7 +273,7 @@ dist2genes=0,
 AssocPVars=pval gwas1_p gwas2_p,
 ZscoreVars=diff_zscore gwas1_z gwas2_z
 );
-
+*/
 
 %mend;
 

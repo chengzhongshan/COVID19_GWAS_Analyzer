@@ -6,7 +6,7 @@ select_smallest_signal=1,
 pos_var=,
 pos_dist_thrshd=,
 dsdout=,
-signal_thrshd=1e-4 /*filter the input dsdin by &signal_val <= &signal_thrshd*/
+signal_thrshd=1 /*filter the input dsdin by association P, i.e, &signal_val <= &signal_thrshd*/
 );
 
 data &dsdout;

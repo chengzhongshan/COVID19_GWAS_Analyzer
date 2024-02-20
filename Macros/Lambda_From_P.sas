@@ -20,6 +20,7 @@ run;
 title "Please find your lambda in sas dataset &dsdout:";
 proc print data=&dsdout;
 run;
+title "";
 %mend;
 
 /*
