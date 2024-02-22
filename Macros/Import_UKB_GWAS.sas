@@ -77,11 +77,16 @@ char2num=1,
 chr_var=chr,
 dsdout=&dsdout);
 
+proc sort data=&dsdout;
+by chr pos;
+run;
+
 %if &print_top_hits=1 %then %do;
 title "Top high confidence variants passed pval<1e-6 in the dataset &dsdout";
 proc print data=&dsdout;
 where pval<1e-6 and low_confidence_variant^="true";
 run;
+title "";
 %end;
 
 %mend;

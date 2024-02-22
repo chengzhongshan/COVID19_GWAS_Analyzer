@@ -14,6 +14,7 @@ print_top_hits=0
 /*print the first 10 records for the imported gwas*/
 title "First 10 records in &outdsd derived from the gwas: &gwas_gz_file";
 proc print data=&outdsd(obs=10);run;
+title "";
 
 %mend;
 
@@ -25,16 +26,57 @@ proc print data=&outdsd(obs=10);run;
 
 libname FM '/home/cheng.zhong.shan/my_shared_file_links/cheng.zhong.shan/F_vs_M_Covid19_Hosp';
 
-%let gwas_url=https://broad-ukb-sumstats-us-east-1.s3.amazonaws.com/round2/additive-tsvs/INFLUENZA.gwas.imputed_v3.both_sexes.tsv.bgz;
-%get_UKB_gwas_from_UKB(gwas_url=&gwas_url,outdsd=UKB_GWAS);
-data UKB_GWAS;set UKB_GWAS;where minor_AF>0.01 and low_confidence_variant='false';run;
-data top;set UKB_GWAS;where pval<1e-6;run;
-proc print data=UKB_GWAS;where snp="rs2070788";run;
+*%let gwas_url=https://broad-ukb-sumstats-us-east-1.s3.amazonaws.com/round2/additive-tsvs/INFLUENZA.gwas.imputed_v3.both_sexes.tsv.bgz;
+*%get_UKB_gwas_from_UKB(gwas_url=&gwas_url,outdsd=UKB_GWAS);
+
+*data UKB_GWAS;
+*set UKB_GWAS;
+*where minor_AF>0.01 and low_confidence_variant='false';
+*run;
+
+*proc datasets;
+*copy in=work out=FM memtype=data move;
+*select UKB_GWAS;
+*run;
+
+data top;set FM.UKB_GWAS;where pval<1e-6;run;
+proc print data=FM.UKB_GWAS;where snp="rs2070788";run;
+
+*Evaluate specific SNP;
+data x;
+set FM.UKB_GWAS;
+logP=-log10(pval);
+where chr=8 and pos between 38348509 and 39006758 and pval<0.05;
+run;
+
+*Top SNP is rs370604612;
+proc sql;
+select chr,snp,pos-1000000,pos+1000000 into: chr,:topsnp,:minst,:maxend
+from x
+having pval=min(pval);
+
+%map_grp_assoc2gene4covidsexgwas( 
+gwas_dsd=FM.UKB_GWAS, 
+gtf_dsd=FM.GTF_HG19, 
+chr=&chr, 
+min_st=&minst, 
+max_end=&maxend, 
+dist2genes=1000, 
+AssocPVars=pval, 
+ZscoreVars=beta, 
+design_width=800, 
+design_height=600, 
+barthickness=15, 
+dotsize=8, 
+dist2sep_genes=1000,
+where_cndtn_for_gwasdsd=%str(pval<1)
+); 
+
 
 %debug_macro;
 *The following macro will fail if no top SNPs pass the log10P < gwas_thrsd threshold;
 %local_gwas_hits_and_nearby_sigs(
-GWAS_SAS_DSD=UKB_GWAS,
+GWAS_SAS_DSD=FM.UKB_GWAS,
 Marker_Col_Name=SNP,
 Marker_Pos_Col_Name=pos,
 Xaxis_Col_Name=chr,
@@ -42,7 +84,7 @@ Yaxis_Col_Name=pval,
 GWAS_dsdout=indep_top,
 gwas_thrsd=5.5,
 Mb_SNPs_Nearby=10,
-snps=%str(rs116519409 rs34844011),
+snps=%str(rs74823374),
 design_width=500,
 design_height=300
 );
@@ -51,7 +93,7 @@ quit;
 **These codes works;
 *If the pos_dis_thrhd or signal_thrshdis too large, SAS OnDemand may be out of space;
 %get_top_signal_within_dist(
-dsdin=UKB_GWAS
+dsdin=FM.UKB_GWAS
 ,grp_var=chr
 ,signal_var=pval
 ,select_smallest_signal=1
@@ -67,7 +109,7 @@ from topsnps;
 *Due to the use of internal macro local_multigwas_manhattan;
 *only snps passed the p < 1e-6 will be plotted;
 %local_multigwas_manhattan(
-GWAS_SAS_DSD=ukb_gwas,
+GWAS_SAS_DSD=FM.ukb_gwas,
 Marker_Col_Name=snp,
 Marker_Pos_Col_Name=pos,
 Xaxis_Col_Name=chr,

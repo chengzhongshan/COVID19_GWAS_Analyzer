@@ -116,6 +116,7 @@ ensuring the same order and no blank spaces are allowed!*/
 
      *Get the x position for the query SNP;
      *As there would be multiple query SNPs, use mean of x positions;
+     *This is not good and replaced by the center position 500;
      proc sql noprint;
      select ceil(mean(&Marker_Pos_Col_Name)) into: xpos4topsnp 
      from &GWAS_dsdout
@@ -191,6 +192,15 @@ new_num_grps=input(grps,grps2nums.);
 new_num_gwas_grps=input(gwas,gwas_grps2nums.);
 run;    
 
+*Need to further adjust pos based on its difference with the center pos = 500;
+data _null_;
+set &GWAS_dsdout(where=(top_tag=2));
+call symputx('diff_dist',500-pos);
+run;
+data &GWAS_dsdout;
+set &GWAS_dsdout;
+pos=pos+&diff_dist;
+run;
 
     *Make a panel of plots with the same xaxis;
     *https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/grstatproc/p1dt33l6a6epk6n1chtynsgsjgit.htm;
@@ -200,7 +210,7 @@ run;
     ods graphics /reset=all height=&design_height.px width=&design_width.px
     antialiasmax=50000000 attrpriority=none;
 /*     Need to make attrpriority as none to use the combination of color and symbol */
-     proc sgpanel data=&GWAS_dsdout;
+     proc sgpanel data=&GWAS_dsdout noautolegend;
 /*   panelby num_grps/layout=columnlattice onepanel novarname noheader; */
 *Remove header, as the order of subplots are according to the input snp order;
      format new_num_grps nums2grps. new_num_gwas_grps nums2gwas_grps.;
@@ -211,7 +221,8 @@ run;
      refline &gwas_thrsd/axis=y lineattrs=(color=darkred pattern=thindot);
      *add the -log10(0.05) refline for the yaxis;
      refline 1.29/axis=y lineattrs=(color=darkred pattern=thindot);
-     refline &xpos4topsnp/axis=x lineattrs=(color=darkgreen pattern=dot thickness=2);     
+/*      refline &xpos4topsnp/axis=x lineattrs=(color=darkgreen pattern=dot thickness=2);      */
+     refline 500/axis=x lineattrs=(color=darkgreen pattern=dot thickness=2);   
 /*      Note: datasymbols option will be overwritten by markerattrs option symbol; */
 /*      scatter x=&Marker_Pos_Col_Name y=logP/group=top_tag markerattrs=(symbol=circlefilled size=6) name="sc"; */
      scatter x=&Marker_Pos_Col_Name y=logP/group=top_tag markerattrs=(size=10) name="sc";

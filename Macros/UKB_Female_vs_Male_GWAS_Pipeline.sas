@@ -65,20 +65,20 @@ libname FM "&outdir";
 
    *To save space, just exclude unnecessary columns from the dataset inmediately after its creation;
    %get_UKB_gwas_from_UKB(gwas_url=&GWAS_F_url,outdsd=ukb_F_gwas);
-   proc print data=ukb_F_gwas(obs=1);run;
+/*    proc print data=ukb_F_gwas(obs=1);run; */
    data ukb_F_gwas;
    set ukb_F_gwas(rename=(pval=p SNP=rsid) where=(minor_AF>0.05 and low_confidence_variant='false'));
    keep chr rsid p SE BETA pos allele1 allele2;
 
 
    %get_UKB_gwas_from_UKB(gwas_url=&GWAS_M_url,outdsd=ukb_M_gwas);
-   proc print data=ukb_M_gwas(obs=1);run;
+/*    proc print data=ukb_M_gwas(obs=1);run; */
    data ukb_M_gwas;
    set ukb_M_gwas(rename=(pval=p SNP=rsid) where=(minor_AF>0.05 and low_confidence_variant='false'));
    keep chr rsid p SE BETA pos allele1 allele2;
 
    %get_UKB_gwas_from_UKB(gwas_url=&GWAS_FM_url,outdsd=ukb_FM_gwas);
-   proc print data=ukb_FM_gwas(obs=1);run;
+/*    proc print data=ukb_FM_gwas(obs=1);run; */
    data ukb_FM_gwas;
    set ukb_FM_gwas(rename=(pval=p SNP=rsid) where=(minor_AF>0.05 and low_confidence_variant='false'));
    keep chr rsid p SE BETA pos allele1 allele2;
@@ -104,9 +104,10 @@ libname FM "&outdir";
  delete F_vs_M_gwas;
  run;
 
- title "UBK &label4female_gwas gwas first 3 observations for evaluation";
- proc print data=FM.ukb_F_gwas(obs=3);run;
- title "";
+/*  title "UBK &label4female_gwas gwas first 3 observations for evaluation"; */
+/*  proc print data=FM.ukb_F_gwas(obs=3);run; */
+/*  title ""; */
+ 
  *Step2: diff GWAS between Female and Male; 
  *Perform Femal vs. Male GWAS diff-zscore analysis;
  libname FM "&outdir";

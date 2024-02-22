@@ -152,7 +152,7 @@ run;
                            ,pos_var=pos
                            ,pos_dist_thrshd=10000000
                            ,dsdout=tops1);
-title "Top snps from diff-zscore analysis: gwas1 for female and gwas2 for male";                           
+title "Top snps from diff-zscore analysis: gwas1 for &label4female_gwas and gwas2 for &label4male_gwas";                           
 proc print data=tops1;run;
 
 data b;

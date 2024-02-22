@@ -91,7 +91,7 @@ run;
 %if &deleteZIP eq 1 %then %do;
 /*Delete the gwas zip file to release space*/
 %del_file_with_fullpath(fullpath=&zip);
-%put the gwas gz file &gwas_gz_file is deleted to release space in SAS oOnDemaond;
+%put the gwas gz file &gwas_gz_file is deleted to release space in SAS OnDemaond;
 %end;
 
 /*Delete the gwas file to release space*/
