@@ -270,7 +270,7 @@ filename fromfile clear;
 %if &deleteZIP eq 1 %then %do;
 /*Delete the gwas zip file to release space*/
 %del_file_with_fullpath(fullpath=&zip);
-%put the input gz file &txtfilename is deleted to release space in SAS oOnDemaond;
+%put the input gz file &txtfilename is deleted to release space;
 
 /* %if &fi=1 %then %do;  */
 /* proc import datafile=txtin dbms=tab out=&sasdsdout replace; */

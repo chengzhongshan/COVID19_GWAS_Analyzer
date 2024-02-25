@@ -1,7 +1,7 @@
 %macro match_elements_in_macro_list(
 macro_list=,/*elements should be separated by blank space*/
 rgx4match=,/*regular expression of prxmatch, such as (rgx1|rgx2)*/
-reversematch=0,/*provide 0 to keep elements not matched with the rgx*/
+reversematch=0,/*provide 1 to keep elements not matched with the rgx*/
 output_idx=0, /*Instead of keeping matched or unmatched elements, keep the 1-based
 indices for these elements in the original macro_list, which would be useful
 to be transformed into a sas data set by the macro for further analysis!*/

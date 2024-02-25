@@ -3,14 +3,20 @@ gwas_names=91854 192226 826733 793752,	/*put multiple gwas numbers and separated
 Go to locuszoom to search for gwas and nevigate to specific gwas and obtain its gwas number in the weblink*/
 gwas_labels=HGI_DF4_W1 HGI_DF4_N2 HGI_DF4_W2 HGI_DF4_N1,	
 /*These are labels for the above gwas numbers and will be used to name gwas in the output*/
-chrpos_or_rsids=%str(1:10000-20000000),	/*Note: X and Y chrs are labeled as 23 and 24 in long covid gwas, respectively;
+chrpos_or_rsids=%str(1:10000:20000000),	/*Note: X and Y chrs are labeled as 23 and 24 in long covid gwas, respectively;
+Ensure the input genomic region format as chrNum:pos1:pos2 with the separator :!
 the macro will automatically remove the character chr notation in the input chrpos and requires the input gwas using 
 numeric chr notation, so if the input is not, the macro will fail!! It is necessary to update the macro by changing 
-char chr notation as numberic in the importing process at the stage of running the submacro get_locuszoom_GWAS*/
+char chr notation as numberic in the importing process at the stage of running the submacro get_locuszoom_GWAS;
+Note: if the macro var is left EMPTY, SNPs from all GWAS will be kept!
+*/
 dsdout=combined_signals,
 dist2each_marker=0, /*extend the region with up/down of a specific distance in bp (>0) to search for all snps*/
 use_zcat=0 /*When running the macro in Linux, it is necessary to use zcat, thus the value of 1 is needed here then!*/
 );
+
+%local gwas gi;
+
 %let gi=1;
 %do %while(%scan(&gwas_names,&gi,%str( )) ne);
  %let gwas=%scan(&gwas_names,&gi,%str( ));
@@ -29,6 +35,7 @@ drop neg_log_p;
 	infile command for the sas macro*/
   );
 
+%if %length(&chrpos_or_rsids)^=0 %then %do;
   %let ncnds=%ntokens(&chrpos_or_rsids);
   data tmp4&gwas;
   set locuszoom_gwas&gwas;
@@ -81,9 +88,10 @@ drop neg_log_p;
          change tmp4&gwas=locuszoom_gwas&gwas;
          run;
   %end;
-  
+ %end;
  %let gi=%eval(&gi+1);
 %end;
+
 
 %put Trying to merge all data sets of GWASs;
 %Union_Data_In_Lib_Rgx(lib=work,excluded=,dsd_contain_rgx=locuszoom_gwas,dsdout=&dsdout);
@@ -93,6 +101,9 @@ set &dsdout;
 %do gwas_i=1 %to %ntokens(&gwas_labels);
 	if dsd="work.LOCUSZOOM_GWAS%left(%scan(&gwas_names,&gwas_i,%str( )))" then dsd="%scan(&gwas_labels,&gwas_i,%str( ))"; 
 %end;
+run;
+proc datasets lib=work nolist;
+delete 	locuszoom_gwas:;
 run;
 
 %mend;
@@ -116,6 +127,24 @@ hg38 position or rsid, such as rs2564978
 *%let macrodir=/home/cheng.zhong.shan/Macros;
 *%include "&macrodir/importallmacros_ue.sas";
 *%importallmacros_ue;
+
+*Get all GWAS signals;
+%get_sigs_from_locuszoom(
+gwas_names=91854 192226 826733 793752,
+gwas_labels=HGI_DF4_W1 HGI_DF4_N2 HGI_DF4_W2 HGI_DF4_N1,	
+chrpos_or_rsids=,
+dsdout=combined_signals,
+dist2each_marker=0,
+use_zcat=0
+);
+libname LG "E:\LongCOVID_HGI_GWAS";
+proc datasets;
+copy in=work out=LG memtype=data move;
+select 	combined_signals;
+run;
+proc datasets lib=LG;
+change combined_signals=LongCOVID_GWAS_Combined;
+run;
 
 %get_sigs_from_locuszoom(
 gwas_names=826733 793752,

@@ -4,9 +4,12 @@ furthermore, except B1, all others have subpopulation GWASs,
 such as B2_AFR, B2_EAS, B2_SAS, B2_HIS;
 Note: A2_HIS, C2_HIS and B2_HIS tar gz file was broken! No A1_ALL
 */
-hgi_gwas=hgi_gwas_out /*sas dsd output*/
+hgi_gwas=hgi_gwas_out, /*sas dsd output*/
+build=hg38 /*Genome build for the GWAS summary statistics, such as hg19 and hg38*/
 );
 %let gwas_name=%upcase(&gwas_name);
+
+%if "&build"="hg19" %then %do;
 
 %if "&gwas_name"="B1_ALL" %then
         %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/main/sumstats/COVID19_HGI_B1_ALL_leave_23andme_20220403_GRCh37.tsv.gz;
@@ -21,7 +24,7 @@ hgi_gwas=hgi_gwas_out /*sas dsd output*/
 %else %if "&gwas_name"="B2_EAS" %then 
         %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_B2_ALL_eas_leave23andme_20220403_GRCh37.tsv.gz;
 %else %if "&gwas_name"="B2_HIS" %then 
-        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_B2_ALL_his_leave23andme_20220403_GRCh37.tsv.gz;
+        %put B2 HIS tar gz file was broken;
 %else %if "&gwas_name"="C2_ALL" %then 
         %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/main/sumstats/COVID19_HGI_C2_ALL_leave_23andme_20220403_GRCh37.tsv.gz;
 %else %if "&gwas_name"="C2_AFR" %then 
@@ -41,7 +44,7 @@ hgi_gwas=hgi_gwas_out /*sas dsd output*/
 %else %if "&gwas_name"="A2_ALL" %then 
         %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/main/sumstats/COVID19_HGI_A2_ALL_leave_23andme_20220403_GRCh37.tsv.gz;
 %else %if "&gwas_name"="A2_HIS" %then 
-        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_A2_ALL_his_leave23andme_20220403_GRCh37.tsv.gz;
+        %put A2 HIS tar gz file was broken;
 %else %if "&gwas_name"="A2_AFR" %then 
         %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_A2_ALL_afr_leave23andme_20220403_GRCh37.tsv.gz;
 %else %if "&gwas_name"="A2_EUR" %then 
@@ -54,6 +57,61 @@ hgi_gwas=hgi_gwas_out /*sas dsd output*/
         %put Unknow gwas name &gwas_name;
         %abort 255;
 %end;
+%end;
+
+
+%if "&build"="hg38" %then %do;
+
+%if "&gwas_name"="B1_ALL" %then
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/main/sumstats/COVID19_HGI_B1_ALL_leave_23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="B2_ALL" %then        
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/main/sumstats/COVID19_HGI_B2_ALL_leave_23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="B2_AFR" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_B2_ALL_afr_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="B2_SAS" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_B2_ALL_sas_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="B2_EUR" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_C2_ALL_eur_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="B2_EAS" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_B2_ALL_eas_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="B2_HIS" %then 
+        %put B2_HIS tar gz was broken;
+%else %if "&gwas_name"="C2_ALL" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/main/sumstats/COVID19_HGI_C2_ALL_leave_23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="C2_AFR" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_C2_ALL_afr_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="C2_EAS" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_C2_ALL_eas_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="C2_SAS" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_C2_ALL_sas_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="C2_HIS" %then %do;
+        %put C2_HIS tar gz file was broken;
+/*         %abort 255;  */
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_C2_ALL_his_leave23andme_20220403_GRCh37.tsv.gz;
+
+%end;
+%else %if "&gwas_name"="C2_EUR" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_C2_ALL_eur_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="A2_ALL" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/main/sumstats/COVID19_HGI_A2_ALL_leave_23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="A2_HIS" %then 
+        %let gwas_url=;
+%else %if "&gwas_name"="A2_AFR" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_A2_ALL_afr_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="A2_EUR" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_A2_ALL_eur_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="A2_EAS" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_A2_ALL_eas_leave23andme_20220403.tsv.gz;
+%else %if "&gwas_name"="A2_SAS" %then 
+        %let gwas_url=https://storage.googleapis.com/covid19-hg-public/freeze_7/results/20220403/pop_spec/sumstats/COVID19_HGI_A2_ALL_sas_leave23andme_20220403.tsv.gz;
+%else %do;
+        %put Unknow gwas name &gwas_name;
+        %abort 255;
+%end;
+
+%end;
+
+
 
 %if %sysfunc(prxmatch(/ALL/,&gwas_name)) %then %do;
    %get_HGI_covid_gwas_from_HGI(gwas_url=&gwas_url,outdsd=&HGI_gwas,for_subpop=0);
@@ -89,7 +147,8 @@ use_zcat=0,
 deleteZIP=0
 );
 */
-
+*Note: for hg19 or hg38 GWAS data, its corresponding hg38 or hg19 position columns will be excluded in the output dataset;
+*although the infile command include the b38 columns, it will not affect later results;
 %ImportFileHeadersFromZIP(
 zip=&wkdir/gwas_gz_file.gz,
 filename_rgx=.,
@@ -137,7 +196,7 @@ furthermore, except B1, all others have subpopulation GWASs,
 such as B2_AFR, B2_EAS, B2_SAS, B2_HIS;
 */
 
-/*Demo:
+/*Demo codes:;
 
 *options mprint mlogic symbolgen;
 %let macrodir=/home/cheng.zhong.shan/Macros;
@@ -145,7 +204,7 @@ such as B2_AFR, B2_EAS, B2_SAS, B2_HIS;
 %importallmacros_ue;
 
 %get_HGI_R7_GWAS(
-gwas_name=C2_HIS, 
+gwas_name=B2_EAS, 
 hgi_gwas=hgi_gwas_out
 );
 
@@ -166,6 +225,7 @@ snps=%str(rs12628403),
 design_width=1000,
 design_height=500
 );
+*/
 
 /* %SNP_Local_Manhattan_With_GTF( */
 /* to make the genes separated better based on distance;GTF(/*As this macro use other sub-macros, it is not uncommon that some global macro */
@@ -217,6 +277,4 @@ design_height=500
 /* where_cndtn_for_gwasdsd=%str(p<1) /*where condition to filter input gwas_dsd */
 /* ); */
 
-
-*/
 

@@ -168,7 +168,63 @@ options compress=yes;
 /* filename target "%sysfunc(getoption(work))/&fname"; */
 /*gzip parameter is only available in latest SAS9.4M5*/
 
-filename fromzip ZIP "&zip" GZIP;
+/*filename fromzip ZIP "&zip" GZIP;*/
+
+/*%if "&sysscp"="WIN" %then %do;*/
+/*	*Need to use 7zip in Windows;*/
+/*	*Uncompress gz file;*/
+/* *Actionable command: 7z e B1_vs_B2.zscore.txt.gz -y;*/
+/*	%let _gzfile_=%scan(&zip,-1,/\);*/
+/*	*need to consider [\/\\] for the separator of &zip;*/
+/*	%let _gzdir_=%sysfunc(prxchange(s/(.*)[\/\\][^\/\\]+/$1/,-1,&zip));*/
+/*	*Need to confirm whether the _gzdir_ is parsed correctly;*/
+/*	*When the &zip var only contains relative path without '.' at the beginning of the dir string;*/
+/*	*The prxchange function can not generate right dir;*/
+/*	%if %direxist(&_gzdir_) %then %do;*/
+/*	 %put your gz file dir is &_gzdir_, which exists;*/
+/*	%end;*/
+/*	%else %do;*/
+/*		%put your gz file dir is &_gzdir_, but which does not exist;*/
+/*		%abort 255;*/
+/*	%end;*/
+/**/
+/**/
+/*	%put you gz file is &_gzfile_;*/
+/*	%let filename4dir=%sysfunc(prxchange(s/(.bgz|.tgz|gz)//i,-1,&_gzfile_));*/
+/*	*This is to prevent the outdir4file with the same name as the gz file;*/
+/*	*windows will failed to create the dir if the gz file exists;*/
+/*	%if %sysfunc(exist(&_gzdir_/&filename4dir)) %then %do;*/
+/*	%put The dir &filename4dir exists, and we assume the file has been uncompressed!;*/
+/*	%end;*/
+/*	%else %do;*/
+/* %Run_7Zip(*/
+/* Dir=&_gzdir_,*/
+/* filename=&_gzfile_,*/
+/* Zip_Cmd=e, */
+/* Extra_Cmd= -y ,*/
+/* outdir4file=&filename4dir*/
+/* );*/
+/*	*Use the filename to create a dir to save uncompressed file;*/
+/*	*Note Run_7Zip will change dir into outdir4file;*/
+/*	%end;*/
+/**/
+/*	%let uncmp_gzfile=%sysfunc(prxchange(s/\.gz//,-1,&_gzfile_));*/
+/*	*Use regular expression to match file, as the uncompressed file may have different appendix, such as tsv.gz.tmp;*/
+/*	filename fromzip "&_gzdir_/&filename4dir/*";*/
+/*%end;*/
+/**/
+/*%else %do;*/
+/*  filename fromzip ZIP "&zip" GZIP;*/
+/*%end;*/
+*The ahove has been put into a sas macro;
+
+%make_gz_fileref(
+zip=&zip,/*full path for the gz file*/
+outgzfileref=fromzip /*A fileref for the uncompressed zip file*/
+);
+
+/*end for the new codes working in WIN for the part: filename fromzip ZIP "&zip" GZIP;*/
+
 data &sasdsdout (keep=chr pos rsid p SE BETA AF het_p ref alt); 
 %let _EFIERR_=0;/*set the error detection macro variable*/
 /* infile target delimiter='09'x missover dsd firstobs=2; */
