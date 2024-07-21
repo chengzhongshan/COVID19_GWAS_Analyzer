@@ -95,6 +95,8 @@ dlm4subgrpvar=X,
 ithelement4subgrpvar=1,
 SameTypeVars=_numeric_
 );
+proc print data=gene_eqtls_sub(obs=1);run;
+
 
 /* proc contents data=tgtgenewidedsd; */
 /* run; */
@@ -136,13 +138,14 @@ data &eqtldsdout;
 set tgtgenewidedsd;
 run;
 
+
 **********************************************************************************;
 data gene_eqtls1
 (where=(snpid^="rs00000"))
 ;
 set gene_eqtls;
 genegrp=prxchange("s/APOBEC/A/i",-1,genesymbol)||":"||tissueSiteDetailId;
-if logP>10 then logP=10;
+if logP>100 then logP=100;
 where pos between &min_pos and &max_pos;
 run;
 proc sort data=gene_eqtls1;by genegrp;
@@ -246,8 +249,8 @@ xfont_style=Italic
 
 *Make scatterplots with different colors for tissues;
 %let sc_width=1000;
-%let sc_height=400;
-ods graphics/reset=all width=&sc_width height=&sc_height;
+%let sc_height=800;
+ods graphics/reset=all width=&sc_width height=&sc_height ANTIALIASMAX=5000;
 proc sgpanel data=gene_eqtls1;
 /* where tissueSiteDetailId="Whole_Blood"; */
 panelby geneSymbol/onepanel columns=1 novarname uniscale=column 
@@ -277,6 +280,50 @@ yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the y
 xaxis_offset4min=0.02, /*provide 0-1 value or auto  to offset the min of the xaxis*/
 xaxis_offset4max=0.02 /*provide 0-1 value or auto to offset the max of the xaxis*/
 );
+
+proc datasets lib=work nolist;
+delete 
+final
+ALL
+BEDCHR9
+DUPS
+EXONCHR9
+EXONCHR9_
+EXONCHR9__BAD
+EXONS
+FAKE_BED_DSD
+FINAL_FMT
+FMTINFO
+GENE_EQTLS
+GENE_EQTLS_SUB
+HEADER_DSD
+HEATMAP
+INFO
+MACRO_PARAS
+NES_VARS
+PVAL_VARS
+SCGRPNAMES
+SIGNAL_DSD
+TGTGENEWIDEDSD
+WIDE_IDS_LOOKUP
+X
+X1
+X1_NEG
+X1_NEG_FK
+X1_POS
+X1_POS_FK
+X2
+XAXIS_DENDROGRAM
+X_TRANS
+YAXIS_DENDROGRAM
+_SGSORT_
+_SINGLE_
+_TMP_
+_TMP_1
+_X1_
+_X_
+;
+run;
 
 %mend;
 

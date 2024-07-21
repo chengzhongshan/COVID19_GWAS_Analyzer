@@ -136,8 +136,13 @@ run;
 
 *Output macro parameters as a sas data set;
 %let _macro_=%sysfunc(prxchange(s/.*\/([^\/]+).sas/$1/i,-1,&&path&i));
+%put Target macro is %trim(&_macro_);
+
 data _mparas&i(drop=tag Macro_info);
-length macro_paras $1000. macro $500.;
+*Note: it is necessary to assign long length for macro_paras;
+*Otherwise, the data step will not get the macro parameters;
+*and the macro will not be included in the final output table;
+length macro_paras $10000. macro $500.;
 retain tag 0 macro_paras '';
 set _macros_;
 macro="&_macro_";
@@ -154,10 +159,12 @@ else if (tag=1) then do;
    macro_paras,
    macro_info
   );
-  if prxmatch("/[\)][;\s]*$/",macro_paras) then do;
+  
+  if prxmatch("/[\)][;\s]*$/i",macro_paras) then do;
      tag=0;output;
   end;   
 end;
+/* %abort 255; */
 
 *Now make both Linux and Windows use the same pure SAS codes to get SAS parameters;
 /*%end;*/
@@ -170,6 +177,8 @@ end;
 data &output_macropara_dsd;
 set _mparas:;
 run;
+
+
 proc datasets lib=work nolist;
 delete _mparas: _macros_ Macroparas;
 run;

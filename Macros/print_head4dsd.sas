@@ -10,6 +10,7 @@
 	proc print data=&dsdin (obs=&n);
 	title "First &n obs of &dsdin. Total Obs: &nobs";
 	run;
+title;
 
 %mend;
 

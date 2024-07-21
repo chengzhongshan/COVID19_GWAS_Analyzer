@@ -21,9 +21,11 @@ design_width=800,
 design_height=600, 
 barthickness=15, /*gene track bar thinkness*/
 dotsize=8, 
-dist2sep_genes=1000,/*Distance to separate close genes into different rows in the gene track; provide negative value
-to have all genes in a single row in the final gene track*/
-where_cndtn_for_gwasdsd=%str(pval<1), /*where condition to filter input gwas_dsd*/
+dist2sep_genes=1000,/*genes with distance less than the cutoff will be separated into different tracks;
+In detail, this is the distance to separate close genes into different rows in the gene track; 
+provide negative value to have all genes in a single row in the final gene track*/
+where_cndtn_for_gwasdsd=%str(pval<1), /*where condition to filter input gwas_dsd
+Make sure the pvalue variable is the same as one of gwas_AssocPVars*/
 
 shift_text_yval=-0.2, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
                       to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;

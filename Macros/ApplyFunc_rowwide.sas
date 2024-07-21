@@ -1,11 +1,17 @@
-%macro ApplyFunc_rowwide(dsdin
-                         ,row_keys
-						 ,KeyVar4dsdout
-                         ,Regex4col_vars2apply
-						 ,SQL_Fun4apply
-                         ,dsdout
-						 ,KeyVar4dsdout_length=200
-                         ,AlsoAppFun4Cols=0);
+%macro ApplyFunc_rowwide(
+/*The macro is a handy tool to calculate common summary statistics, such as mean, median, sum, n, std, and others that allowed
+in proc sql when conducting analysis on groups on ROW-WIDE. Additionally, the macro can generate summary statistics by 
+including data from both rows and columns, with special case to generate summary statistics on all columns without providing row_keys or 
+on all data in a table from all columns and rows!*/
+dsdin,
+row_keys,
+KeyVar4dsdout,
+Regex4col_vars2apply,
+SQL_Fun4apply,
+dsdout,
+KeyVar4dsdout_length=200,
+AlsoAppFun4Cols=0
+);
 %let n=%numargs(&row_keys);
 %put macro var row_keys are &row_keys;
 
@@ -107,35 +113,43 @@ options mprint mlogic symbolgen;
 
 *ApplyFunc_rowwide for avg,std,sum,median,max,min, or other related functions.
 *If use mean and AlsoAppFun4Cols=0, make sure to use avg to replace mean;
+
+*Case 1: generate summary statistics for matched columns on rows grouped by row_keys;
+*This is very similar to the matlab function groupcount;
+
 %ApplyFunc_rowwide(dsdin=a
-                  ,row_keys=key
-                  ,KeyVar4dsdout=OutKeyVar
-                  ,Regex4col_vars2apply=[ab]
-				  ,SQL_Fun4apply=max
-                  ,dsdout=t
-                  ,KeyVar4dsdout_length=200
-                  ,AlsoAppFun4Cols=0);
+,row_keys=key
+,KeyVar4dsdout=OutKeyVar
+,Regex4col_vars2apply=[ab]
+,SQL_Fun4apply=max
+,dsdout=t
+,KeyVar4dsdout_length=200
+,AlsoAppFun4Cols=0);
+
+*Case 2: generate summary statistics on all rows for each column;
 
 *If row_keys is missing, will apply specific function on all rows for each column;
 %ApplyFunc_rowwide(dsdin=a
-                  ,row_keys=
-                  ,KeyVar4dsdout=OutKeyVar
-                  ,Regex4col_vars2apply=[ab]
-				  ,SQL_Fun4apply=max
-                  ,dsdout=t
-                  ,KeyVar4dsdout_length=200
-                  ,AlsoAppFun4Cols=0);
+ ,row_keys=
+ ,KeyVar4dsdout=OutKeyVar
+ ,Regex4col_vars2apply=[ab]
+,SQL_Fun4apply=max
+,dsdout=t
+,KeyVar4dsdout_length=200
+,AlsoAppFun4Cols=0);
 
+*Case 3: generate summary statistics on bothrows and columns;
 *If AlsoAppFun4Cols=1, will apply specific function on each row or ALL Rows (if row_keys is missing) for ALL these matched columns;
+
 *For AlsoAppFun4Cols=1, we can not use avg but mean, because avg is going to calculate mean based on group and mean is to calculate mean of different columns;
 *Should be careful to use this function to calculate mean of ALL data points.
 %ApplyFunc_rowwide(dsdin=a
-                  ,row_keys=
-                  ,KeyVar4dsdout=OutKeyVar
-                  ,Regex4col_vars2apply=[ab]
-				  ,SQL_Fun4apply=mean
-                  ,dsdout=t
-                  ,KeyVar4dsdout_length=200
-                  ,AlsoAppFun4Cols=1);
+ ,row_keys=
+,KeyVar4dsdout=OutKeyVar
+,Regex4col_vars2apply=[ab]
+,SQL_Fun4apply=mean
+,dsdout=t
+,KeyVar4dsdout_length=200
+,AlsoAppFun4Cols=1);
 
 */

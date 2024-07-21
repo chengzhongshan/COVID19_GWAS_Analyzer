@@ -18,10 +18,50 @@ columnweights=0.05 0.95, /*figure 2 column ratio*/
 rowweights=0.15 0.85, /*figure 2 row ratio*/
 cluster_type=3,        /*values are 0, 1, 2, and 3 for not clustering heatmap, 
                        clustering heatmap by column, row, and both*/
-colormodel=cxFAFBFE cx667FA2 cxD05B5B, /*Default is blue grey red heatmap;
-Use different color names here to draw heatmap, such as yellow blue green red
-*/    
-fig_outputfmt=png /*output figure formats: svg, jpg, png, and other sas ods supported figure formats*/                  
+missing_value=-1,/*If assigning . to the missing_value, the macro will fail to generate dendrogram!
+Assign specific numberic value to missing cell in the heatmap; default is to use -1, 
+as missing value will be assigned with different color; Note: assign negative value for missing data 
+will draw the missing color at the bottom of colorbar*/  
+outputfmt=png, /*output figure formats: svg, jpg, png, and other sas ods supported figure formats*/  
+colormodel=cxFAFBFE cx667FA2 cxD05B5B,
+/*CXFFFFFF CXFFFFB2 CXFECC5C CXFD8D3C CXE31A1C */
+/*Default WhiteYeOrRed colors for colormap; 
+alternative colors: cxFAFBFE cx667FA2 cxD05B5B
+Note: if rangemap_setting is not empty, colormodel will not be used!*/
+rangemap_setting=,
+/*If colormodel is EMPTY and rangemap_setting is not EMPTY, the macro will use rangemap setting for colorbar;
+The following is an example code, and ensure the attrvar is named as RangeVar and Var equal to dist, 
+which are hardcoded internally in the macro:
+*Add more customized ranges to be labeled in the final colorbar!;
+rangemap_setting=%str(
+rangeattrmap name="ResponseRange";
+        range min-300 / rangeColorModel=(CXFFFFB2 CXFED976 CXFEB24C CXFD8D3C CXFC4E2A CXE31A1C CXB10026);
+        range OTHER   / rangeColorModel=(Gray);   
+        range MISSING / rangeColorModel=(Lime);   
+endrangeattrmap;
+rangeattrvar var=dist                        
+attrmap="ht"       
+attrvar=RangeVar;  
+)    
+*/
+continuouslegend_setting=
+%nrstr(location=outside valign=bottom halign=center integer=false valuecounthint=50 ),
+/*Change the colorbar setting; If left empty, default setting will be applied by sas;
+Note: if rangemap_setting is used, sas assumes the colorbar will be discreted and the continuouslegend_setting will fail!;*/
+heatmap_dsd=longformat_heatmap_dsd /*Output a copy dataset that is used for making the heatmap, which can be modified 
+to make updated heatmap with the GTL template HeatDendrogram as follows:
+data longformat_heatmap;
+set longformat_heatmap;
+ord=_n_;
+run;
+*Modify the longformat_heatmap and keep its row order by sorting with ord;
+data tgt;
+set longform_heatmap;
+*Your codes to modify the color variable Dist;
+run;
+proc sgrender data=tgt template=HeatDendrogram;
+run;
+*/              
 );
 
 *estimate the clustergram height and width by calculating total number of snpid and genegrp;
@@ -82,11 +122,13 @@ run;
 data x(keep=&rowname_var _numeric_);
 set x;
 *give missing value 0;
+%if %length(&missing_value)>0 %then %do;
 array t{*} _numeric_;
 do i=1 to dim(t);
-   if t{i}=. then t{i}=0;
+   if t{i}=. then t{i}=&missing_value;
 end;
 drop i;
+%end;
 run;
 
 /*Remove duplicate rownames*/
@@ -207,12 +249,18 @@ y_name_=prxchange('s/_+/ /',-1,y_name_);
 x_name_=prxchange('s/_+/ /',-1,x_name_);
 run;
 
+
 /*Note: make sure to let rowdata and columndata with union range*/
-ods graphics /noborder outputfmt=&fig_outputfmt;
+ods graphics /reset=all noborder outputfmt=&outputfmt imagename="Clustergram_%RandBetween(1,100)";
+*The above failed sometimes due to unknown reasons;
 *It is necessary to remove previous setting;
 proc template;
    define statgraph HeatDendrogram;
       begingraph / designheight=&height.cm designwidth=&width.cm;
+        %if %length(&rangemap_setting)>0 %then %do;
+              &rangemap_setting;  
+         %end;
+
          layout lattice    / rowdatarange=union columndatarange=union
                              rows=2 columns=2 
                              columnweights=(&columnweights) rowweights=(&rowweights);
@@ -236,27 +284,42 @@ proc template;
 															entry ' ';
 														%end;
             endlayout;
-            *Need to use type of discrete yaxis and enable tickvaluefitpolicy as none;
-            *This will show all heatmap yaxis labels;
+            *To remove outline, add "walldisplay=none";
             layout overlay / yaxisopts=(display=none reverse=true
-                                        displaysecondary=(tickvalues)
-                                        type=discrete
-                                        discreteopts=(tickvaluefitpolicy=none)
-                                        )
-                             xaxisopts=(display=(tickvalues)) walldisplay=none;
-               heatmapparm y=col x=row colorresponse=dist /
-/*                              colormodel=(cxFAFBFE cx667FA2 cxD05B5B) name="ht"; */
-                                colormodel=(&colormodel) name="ht";
-               continuouslegend "ht";
+                                        displaysecondary=(tickvalues))
+                             xaxisopts=(display=(tickvalues));
+               heatmapparm y=col x=row 
+                               %if %length(&rangemap_setting)>0 %then %do;
+                                colorresponse=RangeVar/
+                                %end;
+                                %else %do;
+                                colorresponse=dist/colormodel=(&colormodel)  
+                                 %end;
+                                name="ht";
+               *Customize the colorbar ticks;
+               *Although the suggested tick counts is 50, sas will automatically decide how many integers will be used for ticks;
+               *default value: location=outside valign=bottom halign=center valuecounthint=50;
+               continuouslegend "ht" / &continuouslegend_setting;
             endlayout;
          endlayout;
      endgraph;
    end;
 run;
-proc sgrender data=all template=HeatDendrogram;
+
+proc sgrender data=all  template=HeatDendrogram;
 run;
 
+*The above colormodel can be updated by using %colormac;
+*https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/graphref/p0d4brn7o50u8ln1xxolln8t7tvc.htm;
+*such as %RBG(100,100,0) for the yellow color;
+
+
 /* ods html close; */
+
+*Keep a copy of the final transformed dataset;
+data &heatmap_dsd;
+set all;
+run;
 
 %mend;
 
@@ -266,6 +329,70 @@ run;
 %let macrodir=/home/cheng.zhong.shan/Macros;
 %include "&macrodir/importallmacros_ue.sas";
 %importallmacros_ue;
+
+
+data a;
+input a $ b $ c;
+*c=log2(c);
+cards;
+a1 b1 100
+a1 b2 200
+a2 b1 300
+a3 b3 400
+;
+%debug_macro;
+*Macro var annotations:;
+*dsdin: The input dataset is a matrix contains rownames and other numeric columns;
+*rowname_var: the elements of rowname_var will be used to label heatmap columns;
+*colname_var: These column-wide names will be used to label heatmap rowlabels;
+*value_var: numeric data for heatmap cells;
+*height: figure 2 height in cm;
+*width: figure 2 width in cm;
+*columnweights: figure 2 column ratio;
+*rowweights: figure 2 row ratio;
+*cluster_type: values are 0, 1, 2, and 3 for not clustering heatmap clustering heatmap by column, row, and both;
+*This is just for comparison!;
+%clustergram4longformatdsd(
+dsdin=a,
+rowname_var=a,
+colname_var=b,
+value_var=c,
+height=8,
+width=10,
+columnweights=0.15 0.85, 
+rowweights=0.15 0.85, 
+cluster_type=3
+);
+
+%clustergram4longformatdsd(
+dsdin=a,
+rowname_var=a,
+colname_var=b,
+value_var=c,
+height=8,
+width=10,
+columnweights=0.15 0.85, 
+rowweights=0.15 0.85, 
+cluster_type=3,
+colormodel=,
+missing_value=-100,
+rangemap_setting=%str(
+rangeattrmap name="ResponseRange";
+        range 0 - 200 / rangeColorModel=(CXFFFFB2 CXFED976 CXFEB24C CXFD8D3C CXFC4E2A CXE31A1C CXB10026);
+        range 200 - 300 /rangeColorModel=(green darkred);
+        range 300 - max /rangeColorModel=(darkred blue);
+        range -100 - 0   / rangeColorModel=(lightgrey); 
+        range other / rangeColorModel=(black);  
+        range MISSING / rangeColorModel=(lime);   
+endrangeattrmap;
+rangeattrvar var=dist                        
+attrmap="ResponseRange"       
+attrvar=RangeVar;  
+),
+continuouslegend_setting=%nrstr(location=outside valign=bottom halign=center valuecounthint=100),
+heatmap_dsd=longformat_heatmap_dsd         
+);
+
 
 libname GTEX '/home/cheng.zhong.shan/data/GTEx_V8';
 

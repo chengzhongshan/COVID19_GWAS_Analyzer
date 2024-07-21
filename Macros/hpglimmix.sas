@@ -1,4 +1,6 @@
 /* %HPGLIMMIX macro */
+*Example data set from here:;
+*https://github.com/xieliaing/SAS/blob/master/GaussianProcess/Examples.sas;
 /********************************************************************
 %HPGLIMMIX: A SAS macro to fit generalized linear mixed model with 
      high dimensional fixed and/or random effects design matrix using

@@ -2,6 +2,10 @@
 from dataset indsd to target_dsd */
 *options mprint;
 %macro Rename_Add_Prefix4Most_Vars(indsd,prefix,excluded,replace_rgx_in_varname=);
+*The macro requires to have the input dataset in the format of lib.dsd;
+%if %index(&indsd,.) =0	%then %let indsd=work.&indsd;
+%put your input dataset is assumed as &indsd;
+/*%abort 255;*/
 %let dsd_name=%scan(&indsd,-1,'.');
 %let dsd_lib=%scan(&indsd,-2,'.');
 %let re=%sysfunc(prxparse(s/ /" "/oi));

@@ -111,6 +111,7 @@ and
 type in ("gene" "exon") and protein_coding=1 and genesymbol not contains '.';
 /*and genesymbol not contains 'ENSG';*/
 run;
+/* %abort 255; */
 
 *Important to remove dup exons;
 proc sort data=exons nodupkeys;by _all_;run;
@@ -121,8 +122,8 @@ proc sql noprint;
 select count(type) into: tot_exons
 from exons
 where type="exon";
-
-%if &tot_exons > 1000 %then %do;
+%put There are &tot_exons unique exons!;
+%if &tot_exons > 20000 %then %do;
 %put There are too many exons in the input dataset, with n=%left(&tot_exons)!;
 %put The macro will exclude these exons;
 /*%abort 255;*/
@@ -140,9 +141,9 @@ run;
 proc sql noprint;
 select count(*) into: tot_bed_regs
 from exons;
-%if &tot_bed_regs > 2000 %then %do;
+%if &tot_bed_regs > 20000 %then %do;
   %put Too many bed regions in your exon dsd;
-		%put Only < 2000 bed regions can be fastly draw by the macro;
+		%put Only < 20000 bed regions can be fastly draw by the macro;
 		%abort 255;
 %end;
 

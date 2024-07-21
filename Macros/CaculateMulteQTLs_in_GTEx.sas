@@ -221,11 +221,13 @@ new_macro_list_var=_tissues_
    title "eQTL summary for &query_snp in tissue &tissue:";
    proc print data=J.root;run;	
 
-   data eqtl&ti._snp&si(drop=TissueSiteDetailId);
+   data eqtl&ti._snp&si(drop=TissueSiteDetailId rename=(genesymbol_=genesymbol));
    set J.root;
-   length SNP $25. tissue $50.;
+   length SNP $25. tissue $50. genesymbol_ $25.;
    SNP="&query_snp";
+   genesymbol_=genesymbol;
    tissue=TissueSiteDetailId;
+   drop genesymbol;
    run;
 
    libname J clear;

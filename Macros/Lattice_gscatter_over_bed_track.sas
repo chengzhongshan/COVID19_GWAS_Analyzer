@@ -63,7 +63,7 @@ based on its real value in the heatmap plot; To keep the original dot y axis val
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
 the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
 */
-
+drawdotintooneline_if_totsc_gt=10,/*When there are too many scatter groups,  let the macro change the macro var makeheatmapdotintooneline=1*/
 var4label_scatterplot_dots=,/*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
@@ -217,7 +217,7 @@ from (
 select distinct &scatter_grp_var
     from &bed_dsd
 );
-%if &totsc>7 %then %let makeheatmapdotintooneline=1;
+%if &totsc>&drawdotintooneline_if_totsc_gt %then %let makeheatmapdotintooneline=1;
 
 %if %eval(&NotDrawScatterPlot=1) %then %do;
    %put The macro will only draw the bottom bed track will will keep negative y values only;
@@ -901,7 +901,8 @@ run;
    top_y4label=&max_y;
    *Add label to plot update the final yaxis label used by latter scatterplot;
 /*   label top_y4label="Association signal";*/
-   label top_y4label="-log10(P)";
+	 label top_y4label="&yaxis_label";
+
   *Also to prevent the legend to include missing value of y, assign lattice_subgrp_var to one of the grps, including 0 and 1;
    if &var4label_scatterplot_dots^="" then &lattice_subgrp_var=0;
    run;
@@ -982,7 +983,8 @@ begingraph / designwidth=&track_width designheight=&track_height
          /*the offsetmin and offsetmax affect the offset area for y axis;*/
        *The adding of walldisplay=none will remove yaxis and other borders, but the yaxis should be kept;
 /*         layout overlay/WALLDISPLAY=none yaxisopts=(*/
-         layout overlay/yaxisopts=(
+	       *Note: the label option will be the real functional section to update the yaxis label;
+         layout overlay/yaxisopts=(label="&yaxis_label"	
  /*                     only provide tickvalues will prevent other features, such as ticks, in the yaxis            */
 /*                      need to add label to display y label; also remove ticks when makeheatmapdotintooneline=1   */
                         display=(%if &makeheatmapdotintooneline=0 %then %do; 
@@ -1134,9 +1136,10 @@ begingraph / designwidth=&track_width designheight=&track_height
 					    %if %sysfunc(exist(work._y&i)) %then %do;
 									   %if %eval(&i=1) %then %do;
 												 *make the 1str grp use group=&grp_var.&i and enable its color more transparent;
+										     *Excludeing missing groups from the legend by adding the option: INCLUDEMISSINGGROUP=FALSE;
                seriesplot x=pos&i y=&yval_var.&i / group=&grp_var.&i connectorder=xaxis
                                       lineattrs=(pattern=SOLID thickness=&linethickness)
-                                      name="series&i" datatransparency=0.5
+                                      name="series&i" datatransparency=0.5	INCLUDEMISSINGGROUP=FALSE
 												%end;
 												%else %if (%eval(&i>=2)) %then %do;
 												 *Make other grps use dark color, but it is not possible, as group is needed;
@@ -1209,7 +1212,8 @@ begingraph / designwidth=&track_width designheight=&track_height
       discretelegend "series1"
  %end;
  %else %do;
-	  discretelegend "sc" "series1"
+/*	  discretelegend "sc" "series1"*/
+ discretelegend "sc" "series1"
  %end;
 /*   Only add legends for scatter plot and gene track*	  
 /* 	  discretelegend "sc" %do i=1 %to &max_ord; */
@@ -1259,6 +1263,7 @@ colors=red blue green
 *The above will generate the Newstyle;
 ods html style=Newstyle;
 */
+
 
 proc sgrender data=WORK.final template=BedGraph;
 dynamic _chr="&chr_var";
@@ -1455,6 +1460,8 @@ dataContrastCols=%str(green darkorange)
 
 *If only the gene track is needed;
 *The macro will try to change the dataset by keeping only negative y axis values;
+*Adjust the yaxis_offset4max to improve the readibility of the gene track;
+*This section can be used to draw regulatory regions grouped by sample or feature;
 %Lattice_gscatter_over_bed_track(
 bed_dsd=x0,
 chr_var=chr,
@@ -1464,19 +1471,19 @@ grp_var=grp,
 scatter_grp_var=gscatter_grp,
 lattice_subgrp_var=lattice_subgrp,
 yval_var=cnv,
-yaxis_label=%str(-log10%(P%)),
-linethickness=20,
+yaxis_label=%str(Gene track),
+linethickness=30,
 track_width=800,
-track_height=300,
+track_height=200,
 dist2st_and_end=0,
 dotsize=8,
 debug=1,
 add_grp_anno=1,
 grp_font_size=8,
 grp_anno_font_type=italic,
-shift_text_yval=0.1, 
+shift_text_yval=0.8, 
 yaxis_offset4min=0.1, 
-yaxis_offset4max=0.1, 
+yaxis_offset4max=0.5, 
 xaxis_offset4min=0.01, 
 xaxis_offset4max=0.01,
 fig_fmt=png,
@@ -1493,5 +1500,70 @@ scatterdotcols=green yellow,
 dataContrastCols=%str(green darkorange)
 );
 
+*If it is necessary to control the order of sub-tracks;
+*Make sure to manually assign negative values to the var grp for different genes;
+*Assign the same negative values for all gene grps if drawing them at the same level;
+*The two vars, gscatter_grp and lattice_subgrp, are necessary but can be the same values;
+*as they are only enable the macro to runnable but are not used by the final plotting codes;
+*Important: for each gene grp, the longest region will be draw in a light color and labeled with grp name!;
+*other grp members will be drawn consecutively with the same color but using darker scheme;
+data x0;
+*gscatter_grp can be either numeric numbers or charaters;
+*the var cnv should be negative for gene grp;
+input chr st end cnv grp $ gscatter_grp lattice_subgrp;
+*gene X1: ranges from 100 to 1500, with 4 exons;
+*gene agene: ranges from 2000 to 3000, with 5 exons;
+cards;
+1 200 300 -1 X1 -1 0
+1 400 500 -1 X1 -1 0
+1 550 600 -1 X1 -1 0
+1 900 1000 -1 X1 -1 0
+1 100 1500 -1 X1 -1 0
+1 2000 3000 -3 agene -1 0
+1 2100 2200 -3 agene -1 0
+1 2300 2400 -3 agene -1 0
+1 2500 2600 -3 agene -1 0
+1 2700 2800 -3 agene -1 0
+1 2900 3000 -3 agene -1 0
+;
+run;
+
+%Lattice_gscatter_over_bed_track(
+bed_dsd=x0,
+chr_var=chr,
+st_var=st,
+end_var=end,
+grp_var=grp,
+scatter_grp_var=gscatter_grp,
+lattice_subgrp_var=lattice_subgrp,
+yval_var=cnv,
+yaxis_label=%str(Gene track),
+linethickness=30,
+track_width=800,
+track_height=200,
+dist2st_and_end=0,
+dotsize=8,
+debug=1,
+add_grp_anno=1,
+grp_font_size=8,
+grp_anno_font_type=italic,
+shift_text_yval=0.8, 
+yaxis_offset4min=0.1, 
+yaxis_offset4max=0.5, 
+xaxis_offset4min=0.01, 
+xaxis_offset4max=0.01,
+fig_fmt=png,
+refline_thickness=10,
+refline_color=lightblue,
+pct4neg_y=0.8,
+NotDrawScatterPlot=1,
+mk_fake_axis_with_updated_func=1,
+sameyaxis4scatter=1,
+maxyvalue4truncat=16,
+adjval4header=0,
+ordered_sc_grpnames=a_a b_b c_c,          
+scatterdotcols=green yellow, 
+dataContrastCols=%str(green darkorange)
+);
 
 */

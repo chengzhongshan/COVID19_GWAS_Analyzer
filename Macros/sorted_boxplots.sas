@@ -7,6 +7,9 @@ label4y=Count,/*Y-axis label*/
 stat4sort=mean /*mean, sum, median value of by_var to sort the boxplots*/
 );
 *Add summary statistics to the input dsd;
+proc sort data=&grpdsd;
+by 	&grp_var &by_var;
+run;
 proc summary data=&grpdsd(keep=&by_var &grp_var) mean sum median;
 var &by_var;
 by &grp_var;
@@ -34,6 +37,7 @@ data &grpdsd.1;
 set &grpdsd.1;
 *format char grps to numeric grps;
 new_&grp_var=input(&grp_var,x2y.);
+Count=1;
 
 proc sgplot data=&grpdsd.1;
 vbox &by_var/group=new_&grp_var category=new_&grp_var 
@@ -41,6 +45,8 @@ vbox &by_var/group=new_&grp_var category=new_&grp_var
 format new_&grp_var y2x.;
 label new_&grp_var="&label4grp_var"
           &by_var="&label4y";
+*add count table, and no need for the option class, which is for boxplots with mulitple subgroups in each group;
+xaxistable Count/stat=sum position=top;  
 run;
 
  %mend;
