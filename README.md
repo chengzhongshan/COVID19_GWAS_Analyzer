@@ -7,8 +7,9 @@ This package provides SAS scripts that perform differential effect size analysis
 
 Once users have the free SAS account, they can login into the SAS OnDemand for Academics and create a directory called 'Macros' under the 'HOME' directory (such as /home/username) of the account. Please upload all SAS macros shared in the 'Macros' directory in this package. These macros will be used by the shared SAS scripts to download GWAS data from the HGI or GRASP databases, perform GWAS comparison, draw Manhattan plot and QQ plot, and conduct single cell expression analyses with data shared by UCSC Cell Browser.
 
-Please read our iScience paper for how we used the COVID19_GWAS_Analyzer to perform intergative GWAS analysis.
+Please read our iScience ans STAR Protocol papers for how we used the COVID19_GWAS_Analyzer to perform intergative GWAS analysis.
 https://www.sciencedirect.com/science/article/pii/S2589004223016322
+https://www.sciencedirect.com/science/article/pii/S266616672400193X
 
 Please read the annotations for all SAS macros included in the "Macros" directory.
 https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/blob/main/Macros/Available_SAS_Macros_and_its_annotations4STAR_PROTOCOL.csv
