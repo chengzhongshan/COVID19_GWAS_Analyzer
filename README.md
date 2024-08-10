@@ -9,6 +9,7 @@ Once users have the free SAS account, they can login into the SAS OnDemand for A
 
 Please read our iScience ans STAR Protocol papers for how we used the COVID19_GWAS_Analyzer to perform intergative GWAS analysis.
 https://www.sciencedirect.com/science/article/pii/S2589004223016322
+
 https://www.sciencedirect.com/science/article/pii/S266616672400193X
 
 Please read the annotations for all SAS macros included in the "Macros" directory.
