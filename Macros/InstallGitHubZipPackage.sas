@@ -32,6 +32,25 @@ UnzipAllFilesIntoOneFolder=1
 );
 
 %mend;
+/*Demo codes:;
+
+filename install url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/InstallGitHubZipPackage.sas";
+%include install;
+
+%InstallGitHubZipPackage(
+git_zip=https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/archive/refs/heads/main.zip,
+homedir=%sysfunc(pathname(HOME)),
+InstallFolder=Macros,
+DeletePreviousFolder=1 
+);
+
+
+%let macrodir=%sysfunc(pathname(HOME))/Macros;
+%include "&macrodir/importallmacros_ue.sas";
+%importallmacros_ue;
+%macroparas(macrorgx=github);
+
+*/
 
 
 
@@ -299,4 +318,8 @@ run;
 filename &f2 clear;
  
 %mend _mp_unzip;
+
+
+
+
 
