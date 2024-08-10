@@ -188,6 +188,7 @@ proc print data=&output_macropara_dsd;
 %print_nicer;
 run;
 %end;
+title;
 
 %mend;
 

@@ -3,7 +3,7 @@ file_or_dir_fullpath=
 );
 filename fileref "&file_or_dir_fullpath";
 data _null_;
-rc=fdelete(fileref);
+rc=fdelete('fileref');
 run;
 filename fileref clear;
 

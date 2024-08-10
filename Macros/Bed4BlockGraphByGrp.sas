@@ -1,22 +1,42 @@
-%macro Bed4BlockGraphByGrp(dsdin,mindist,maxdist,chr,chr_var,st_var,end_var,dsdout,graph_wd,graph_ht,show_block_values,Grp);
+%macro Bed4BlockGraphByGrp(
+dsdin,
+mindist,
+maxdist,
+chr,
+chr_var,
+st_var,
+end_var,
+dsdout,
+graph_wd,
+graph_ht,
+show_block_values,
+Grp,
+block_colors=darkred darkblue,
+gap_color=white
+);
 /*make sure no overlapping between each bed region*/
-%local i block_values grp_list grp_n typic_colors color xi gi;
+%local i block_values grp_list grp_n color xi gi;
 
 /*typical colors: lightgreen lightred lightblue lightgreen lightpink darkred*/
 /*selected based Hex colors from SAS sgdesign*/
+%if %length(&block_colors)=0 %then %do;
 %let typic_colors=CXFFFFFF CXF6A48A CX98F19B CX7F91ED CXED85F2 CXE30735;
+%end;
+%else %do;
+%let typic_colors=&block_colors;
+%end;
 
 %if &show_block_values %then %let block_values=values;
 %else %let block_values=;
 
-proc sql;
+proc sql noprint;
 select distinct &grp
 into :grp_list separated by ' '
 from &dsdin;
 %let grp_n=%numargs(&grp_list);
 
 %bed_block_complement4blockplot(dsdin=&dsdin,chr_var=&chr_var,chr_value=&chr,st_var=&st_var,end_var=&end_var,
-dsdout=&dsdout,minst=&mindist,maxend=&maxdist,generate_dsd_only=0);
+dsdout=&dsdout,minst=&mindist,maxend=&maxdist,generate_dsd_only=1);
 
 /*%abort 255;*/
 
@@ -64,13 +84,14 @@ begingraph / designwidth=&graph_wd designheight=&graph_ht border=false;
 		  /*Make the altfillattrs with the fixed color CX0000FF as that is used by the 1st background track!*/
 		  /*For different grps, change the fillattrs color accordingly*/ 
 		  /*Note: here will use fixed var grp&grp_n.d4bar for each group*/
-          blockplot x=grp&grp_i.pos block=grp&grp_i.d4bar / datatransparency=0.5 name="block&grp_i" display=(FILL &block_values) filltype=alternate fillattrs=(color=&color) altfillattrs=(color=CX0000FF)
-                                    valuehalign=center valuevalign=center extendblockonmissing=true;
+          blockplot x=grp&grp_i.pos block=grp&grp_i.d4bar / datatransparency=0.2 name="block&grp_i" 
+                                                                                                    display=(FILL &block_values) filltype=alternate fillattrs=(color=&gap_color) altfillattrs=(color=&color)
+                                                                                                    valuehalign=center valuevalign=center extendblockonmissing=true;
 		%end;
 	 %end;
 	 %else %do;
       layout overlay / walldisplay=none xaxisopts=( display=(LINE TICKS TICKVALUES) linearopts=(viewmin=&mindist viewmax=&maxdist  tickvaluesequence=( start=%eval(&mindist-1) end=&maxdist increment=%eval((&maxdist-&mindist+1)/10) )));
-         blockplot x=_ST block=_N / datatransparency=1 name='block' display=(FILL &block_values) filltype=alternate fillattrs=(color=CXFFFFFF) altfillattrs=(color=CX0000FF )
+         blockplot x=_ST block=_N / datatransparency=1 name='block' display=(FILL &block_values) filltype=alternate fillattrs=(color=&gap_color) altfillattrs=(color=%scan(&typic_colors,1,%str( )) )
                                     valuehalign=center valuevalign=center;
 	 %end;
       endlayout;
@@ -227,16 +248,18 @@ chr7  410 1500
 run;
 
 %Bed4BlockGraph(dsdin=bed
-                ,mindist=10
-                ,maxdist=1400
-                ,chr=chr7
-                ,chr_var=Var1
-                ,st_var=Var2
-                ,end_var=Var3
-                ,dsdout=test
-				,graph_wd=1000
-				,graph_ht=60
-                ,show_block_values=0
+,mindist=10
+ ,maxdist=1400
+,chr=chr7
+,chr_var=Var1
+,st_var=Var2
+,end_var=Var3
+,dsdout=test
+,graph_wd=1000
+,graph_ht=60
+,show_block_values=0
+,block_color=CX0000FF	
+,gap_color=CXFFFFFF 
 );
 
 */
@@ -256,10 +279,11 @@ run;
 *Check overlapped regions;
 *This is already included into the macro Bed4BlockGraph, Demo here for recalling only;
 %MergerOverlappedRegInBed(bedin=bed
-                         ,chr_var=var1
-                         ,st_var=var2
-                         ,end_var=var3
-                         ,bedout=xyz);
+,chr_var=var1
+,st_var=var2
+,end_var=var3
+,bedout=xyz
+);
 
 data xyz1;
 set xyz;
@@ -269,18 +293,21 @@ run;
 
 options mprint mlogic symbolgen;
 
-%Bed4BlockGraphByGrp(dsdin=xyz1
-                ,mindist=1
-                ,maxdist=2000
-                ,chr=chr7
-                ,chr_var=Var1
-                ,st_var=Var2
-                ,end_var=Var3
-                ,dsdout=test
-				,graph_wd=1200
-				,graph_ht=100
-                ,show_block_values=0
-                ,grp=grp
+%Bed4BlockGraphByGrp(
+dsdin=xyz1
+,mindist=1
+,maxdist=2000
+,chr=chr7
+,chr_var=Var1
+,st_var=Var2
+,end_var=Var3
+,dsdout=test
+,graph_wd=1200
+,graph_ht=100
+,show_block_values=0
+,grp=grp
+,block_colors=darkred darkgreen	
+,gap_color=CXFFFFFF 
 );
 
 */

@@ -1,5 +1,10 @@
-
-%macro Get_Tested_ASE_Muts(Cancer,normal_aaf,gene);
+%macro Get_Tested_ASE_Muts(
+Cancer,
+normal_aaf,
+gene,
+MatlabAnalysisDir=F:\NewTCGAAssocRst /*This is the matlab analysis directory containing directories for different cancer types,
+and each cancer directory has the following subdir: MatlabAnalysis*/
+);
 %if &gene ne %then %do;
  %put Will only query ASE-Mut for single gene &gene;
 %end;
@@ -10,7 +15,7 @@
 goptions nonote;
 
 /*Prepare database for analysis*/
-%let CancerDir=F:\NewTCGAAssocRst\&Cancer;
+%let CancerDir=&MatlabAnalysisDir\&Cancer;
 %let outpath=%qsysfunc(prxchange(s/\//\\/,-1,&CancerDir\MatlabAnalysis\hits));
 %put &outpath;
 %if &outpath="" %then %abort 255;
@@ -123,10 +128,10 @@ on b.TCGA=a.id;
 
 *Change &Cancer into other cancer type globally;
 %let Cancer_type=&Cancer;
-%let driver_mut_file=F:\NewTCGAAssocRst\&Cancer\MatlabAnalysis\&Cancer._All_Tested_Muts4FiveFeatures.txt;
-%let driver_gene_info=F:\NewTCGAAssocRst\&Cancer\MatlabAnalysis\&Cancer._All_Tested_GeneInfo4FiveFeatures.txt;
+%let driver_mut_file=&MatlabAnalysisDir\&Cancer\MatlabAnalysis\&Cancer._All_Tested_Muts4FiveFeatures.txt;
+%let driver_gene_info=&MatlabAnalysisDir\&Cancer\MatlabAnalysis\&Cancer._All_Tested_GeneInfo4FiveFeatures.txt;
 %let ASE_Read_cutoff=20;
-%let CancerDir=F:\NewTCGAAssocRst\&Cancer_type;
+%let CancerDir=&MatlabAnalysisDir\&Cancer_type;
 
 %ImportFilebyScan(file=&driver_mut_file
                  ,dsdout=all_muts
@@ -144,14 +149,14 @@ on b.TCGA=a.id;
 );
  
 /*Get samples having both ASE and WGS mutations;*/
-%ImportFilebyScan(file=F:\NewTCGAAssocRst\&Cancer\MatlabAnalysis\matrix\tumor.collabels
+%ImportFilebyScan(file=&MatlabAnalysisDir\&Cancer\MatlabAnalysis\matrix\tumor.collabels
                  ,dsdout=RNASeq
                  ,firstobs=0
                  ,dlm='09'x
                  ,ImportAllinChar=1
                  ,MissingSymb=NaN
 );
-%ImportFilebyScan(file=F:\NewTCGAAssocRst\&Cancer\MatlabAnalysis\mutations\collabels.txt
+%ImportFilebyScan(file=&MatlabAnalysisDir\&Cancer\MatlabAnalysis\mutations\collabels.txt
                  ,dsdout=WGS
                  ,firstobs=0
                  ,dlm=':'
@@ -168,7 +173,7 @@ where V1 in (
 );
 
 /*Import ASE-Mut Assoc P and FDR*/
-%ImportFilebyScan(file=F:\NewTCGAAssocRst\&Cancer\MatlabAnalysis\&Cancer._AssocInfo4FiveFeatures.txt
+%ImportFilebyScan(file=&MatlabAnalysisDir\&Cancer\MatlabAnalysis\&Cancer._AssocInfo4FiveFeatures.txt
                  ,dsdout=AssocInfo
                  ,firstobs=1
                  ,dlm='09'x
@@ -284,7 +289,7 @@ run;
 proc sort data=ASE_mut_final1 nodupkeys;by rowlabels mut id;run;
 
 %if &gene ne %then %do;
- proc export data=ASE_Mut_Final1 outfile="F:\NewTCGAAssocRst\&Cancer\MatlabAnalysis\&Cancer._AllTestedMutASE4Matlab.&gene..txt" dbms=tab replace;
+ proc export data=ASE_Mut_Final1 outfile="&MatlabAnalysisDir\&Cancer\MatlabAnalysis\&Cancer._AllTestedMutASE4Matlab.&gene..txt" dbms=tab replace;
  run;
  data ASE_mut_Final1;
  set ASE_mut_Final1;
@@ -302,7 +307,7 @@ proc sort data=ASE_mut_final1 nodupkeys;by rowlabels mut id;run;
 
 %end;
 %else %do;
- proc export data=ASE_Mut_Final1 outfile="F:\NewTCGAAssocRst\&Cancer\MatlabAnalysis\&Cancer._AllTestedMutASE4Matlab.txt" dbms=tab replace;
+ proc export data=ASE_Mut_Final1 outfile="&MatlabAnalysisDir\&Cancer\MatlabAnalysis\&Cancer._AllTestedMutASE4Matlab.txt" dbms=tab replace;
  run;
 %end;
 

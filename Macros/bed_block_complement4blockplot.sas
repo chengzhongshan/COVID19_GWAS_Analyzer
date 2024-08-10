@@ -109,7 +109,7 @@ begingraph / designwidth=1200 designheight=100;
                              end=&maxdist increment=%eval((&maxdist-&mindist+1)/10) )));
          blockplot x=_POS2 block=_I / name='block' display=(FILL) 
                    extendblockonmissing=true 
-        *This will enable the alternate color mode, which is contronable compared to the multicolor mode;
+        /*This will enable the alternate color mode, which is contronable compared to the multicolor mode;*/
         %if &use_alternate_mode2fill_blocks=0 %then %do;
                    filltype=multicolor
           %end;

@@ -1,4 +1,22 @@
-%macro PrepareDsd4MutRegPlot(dsd,pos_var,ID_var4yaxis,x_st4mut,x_end4mut,gr4color,pic_wd,pic_ht,dot_size,dsdout,seriesplot=0);
+%macro PrepareDsd4MutRegPlot(
+dsd,
+pos_var,
+ID_var4yaxis,
+x_st4mut,
+x_end4mut,
+gr4color,
+pic_wd,
+pic_ht,
+dot_size,
+dsdout,
+seriesplot=0,
+yoffsetmin=0.01, /*Adjust the y-axis offset min or max to prevent the axis overlap with barplot*/
+yoffsetmax=0.01,
+xoffsetmin=0.01,
+xoffsetmax=0.01,
+colors4grps=CXd17800 CX47a82a CXb38ef3 CXf9da04  CX445694 CXdd988f CX01665e CX8da7cd CX9d3cdb CX7f8e1f CX2597fa CXb26084 
+/*Assign custom colors for bar groups from upper to bottom bars;*/
+);
 
 *Asign missing values for these rows if its positions are out of the query range;
 data &dsd.tmp;
@@ -68,8 +86,12 @@ dynamic _I _G _VALUE2 _I2 __VALUE_ _V0A _I3 _I4;
 begingraph / designwidth=&pic_wd designheight=&pic_ht;
    layout lattice / rowdatarange=data columndatarange=data rowgutter=10 columngutter=10;
       *Note: yaxis is reversed!;
-      layout overlay / walldisplay=none xaxisopts=( display=(TICKS TICKVALUES LINE)) yaxisopts=(reverse=true type=discrete display=none discreteopts=( tickvaluefitpolicy=none));
-	     barchart category=_I response=__VALUE_ / group=_G name='bar_h' display=(FILL) stat=mean orient=horizontal barwidth=1.0 discreteoffset=0.02 groupdisplay=Stack clusterwidth=1.0;
+       *Note: offsetmax=0 or offsexmin=0 for each axis will remove the blank spaces close to each axis;
+        *It is necessary to adjust y-axis offsetmin and offsetmax to prevent the upper and lower bars cut by the axis;
+      layout overlay / walldisplay=none xaxisopts=( offsetmin=&xoffsetmin offsemax=&xoffsetmax display=(TICKS TICKVALUES LINE)) 
+                                yaxisopts=(offsetmin=&yoffsetmin offsemax=&yoffsetmax reverse=true type=discrete display=none discreteopts=( tickvaluefitpolicy=none));
+	     	*It is important to give full width for bar when the display of bar is filled by specific color;
+        barchart category=_I response=__VALUE_ / group=_G name='bar_h' display=(FILL) stat=mean orient=horizontal barwidth=1.0 discreteoffset=0.02 groupdisplay=Stack clusterwidth=1.0;
          scatterplot x=_VALUE2 y=_I2 / name='scatter' markerattrs=(color=black symbol=CIRCLEFILLED size=&dot_size );
 		  %if %eval(&seriesplot=1) %then %do;
 		   seriesplot x=_V0A y=_I3 / group=_I4 name='series' connectorder=xaxis datatransparency=0.5 lineattrs=(color=CX000000 pattern=thindot);
@@ -81,21 +103,26 @@ end;
 run;
 
 /*default is listing style;*/
-%Barchart_color_template(colors=CX445694 CXdd988f CX01665e CX8da7cd CX9d3cdb CX7f8e1f CX2597fa CXb26084 CXd17800 CX47a82a CXb38ef3 CXf9da04,
+%Barchart_color_template(colors=&colors4grps,
                          temp_out=blockstyle);
 
 ODS listing style=blockstyle image_dpi=300;
 
 /*Doesn't work*/
+/*
 options printerpath=svg;
 ods listing close;
 ods printer style=blockstyle;
+*/
+ods listing close;
+ods html style=blockstyle image_dpi=300 file="myblock.html";
+ods graphics/border=off;
 
 proc sgrender data=&dsdout template=Graph;
 dynamic _I="I" _G="G" _VALUE2="VALUE" _I2="I" __VALUE_="'_VALUE_'n" _V0A="V0" _I3="I" _I4="I";
 run;
 
-ods printer close;
+/*ods printer close;*/
 ods listing;
 
 %mend;
@@ -121,17 +148,18 @@ perlfuncpath=F:/360yunpan/SASCodesLibrary/SAS-Useful-Codes,
 outdsd=filenames,
 outputfullfilepath=1);
 
-%ImportFilesInDSDbyScan(filedsd=filenames
-                 ,filename_var=filefullname
-		         ,filedir=
-                 ,fileRegexp=_AllTestedMutASE
-                 ,dsdout=dsd
-                 ,firstobs=1
-                 ,dlm='09'x
-                 ,ImportAllinChar=1
-                 ,MissingSymb=NaN
-		         ,notverbose=1
-                 ,debug=0
+%ImportFilesInDSDbyScan(
+filedsd=filenames
+,filename_var=filefullname
+,filedir=
+,fileRegexp=_AllTestedMutASE
+,dsdout=dsd
+,firstobs=1
+,dlm='09'x
+,ImportAllinChar=1
+,MissingSymb=NaN
+,notverbose=1
+,debug=0
 );
 
 data dsd;
@@ -163,15 +191,21 @@ run;
 
 
 %PrepareDsd4MutRegPlot(dsd=a,
-                       pos_var=pos,
-                       ID_var4yaxis=ID,
-                       x_st4mut=139386896,
-                       x_end4mut=139442238,
-                       gr4color=type,
-                       pic_wd=150,
-                       pic_ht=200,
-                       dot_size=2,
-                       dsdout=ab_New);
+ pos_var=pos,
+ ID_var4yaxis=ID,
+ x_st4mut=139386896,
+ x_end4mut=139442238,
+ gr4color=type,
+ pic_wd=150,
+ pic_ht=200,
+ dot_size=2,
+ dsdout=ab_New,
+yoffsetmin=0.05,
+yoffsetmax=0.05,
+xoffsetmin=0.01,
+xoffsetmax=0.01,
+colors4grps=lightred lightgreen lightblue red green blue darkred darkgreen darkblue
+);
 proc sort data=ab_New out=ab_uniq nodupkeys;by type mut ID;run;
 proc freq data=ab_uniq;
 table type;
@@ -211,16 +245,23 @@ run;
 
 *options mprint mlogic symbolgen;
 %PrepareDsd4MutRegPlot(dsd=z,
-                       pos_var=pos,
-                       ID_var4yaxis=ID,
-                       x_st4mut=160381329,
-                       x_end4mut=160404508,
-                       gr4color=type,
-                       pic_wd=600,
-                       pic_ht=800,
-                       dot_size=5,
-                       dsdout=z_new,
-                       seriesplot=1);
+ pos_var=pos,
+ ID_var4yaxis=ID,
+ x_st4mut=160381329,
+ x_end4mut=160404508,
+ gr4color=type,
+ pic_wd=800,
+ pic_ht=800,
+ dot_size=5,
+ dsdout=z_new,
+ seriesplot=0,
+yoffsetmin=0.05,
+yoffsetmax=0.05,
+xoffsetmin=0.01,
+xoffsetmax=0.01,
+colors4grps=lightred lightgreen lightblue
+);
+
 *Optimize the template by using the sgd graph template: ;
 *F:\360yunpan\SASCodesLibrary\SAS-Useful-Codes\SAS_Code_Database\mutation heatmap sgd graph template.sgd;
 

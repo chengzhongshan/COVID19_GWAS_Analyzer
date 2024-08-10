@@ -1,26 +1,30 @@
-
-%macro MutRegOverlappedBlock(block_dsdin
-                            ,block_chr_var
-                            ,block_st_var
-							,block_end_var
-							,chr
-							,mindist
-							,maxdist
-							,Mut_dsdin
-							,Mut_chr_var
-							,Mut_st_var
-							,mut_sample_var
-							,Final_dsdout
-							,block_filcolor
-							,block_filaltcolor
-							,dotsize
-							,dotcolor
-							,max_y
-							,add_sample_ref_line=0
-							,graph_designwidth=400
-							,sample_refline_pattern=solid
-							,ref_line_color=white
-                            );
+%macro MutRegOverlappedBlock(
+block_dsdin
+,block_chr_var
+,block_st_var
+,block_end_var
+,chr
+,mindist
+,maxdist
+,Mut_dsdin
+,Mut_chr_var
+,Mut_st_var
+,mut_sample_var
+,Final_dsdout
+,block_filcolor
+,block_filaltcolor
+,dotsize
+,dotcolor
+,max_y
+,add_sample_ref_line=0
+,graph_designwidth=400
+,graph_designheight=
+,sample_refline_pattern=solid
+,ref_line_color=white,
+yoffsetmin=0.01, /*This is for the sub-macro Bed4BlockGraph: 
+Adjust the y-axis offset min or max to prevent the axis overlap with barplot*/
+yoffsetmax=0.01
+);
 /*select color in sgdesigner and add initial 'CX'*/
 %if &block_filcolor eq %then %let block_filcolor=CXC6C3C6; 
 %if &block_filaltcolor eq %then %let block_filaltcolor=CX00CCCC;
@@ -64,8 +68,8 @@ run;
                 ,st_var=block_x
                 ,end_var=block_x1
                 ,dsdout=block1
-				,graph_wd=&graph_designwidth
-				,graph_ht=60
+				       ,graph_wd=&graph_designwidth
+				       ,graph_ht=60
                 ,show_block_values=0
 );
 
@@ -135,12 +139,14 @@ if _n_=1 then do;
 end;
 run;
 
+%if %length(&graph_designheight)=0 %then %let graph_designheight=%eval(&max_y+10*&max_y);
+
 proc template;
 define statgraph Graph;
 dynamic _BLOCK_X _BLOCK_Y _MUT_X _MUT_Y _MUT_X1 _MUT_Y1 _MUT_X2 _MUT_Y2;
 /*pad=5 will add the extra 5px spaces to the left, right, top and bottom of the figure*/
 /*Change designwidth and designheight to revise the figure*/
-begingraph / pad=5 border=false designwidth=&graph_designwidth designheight=%eval(&max_y+10*&max_y); /*Make the graph's height as that of sample, plus 22 of margin*/
+begingraph / pad=5 border=false designwidth=&graph_designwidth designheight=&graph_designheight; /*Make the graph's height as that of sample, plus 22 of margin*/
    layout lattice / rowdatarange=data columndatarange=data rowgutter=10 columngutter=10;
       layout overlay / walldisplay=none 
                        /*xaxisopts=( display=(LINE TICKVALUES TICKS ) griddisplay=off linearopts=( viewmin=%eval(&mindist-1) viewmax=&maxdist minorticks=OFF tickvaluesequence=( start=%eval(&mindist-1) end=&maxdist increment=%eval((&maxdist-&mindist+1)/10)))) 
@@ -175,7 +181,7 @@ run;
 options printerpath=svg;
 ods listing close;
 ods printer file="&Final_dsdout..svg";
-
+title;
 proc sgrender data=&Final_dsdout template=Graph;
 dynamic _BLOCK_X="'BLOCK_X'n" _BLOCK_Y="'BLOCK_Y'n" _MUT_X="'MUT_X'n" _MUT_Y="'MUT_Y'n" _MUT_X1="'MUT_X1'n" _MUT_Y1="'MUT_Y1'n" _MUT_X2="'MUT_X2'n" _MUT_Y2="'MUT_Y2'n";
 run;
@@ -213,27 +219,29 @@ chr7 800 f
 chr7 900 a
 ;
 
-%MutRegOverlappedBlock(block_dsdin=bed
-                      ,block_chr_var=var1
-                      ,block_st_var=var2
-				      ,block_end_var=var3
-					  ,chr=chr7
-					  ,mindist=10
-					  ,maxdist=1500
-					  ,Mut_dsdin=Mut
-					  ,Mut_chr_var=chr
-					  ,Mut_st_var=_st_
-					  ,mut_sample_var=sample
-					  ,Final_dsdout=AAA
-					  ,block_filcolor=CXC6C3C6
-					  ,block_filaltcolor=CX00CCCC
-					  ,dotsize=10
-					  ,dotcolor=CX000000
-                      ,max_y=20 
-                      ,add_sample_ref_line=1
-                      ,graph_designwidth=800
-					  ,sample_refline_pattern=3
-					  ,ref_line_color=blue
+%MutRegOverlappedBlock(
+block_dsdin=bed
+,block_chr_var=var1
+,block_st_var=var2
+,block_end_var=var3
+,chr=chr7
+,mindist=10
+,maxdist=1500
+,Mut_dsdin=Mut
+,Mut_chr_var=chr
+,Mut_st_var=_st_
+,mut_sample_var=sample
+,Final_dsdout=AAA
+,block_filcolor=CXffffff
+,block_filaltcolor=lightblue
+,dotsize=10
+,dotcolor=CX000000
+,max_y=20 
+,add_sample_ref_line=1
+,graph_designwidth=800
+,graph_designheight=600
+,sample_refline_pattern=3
+,ref_line_color=black
 );
 *Select different refline pattern here:
 *https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/grstatgraph/n13pm0ndse66l2n1u309543mx2yt.htm;

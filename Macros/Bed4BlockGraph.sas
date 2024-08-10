@@ -1,4 +1,18 @@
-%macro Bed4BlockGraph(dsdin,mindist,maxdist,chr,chr_var,st_var,end_var,dsdout,graph_wd,graph_ht,show_block_values);
+%macro Bed4BlockGraph(
+dsdin,
+mindist,
+maxdist,
+chr,
+chr_var,
+st_var,
+end_var,
+dsdout,
+graph_wd,
+graph_ht,
+show_block_values,
+block_color=CX0000FF,	/*color for the bed block regions*/
+gap_color=CXFFFFFF /*color for the space regions between bed regions*/
+);
 /*make sure no overlapping between each bed region*/
 
 %if &show_block_values %then %let block_values=values;
@@ -109,7 +123,7 @@ begingraph / designwidth=&graph_wd designheight=&graph_ht border=false;
       /*make sure to customize start and end, as well as viewmin and viewmax*/
 			   /*Remove line from the display will lead to no xaxis line*/
       layout overlay / walldisplay=none xaxisopts=(display=(TICKS TICKVALUES) linearopts=(viewmin=&mindist viewmax=&maxdist  tickvaluesequence=( start=%eval(&mindist-1) end=&maxdist increment=%eval((&maxdist-&mindist+1)/10) )));
-         blockplot x=_ST block=_N / name='block' display=(FILL &block_values) filltype=alternate fillattrs=(color=CXFFFFFF) altfillattrs=(color=CX0000FF )
+         blockplot x=_ST block=_N / name='block' display=(FILL &block_values) filltype=alternate fillattrs=(color=&gap_color) altfillattrs=(color=&block_color )
                                     valuehalign=center valuevalign=center;
           /*Add block values at the center of each block, which is not necessary when there are too many blocks to be visible!*/
          /*blockplot x=_ST block=_N / name='block' display=(FILL VALUES) filltype=alternate fillattrs=(color=CXFFFFFF) altfillattrs=(color=CX0000FF )
@@ -131,7 +145,7 @@ title "Block graph for dsd: &dsdin";
 proc sgrender data=&dsdout template=Graph;
 dynamic _ST="ST" _N="d4bar";
 run;
-
+title;
 ods printer close;
 ods listing;
 
@@ -286,17 +300,20 @@ chr7 80 400
 chr7  410 1500
 run;
 
-%Bed4BlockGraph(dsdin=bed
-                ,mindist=10
-                ,maxdist=1400
-                ,chr=chr7
-                ,chr_var=Var1
-                ,st_var=Var2
-                ,end_var=Var3
-                ,dsdout=test
-				,graph_wd=1000
-				,graph_ht=60
-                ,show_block_values=0
+%Bed4BlockGraph(
+dsdin=bed
+,mindist=10
+,maxdist=1400
+,chr=chr7
+,chr_var=Var1
+,st_var=Var2
+,end_var=Var3
+,dsdout=test
+,graph_wd=1000
+,graph_ht=60
+,show_block_values=0
+,block_color=darkred
+,gap_color=white
 );
 
 */
@@ -331,22 +348,25 @@ run;
 *Check overlapped regions;
 *This is already included into the macro Bed4BlockGraph, Demo here for recalling only;
 %MergerOverlappedRegInBed(bedin=bed
-                         ,chr_var=var1
-                         ,st_var=var2
-                         ,end_var=var3
-                         ,bedout=xyz);
+ ,chr_var=var1
+,st_var=var2
+,end_var=var3
+,bedout=xyz);
 
-%Bed4BlockGraph(dsdin=xyz
-                ,mindist=55076725
-                ,maxdist=55097925
-                ,chr=chr7
-                ,chr_var=Var1
-                ,st_var=Var2
-                ,end_var=Var3
-                ,dsdout=test
-				,graph_wd=1000
-				,graph_ht=160
-                ,show_block_values=0
+%Bed4BlockGraph(
+dsdin=xyz
+,mindist=55076725
+,maxdist=55097925
+,chr=chr7
+,chr_var=Var1
+,st_var=Var2
+,end_var=Var3
+,dsdout=test
+,graph_wd=1000
+,graph_ht=160
+,show_block_values=0
+,block_color=darkred
+,gap_color=white
 );
 
 data xyz1;
@@ -355,17 +375,20 @@ if _n_<5 then grp=1;
 else grp=2;
 run;
 
-%Bed4BlockGraph(dsdin=xyz1
-                ,mindist=55076725
-                ,maxdist=55285031
-                ,chr=chr7
-                ,chr_var=Var1
-                ,st_var=Var2
-                ,end_var=Var3
-                ,dsdout=test
-				,graph_wd=1000
-				,graph_ht=160
-                ,show_block_values=0
+%Bed4BlockGraph(
+dsdin=xyz1
+,mindist=55076725
+,maxdist=55285031
+,chr=chr7
+,chr_var=Var1
+,st_var=Var2
+,end_var=Var3
+,dsdout=test
+,graph_wd=1000
+,graph_ht=160
+,show_block_values=0
+,block_color=darkred
+,gap_color=white
 );
 
 */

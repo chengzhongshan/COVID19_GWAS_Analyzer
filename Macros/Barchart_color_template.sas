@@ -1,6 +1,9 @@
 %macro Barchart_color_template(colors,temp_out);
+/*SAS codes for defining colors for ods output*/
+/*https://support.sas.com/kb/48/138.html*/
+
 /*https://support.sas.com/rnd/base/ods/templateFAQ/Template_colors.html*/
-/*BLACK	#FFFFFF*/
+/*WHITE	#FFFFFF*/
 /*BLUE	#0000FF*/
 /*YELLOW	#FFF00*/
 /*BLUE VIOLET	#9F5F9F*/
@@ -51,7 +54,11 @@
 /*default is listing*/
 proc template;
  define style &temp_out;
- parent = styles.default;
+ parent = styles.sasweb;
+    class graphwalls / 
+            frameborder=off;
+    class graphbackground / 
+            color=white;
  %if &colors ne %then %do;
   %do i=1 %to &n_colors;
    %let color=%scan(&colors,&i,%str( ));
@@ -97,7 +104,8 @@ options mprint mlogic symbolgen;
 
 *%Barchart_color_template(colors=CX445694 CXa23a2e CX01665e CX8CA6CE CX9d3cdb CX7f8e1f CX2597fa CXb26084 CXd17800 CX47a82a CXb38ef3 CXf9da04,temp_out=blockstyle);
 
-%Barchart_color_template(colors=CX445694 CXdd988f CX01665e CX8da7cd CX9d3cdb CX7f8e1f CX2597fa CXb26084 CXd17800 CX47a82a CXb38ef3 CXf9da04,
+*%debug_macro;
+%Barchart_color_template(colors=CXd17800 CX47a82a CXb38ef3 CXf9da04 CX445694 CXdd988f CX01665e CX8da7cd CX9d3cdb CX7f8e1f CX2597fa CXb26084,
                          temp_out=blockstyle);
 
 ODS listing style=blockstyle;
@@ -114,13 +122,32 @@ define statgraph Graph;
 dynamic _I _X _I2;
 begingraph;
    layout lattice / rowdatarange=data columndatarange=data rowgutter=10 columngutter=10;
-      layout overlay / walldisplay=none yaxisopts=(reverse=true discreteopts=( tickvaluefitpolicy=none));
-         barchart category=_I response=_X / group=_I2 name='bar_h' display=(FILL) stat=mean orient=horizontal outlineattrs=(color=CXFFFFFF) barwidth=1.0 groupdisplay=Cluster clusterwidth=1;
+
+      *It is necessary to adjust y-axis offsetmin and offsetmax to prevent the upper and lower bars cut by the axis;
+       *walldisplay=none will remove outline;
+      layout overlay / walldisplay=none xaxisopts=( offsetmin=0 offsetmax=0 display=(LINE))  
+                                yaxisopts=(offsetmin=0.04 offsetmax=0.04 reverse=true display=(line) discreteopts=( tickvaluefitpolicy=none));
+         barchart category=_I response=_X / group=_I2 name='bar_h' display=(FILL) stat=mean orient=horizontal outlineattrs=(color=CX000000) barwidth=1.0 groupdisplay=Cluster clusterwidth=1;
       endlayout;
    endlayout;
 endgraph;
 end;
 run;
+
+*Option 1;
+ods listing close;
+ods html style=blockstyle path='.' file='newgraph.html';
+ods graphics / reset=all border=off width=600px height=400px;
+
+proc sgrender data=WORK.A template=Graph;
+dynamic _I="I" _X="X" _I2="I";
+run;
+
+ods html close;
+ods listing;
+
+*Option 2, the default list colors will be used by the htm output in the SAS workspace;
+*but the output svg file will be assigned with the custom colors;
 
 options printerpath=svg;
 ods listing close;
