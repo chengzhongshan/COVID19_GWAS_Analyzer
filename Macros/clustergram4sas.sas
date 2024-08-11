@@ -200,7 +200,8 @@ run;
 
 
 /*Note: make sure to let rowdata and columndata with union range*/
-ods graphics /reset=all noborder outputfmt=&outputfmt imagename="Clustergram_%RandBetween(1,100)";
+%let rnd=%RandBetween(1,1000);
+ods graphics /reset=all noborder outputfmt=&outputfmt imagename="Clustergram_random&rnd";
 *The above failed sometimes due to unknown reasons;
 *It is necessary to remove previous setting;
 proc template;
@@ -234,7 +235,7 @@ proc template;
 														%end;
             endlayout;
             *To remove outline, add "walldisplay=none";
-            layout overlay / yaxisopts=(display=none reverse=true
+            layout overlay / walldisplay=none yaxisopts=(display=none reverse=true
                                         displaysecondary=(tickvalues))
                              xaxisopts=(display=(tickvalues));
                heatmapparm y=col x=row 
@@ -244,7 +245,9 @@ proc template;
                                 %else %do;
                                 colorresponse=dist/colormodel=(&colormodel)  
                                  %end;
-                                name="ht";
+                                name="ht" outlineattrs=(color=gray  thickness=1) display=all;
+               *The above codes of outlineattrs=(color=gray  thickness=1) display=all customize grid colors and thickness;
+
                *Customize the colorbar ticks;
                *Although the suggested tick counts is 50, sas will automatically decide how many integers will be used for ticks;
                *default value: location=outside valign=bottom halign=center valuecounthint=50;
