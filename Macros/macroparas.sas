@@ -1,6 +1,7 @@
 %macro macroparas(
 macrorgx=.,
 dir=%sysfunc(pathname(HOME))/Macros 
+\\stjude.sjcrh.local\data\ResearchHome\ClusterHome\zcheng\SAS-Useful-Codes\Macros
 H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros
 ~/shared/Macros
 /home/zcheng/SAS-Useful-Codes/Macros 

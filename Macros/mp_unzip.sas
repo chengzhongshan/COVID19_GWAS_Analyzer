@@ -34,8 +34,6 @@
 %macro mp_unzip(
   ziploc=
   ,outdir=%sysfunc(pathname(work))
-  ,UnzipAllFilesIntoOneFolder=0 
-  /*Extract all files in the main- and sub-folders and put them into the supplied outdir*/
 )/*/STORE SOURCE*/;
  
 %local f1 f2 ;
@@ -69,28 +67,10 @@ filename &f2 temp;
 data _null_;
   set &syslast;
   file &f2;
-  
-  *Decide whether to put files into a single output folder;
-  %if &UnzipAllFilesIntoOneFolder=0 %then %do;
-  if isFolder then do;
-    call execute('%mf_mkdir(&outdir/'!!memname!!')');
-  end;
-  %end;
-  
-    *memname will be changed if UnzipAllFilesIntoOneFolder is true;
-    bname=cats('(',memname,')');  
-  
-  if not isFolder then do;
-   *Decide whether to put files into a single output folder;
-   %if &UnzipAllFilesIntoOneFolder=0 %then %do;
+  if isFolder then call execute('%mf_mkdir(&outdir/'!!memname!!')');
+  else do;
     qname=quote(cats("&outdir/",memname));
-   %end;
-   %else %do;
-    memname=prxchange('s/.*[\/\\]([^\/\\]+)$/$1/',1,memname);
-    qname=quote(cats("&outdir/",memname));
-   %end;
-   
-
+    bname=cats('(',memname,')');
     put '/* hat tip: "data _null_" on SAS-L */';
     put 'data _null_;';
     put '  infile &f1 ' bname ' lrecl=32767 recfm=F length=length eof=eof unbuf;';

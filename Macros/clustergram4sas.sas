@@ -18,6 +18,7 @@ Assign specific numberic value to missing cell in the heatmap; default is to use
 as missing value will be assigned with different color; Note: assign negative value for missing data 
 will draw the missing color at the bottom of colorbar*/
 outputfmt=png,
+show_heatmap_grid=1,/*Remove grid by providing 0 if there are too many rows or columns in the data matrix*/
 colormodel=cxFAFBFE cx667FA2 cxD05B5B,
 /*CXFFFFFF CXFFFFB2 CXFECC5C CXFD8D3C CXE31A1C */
 /*Default WhiteYeOrRed colors for colormap; 
@@ -245,7 +246,11 @@ proc template;
                                 %else %do;
                                 colorresponse=dist/colormodel=(&colormodel)  
                                  %end;
-                                name="ht" outlineattrs=(color=gray  thickness=1) display=all;
+                                name="ht" 
+                                %if &show_heatmap_grid=1 %then %do;
+                                outlineattrs=(color=gray  thickness=1) display=all
+                                %end;
+                       ;
                *The above codes of outlineattrs=(color=gray  thickness=1) display=all customize grid colors and thickness;
 
                *Customize the colorbar ticks;
@@ -308,7 +313,8 @@ height=8,
 width=10,
 columnweights=0.15 0.85, 
 rowweights=0.15 0.85, 
-cluster_type=3
+cluster_type=3,
+show_heatmap_grid=1
 );
 
 *************************Optimized demo codes for clustergram4sas*****************************;
@@ -338,6 +344,7 @@ rowweights=0.15 0.85,
 cluster_type=1,
 missing_value=-100,
 outputfmt=png,
+show_heatmap_grid=1,
 colormodel=,
 rangemap_setting=%str(
 rangeattrmap name="ResponseRange";
