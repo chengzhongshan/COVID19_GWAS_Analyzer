@@ -3,7 +3,7 @@ git_zip=https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/archive/refs/hea
 homedir=%sysfunc(pathname(HOME)),/*SAS OnDemand for Academics HOME folder*/
 InstallFolder=NewMacros, /*Put all uncompressed files into the folder under the homedir*/
 DeletePreviousFolder=0, /*Delete previous InstallFolder if existing in the target homedir*/
-excluded_file_rgx=Evaluate_FOXP4_SNPs_with_both_long_COVID_and_severe_COVID|COVID19_GWAS_Analyzer_STAR_Protocol_Demo_Codes4MAP3K19|HGI_Hospitalization_GWAS_Analyzer 
+excluded_files_rgx=Evaluate_FOXP4_SNPs_with_both_long_COVID_and_severe_COVID|COVID19_GWAS_Analyzer_STAR_Protocol_Demo_Codes4MAP3K19|HGI_Hospitalization_GWAS_Analyzer 
 /*Exclude files matched with perl regular expressions, which should be separated by | and 
 no () is needed to wrap these perl regular expression, as () will be added within the macro*/
 );
@@ -32,7 +32,7 @@ no () is needed to wrap these perl regular expression, as () will be added withi
 ziploc="%sysfunc(getoption(work))/sas.zip",
 outdir=&homedir/&InstallFolder,
 UnzipAllFilesIntoOneFolder=1,
-excluded_files_rgx=&excluded_file_rgx
+excluded_files_rgx=&excluded_files_rgx
 );
 
 %mend;

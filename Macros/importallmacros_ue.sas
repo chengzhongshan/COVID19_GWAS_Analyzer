@@ -36,7 +36,8 @@
   git_zip=https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/archive/refs/heads/main.zip, 
   homedir=%sysfunc(pathname(HOME)),/*SAS OnDemand for Academics HOME folder*/ 
   InstallFolder=Macros, /*Put all uncompressed files into the folder under the homedir*/ 
-  DeletePreviousFolder=1 /*Delete previous InstallFolder if existing in the target homedir*/ 
+  DeletePreviousFolder=1, /*Delete previous InstallFolder if existing in the target homedir*/ 
+  excluded_files_rgx=Evaluate_FOXP4_SNPs_with_both_long_COVID_and_severe_COVID|COVID19_GWAS_Analyzer_STAR_Protocol_Demo_Codes4MAP3K19|HGI_Hospitalization_GWAS_Analyzer
   ); 
 %end;
 %else %do;
