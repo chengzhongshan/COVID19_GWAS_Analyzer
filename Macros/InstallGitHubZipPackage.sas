@@ -309,8 +309,6 @@ data _null_;
    %if %length(&excluded_files_rgx)>0 %then %do;
     if prxmatch("/(&excluded_files_rgx)/i",memname) then do;
          call symputx('run_inc',0);
-          put '/*Excluded*/';
-          stop;
     end;
     else do;
          call symputx('run_inc',1);
