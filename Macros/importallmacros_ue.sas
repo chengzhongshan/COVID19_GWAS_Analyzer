@@ -48,7 +48,6 @@
 
 %put Macro Dir is &MacroDir;
 %put Your system is &sysscp;
-%abort 255;
 
 %let ndirs=%sysfunc(countc(&MacroDir,' '))+1;
 
