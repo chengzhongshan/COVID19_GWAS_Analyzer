@@ -2,7 +2,10 @@
 git_zip=https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/archive/refs/heads/main.zip,
 homedir=%sysfunc(pathname(HOME)),/*SAS OnDemand for Academics HOME folder*/
 InstallFolder=NewMacros, /*Put all uncompressed files into the folder under the homedir*/
-DeletePreviousFolder=0 /*Delete previous InstallFolder if existing in the target homedir*/
+DeletePreviousFolder=0, /*Delete previous InstallFolder if existing in the target homedir*/
+excluded_file_rgx=Evaluate_FOXP4_SNPs_with_both_long_COVID_and_severe_COVID|COVID19_GWAS_Analyzer_STAR_Protocol_Demo_Codes4MAP3K19|HGI_Hospitalization_GWAS_Analyzer 
+/*Exclude files matched with perl regular expressions, which should be separated by | and 
+no () is needed to wrap these perl regular expression, as () will be added within the macro*/
 );
 
 %if %sysfunc(fileexist(%bquote(&homedir/&InstallFolder))) and &DeletePreviousFolder=1 %then %do;
@@ -28,7 +31,8 @@ DeletePreviousFolder=0 /*Delete previous InstallFolder if existing in the target
 %_mp_unzip(
 ziploc="%sysfunc(getoption(work))/sas.zip",
 outdir=&homedir/&InstallFolder,
-UnzipAllFilesIntoOneFolder=1
+UnzipAllFilesIntoOneFolder=1,
+excluded_files_rgx=&excluded_file_rgx
 );
 
 %mend;
@@ -244,8 +248,9 @@ filename out clear;
 %macro _mp_unzip(
   ziploc=
   ,outdir=%sysfunc(pathname(work))
-  ,UnzipAllFilesIntoOneFolder=0 
+  ,UnzipAllFilesIntoOneFolder=0, 
   /*Extract all files in the main- and sub-folders and put them into the supplied outdir*/
+  ,excluded_files_rgx= /*put multiple file regular expressions separated by | that should be excluded*/
 )/*/STORE SOURCE*/;
  
 %local f1 f2 ;
@@ -299,7 +304,12 @@ data _null_;
     memname=prxchange('s/.*[\/\\]([^\/\\]+)$/$1/',1,memname);
     qname=quote(cats("&outdir/",memname));
    %end;
-   
+
+    *Exclude these files matched with file regular expression;
+   %if %length(&excluded_files_rgx)>0 %then %do;
+    if prxmatch("/(&excluded_files_rgx)/",memname) then stop;
+   %end;
+
     put '/* hat tip: "data _null_" on SAS-L */';
     put 'data _null_;';
     put '  infile &f1 ' bname ' lrecl=32767 recfm=F length=length eof=eof unbuf;';
