@@ -308,9 +308,13 @@ data _null_;
     *Exclude these files matched with file regular expression;
    %if %length(&excluded_files_rgx)>0 %then %do;
     if prxmatch("/(&excluded_files_rgx)/i",memname) then do;
+         call symputx('run_inc',0);
           put '/*Excluded*/';
           stop;
     end;
+    else do;
+         call symputx('run_inc',1);
+     end;
    %end;
 
     put '/* hat tip: "data _null_" on SAS-L */';
@@ -325,8 +329,10 @@ data _null_;
     put 'run;';
   end;
 run;
- 
-%inc &f2/source2;
+
+%if &run_inc=1 %then %do; 
+   %inc &f2/source2;
+%end;
  
 filename &f2 clear;
  
