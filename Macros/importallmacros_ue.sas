@@ -36,7 +36,7 @@
   git_zip=https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/archive/refs/heads/main.zip, 
   homedir=%sysfunc(pathname(HOME)),/*SAS OnDemand for Academics HOME folder*/ 
   InstallFolder=Macros, /*Put all uncompressed files into the folder under the homedir*/ 
-  DeletePreviousFolder=0 /*Delete previous InstallFolder if existing in the target homedir*/ 
+  DeletePreviousFolder=1 /*Delete previous InstallFolder if existing in the target homedir*/ 
   ); 
 %end;
 %else %do;
@@ -47,6 +47,7 @@
 
 %put Macro Dir is &MacroDir;
 %put Your system is &sysscp;
+%abort 255;
 
 %let ndirs=%sysfunc(countc(&MacroDir,' '))+1;
 
