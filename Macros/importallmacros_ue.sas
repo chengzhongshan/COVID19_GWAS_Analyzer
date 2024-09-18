@@ -28,7 +28,7 @@
 
 %macro importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=.sas,verbose=0);
 
-%if not %_FileOrDirExist_(dir=&MacroDir)  %then %do;
+%if %_FileOrDirExist_(dir=&MacroDir)  %then %do;
  %put We are going to download the required SAS macros from github;
  	filename N url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/InstallGitHubZipPackage.sas";
   %include N;
