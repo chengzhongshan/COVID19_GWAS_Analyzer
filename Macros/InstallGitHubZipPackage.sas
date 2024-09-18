@@ -248,7 +248,7 @@ filename out clear;
 %macro _mp_unzip(
   ziploc=
   ,outdir=%sysfunc(pathname(work))
-  ,UnzipAllFilesIntoOneFolder=0, 
+  ,UnzipAllFilesIntoOneFolder=0 
   /*Extract all files in the main- and sub-folders and put them into the supplied outdir*/
   ,excluded_files_rgx= /*put multiple file regular expressions separated by | that should be excluded*/
 )/*/STORE SOURCE*/;
