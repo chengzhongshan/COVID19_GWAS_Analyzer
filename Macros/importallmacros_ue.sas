@@ -1,10 +1,37 @@
+%macro _FileOrDirExist_(dir) ; 
+   %LOCAL rc fileref return; 
+
+   %*arbitrarily assign value 0 to output if dir is empty;
+   %*This will avoid of error message issued by fexist later;
+   %if %length(&dir)=0 %then %do;
+          0
+    %end;
+	%*It is necessary to add else do macro statement here, otherwise, even if the above is true, later codes will still run by sas;
+    %else %do;
+
+   %let rc = %sysfunc(filename(fileref,&dir)) ; 
+/*    %if &rc=0 and %sysfunc(fexist(&fileref))  %then %let return=1;     */
+/*    %else %let return=0; */
+/*    &return */
+%*The above failed in SAS OnDemand but works in Windows;
+%*The reason is because the sas funciton will return these sas comments if not escaped by %;
+%*Note: it is necessary to assign &fileref but no filerefto fexist here!;
+   %if %sysevalf(&rc=0 and %symexist(fileref) and %sysfunc(fexist(&fileref)))  %then %do;
+       1
+   %end;
+   %else %do;
+       0
+   %end;
+%end;
+
+%mend;
 
 %macro importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=.sas,verbose=0);
 
-%if not %FileOrDirExist(dir=&MacroDir)  %then %do;
+%if not %_FileOrDirExist_(dir=&MacroDir)  %then %do;
  %put We are going to download the required SAS macros from github;
- 	filename install url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/InstallGitHubZipPackage.sas";
-  %include install;
+ 	filename N url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/InstallGitHubZipPackage.sas";
+  %include N;
   %InstallGitHubZipPackage( 
   git_zip=https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/archive/refs/heads/main.zip, 
   homedir=%sysfunc(pathname(HOME)),/*SAS OnDemand for Academics HOME folder*/ 
