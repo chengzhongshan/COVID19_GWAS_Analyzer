@@ -40,7 +40,7 @@ _grps_output_key_=catx(':', of &grp_vars4sort);
 run;
 proc sql;
 create table &dsdout(drop=_grps_output_key_) as
-select b.*,a.&num_grp_output_name
+select b.*,a.&num_grp_output_name,a.grps_output_key
 from dsdout as a
 right join
 tmp as b

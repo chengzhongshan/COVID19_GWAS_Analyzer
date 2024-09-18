@@ -2,7 +2,7 @@
 and perform descriptive summary for genes passed the depth threshold in each single cell*/
 file=,/*fullpath to Numbat generated scASE sample_allele_counts.tsv.gz file*/
 outdsd=sc,/*Output for unfiltered scASE read count dataset*/
-gene_DP_cutoff=10,/*a threshold of total number of reads for all SNPs mapped to each gene to exclude genes with low coverage ASE depth*/
+gene_DP_cutoff=20,/*a threshold of total number of reads for all SNPs mapped to each gene to exclude genes with low coverage ASE depth*/
 out4cell_gene_summary=sc_summary /*Output dataset containg the number of genes passed the DP threshold in each single cell*/
 );
 %ImportFileHeadersFromZIP(
@@ -51,7 +51,7 @@ run;
 %import_numbat_scASE(
 file=&file,
 outdsd=sc,
-gene_DP_cutoff=10,
+gene_DP_cutoff=20,
 out4cell_gene_summary=sc_summary 
 );
 

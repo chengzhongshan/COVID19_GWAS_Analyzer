@@ -84,7 +84,7 @@ on strip(left(a.KeyVar4dsdout))=strip(left(b.KeyVar4dsdout))
 data &dsdout;
 set &dsdin._tmp;
 num_grp=&new_Xaxis_var;
-/*Will change it manually outside of the macro later*/
+/*Will change it manually outside the macro later*/
 attrib &new_Xaxis_var format=&createdfmtname..;
 run;
 

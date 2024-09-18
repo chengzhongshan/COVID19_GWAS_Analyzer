@@ -1,12 +1,22 @@
 %macro clustergram4sas(
-/*The final rowlabels of the heatmap can be customized 
+/* 
+The final rowlabels of the heatmap can be customized 
 when not clustering the final rowlabels by
 pre-sorting the numeric_var names with two macros: 
-check_col_orders and pull_column
+check_col_orders and pull_column:
+%pull_column(dsd=A,dsdout=x,cols2pull=1 2 3-4 6 7-9 10,exclude_pulled_cols=0);
+%check_col_orders(dsd=A,colorder_info_out=colinfo,print_colobs=10);
 */
 dsdin=_last_,/*The input dataset is a matrix contains rownames and other numeric columns*/
-rowname_var=,/*the elements of rowname_var will be used to label heatmap columns*/
+rowname_var=,/*the elements of rowname_var will be used to label heatmap columns;
+If needed to make the rowname_var as column names, please supply value 1 to switch_rownames_as_colnames!*/
+switch_rownames_as_colnames=0,/*Switch the above rowname_var as final column names if providing value 1*/
 numeric_vars=_numeric_,/*These column-wide numeric vars will become row-wide in the heatmap*/
+colaxis_font_setting=%str(Style=italic size=10 weight=normal),/*column label setting for font style, size, and weight*/
+rowaxis_font_setting=%str(Style=italic size=10 weight=normal),/*column label setting for font style, size, and weight*/
+stdize=0,/*provide value 1 to perform standardize all numeric vars with std method;
+Please do not assign value 1 to perform_log2_for_numeric_vars when assigning value 1 to stdize*/
+perform_log2_for_numeric_vars=0,/*Transform the input numberic vars by using log2(var+0.1)*/
 height=20,/*figure height in cm*/
 width=24,/*figure width in cm*/
 columnweights=0.15 0.85, /*figure 2 column ratio*/
@@ -75,17 +85,69 @@ proc sort data=&dsdin out=x nodupkeys;by &rowname_var;run;
 
 data x(keep=&rowname_var &numeric_vars);
 set x;
+run;
+
+*Keep the order of rownames and colnames for making heatmap by original data order;
+%if &cluster_type^=3 %then %do;
+
+data rownames(keep=ord &rowname_var rename=(&rowname_var=rowname));
+set x;
+ord=_n_;
+run;
+
+data colnames;
+set x(obs=1);
+keep &numeric_vars;
+run;
+%check_col_orders(dsd=colnames,colorder_info_out=colinfo,print_colobs=0);
+data colinfo(keep=ord colname);
+set colinfo(rename=(column_order=ord name=colname));
+run;
+
+%end;
+
+*Switch rownames as colnames as requested;
+%if &switch_rownames_as_colnames=1 %then %do;
+
+%tanspose_table(
+indsd=x, /*A table with unique rownames and multiple variables for transposing into row-wide*/
+rowname_var=&rowname_var,/*a variable name in the input data set to be transposed into column-wide;
+Only unique rownames will be kept for transposing*/
+column_vars=&numeric_vars,/*A list of variables that are subjected to transposing*/
+outdsd=x /*Final tranposed table with original rownames as column names and column names as rownames*/
+);
+%let rowname_var=rownames;
+
+%end;
+
+
+*Note: perform standardization after switching rownames to column names;
+%if &stdize=1 %then %do;
+proc stdize method=std data=x out=x;
+var &numeric_vars;
+run;
+%end;
+
+
+
+
+data x;
+set x end=eof;
 /*Need to run this to rescue the inconsistency of column names*/
 &rowname_var=compress(&rowname_var);
 &rowname_var=prxchange('s/\.//',-1,&rowname_var);
+array t{*} _numeric_;
+call symputx('nrows',dim(t));
 *give missing value 0;
 %if %length(&missing_value)>0 %then %do;
-array t{*} _numeric_;
 do i=1 to dim(t);
    if t{i}=. then t{i}=&missing_value;
 end;
 drop i;
 %end;
+if eof then do;
+call symputx('ncols',_n_);
+end;
 run;
 
 /*Remove duplicate rownames*/
@@ -135,9 +197,64 @@ do i=1 to dim(m);
  col=compress(col);
  col=prxchange('s/\.//',-1,col);
  Dist=m[i];
+%if &perform_log2_for_numeric_vars=1 %then %do;
+					 Dist=log2(Dist+0.1);
+%end;
  output;
  end;
  run;
+
+*re-order colnames or rownames if not clustering the heatmap by either one of them or both;
+%if &cluster_type^=3 %then %do;
+ %if &cluster_type=1 or &cluster_type=0 %then %do;
+   %if &switch_rownames_as_colnames=0 %then %do;
+	 proc sql;
+   create table heatmap as 
+   select a.*,b.ord as col_ord
+   from heatmap as a
+   left join 
+   colinfo as b
+   on a.row=b.colname
+   order by ord;
+   %end;
+   %else %do;
+	 proc sql;
+   create table heatmap as 
+   select a.*,b.ord as col_ord
+   from heatmap as a
+   left join 
+   rownames as b
+   on a.col=b.rowname
+   order by ord;
+   %end;
+ %end;
+ %if &cluster_type=2 or &cluster_type=0 %then %do;
+   %if &switch_rownames_as_colnames=0 %then %do;
+	 proc sql;
+   create table heatmap as 
+   select a.*,b.ord as row_ord
+   from heatmap as a
+   left join 
+   rownames as b
+   on a.col=b.rowname
+   order by ord;
+   %end;
+   %else %do;
+	 proc sql;
+   create table heatmap as 
+   select a.*,b.ord as row_ord
+   from heatmap as a
+   left join 
+   colinfo as b
+   on a.row=b.colname
+   order by ord;
+   %end;
+ %end;
+%if &cluster_type=0 %then %do;
+	 proc sort data=heatmap;by row_ord col_ord;run;
+%end;
+%end;
+
 
  data all;
  merge heatmap 
@@ -199,6 +316,23 @@ run;
 /* run; */
 /* ods html file="sample.html" gpath="." style=styles.greyline; */
 
+*Note: the variable row and col will be used to draw Y-axis and X-axis labels!;
+*This is a little confusing, but need to pay attention to it!;
+*Decide whether to draw x-axis labels;
+%if &nrows<100 %then %do; 
+  %let colaxis_label_setting=tickvalues; 
+%end; 
+%else %do; 
+  %let colaxis_label_setting=line; 
+%end;
+
+ *Decide whether to draw y-axis labels;
+%if &ncols<100 %then %do; 
+  %let rowaxis_label_setting=tickvalues; 
+%end; 
+%else %do; 
+  %let rowaxis_label_setting=line; 
+%end;
 
 /*Note: make sure to let rowdata and columndata with union range*/
 %let rnd=%RandBetween(1,1000);
@@ -237,8 +371,8 @@ proc template;
             endlayout;
             *To remove outline, add "walldisplay=none";
             layout overlay / walldisplay=none yaxisopts=(display=none reverse=true
-                                        displaysecondary=(tickvalues))
-                             xaxisopts=(display=(tickvalues));
+                                        displaysecondary=(&colaxis_label_setting)  TICKVALUEATTRS=(&colaxis_font_setting))
+                             xaxisopts=(display=(&rowaxis_label_setting) TICKVALUEATTRS=(&rowaxis_font_setting));
                heatmapparm y=col x=row 
                                %if %length(&rangemap_setting)>0 %then %do;
                                 colorresponse=RangeVar/
@@ -281,7 +415,40 @@ run;
 
 %mend;
 
-/*Demo:
+/*
+*Best codes for making heatmap with rangeAttrmap;
+
+*It is possible to keep the original column order by using:
+*%pull_column(dsd=x1,dsdout=x2,cols2pull=2 9 10 4-8,exclude_pulled_cols=0);;
+*If not sorting the input rownames and not clustering the columns by the input rowname_var;
+*the original input rowname_var order will be kept by the macro!;
+
+%clustergram4sas(
+dsdin=dsd_rm_empty_cols,
+rowname_var=gene,
+numeric_vars=_numeric_,
+height=50,
+width=30,
+columnweights=0.15 0.85, 
+rowweights=0.05 0.95,
+cluster_type=3,
+missing_value=-1,
+rangemap_setting=%str(
+rangeattrmap name="ResponseRange";
+        range 0-1 /rangeColorModel=(white lightblue);
+        range 1-12 /rangeColorModel=(lightblue blue darkblue lightred red darkred);
+        range OTHER   / rangeColorModel=(lightgrey);   
+        range MISSING / rangeColorModel=(lime);   
+endrangeattrmap;
+rangeattrvar var=dist                        
+attrmap="ResponseRange"       
+attrvar=RangeVar;  
+),
+heatmap_dsd=longformat_heatmap_dsd      
+);
+*/
+
+/*Demo codes:
 
 data a;
 input a $ b $ c;

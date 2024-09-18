@@ -1247,7 +1247,9 @@ ods graphics /
 reset=all
 outputfmt=&fig_fmt 
 imagename="&outimagename" 
-noborder;
+noborder
+MAXOBS=100000000
+;
 
 *Add format for directions of &lattice_subgrp_var;
 proc format;

@@ -7,7 +7,8 @@ chr st end genesymbol type protein_coding
 chr=,
 min_st=,
 max_end=,
-dist2genes=100000
+dist2genes=100000,
+outdsd=exons
 );
 
 *Need to first select these genes and get their min_pos and max_pos;
@@ -80,6 +81,10 @@ if _chr_="chr23" then _chr_="chrX";
 y=-1;
 run;
 
+data &outdsd;
+set exons;
+run;
+
 %mend;
 
 /*Demo:
@@ -102,7 +107,8 @@ gtf_dsd=FM.GTF_HG19,
 chr=&chr,
 min_st=&minst,
 max_end=&maxend,
-dist2genes=1000
+dist2genes=1000,
+outdsd=exons
 );
 
 

@@ -1,5 +1,23 @@
 
 %macro importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=.sas,verbose=0);
+
+%if not %FileOrDirExist(dir=&MacroDir)  %then %do;
+ %put We are going to download the required SAS macros from github;
+ 	filename install url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/InstallGitHubZipPackage.sas";
+  %include install;
+  %InstallGitHubZipPackage( 
+  git_zip=https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/archive/refs/heads/main.zip, 
+  homedir=%sysfunc(pathname(HOME)),/*SAS OnDemand for Academics HOME folder*/ 
+  InstallFolder=Macros, /*Put all uncompressed files into the folder under the homedir*/ 
+  DeletePreviousFolder=0 /*Delete previous InstallFolder if existing in the target homedir*/ 
+  ); 
+%end;
+%else %do;
+  %put The required SAS macros exist in the macro dir &MacroDir;
+  %put We will not download these macros from github;
+%end;
+
+
 %put Macro Dir is &MacroDir;
 %put Your system is &sysscp;
 
@@ -81,6 +99,8 @@ run;
 
 /*
 
-%importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=Import,verbose=1);
+filename loadmacros url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
+%include loadmacros;;
+%importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=.,verbose=0);
 
 */

@@ -18,6 +18,17 @@ Key=catx(':',&grp_var,&pos_var);
 where &signal_var <= &signal_thrshd;
 run;
 
+%put Warning: duplicate records by Key and &signal_var will be kept for only one records;
+proc sort data=&dsdout dupout=_dup_records_ out=&dsdout nodupkeys;
+%if &select_smallest_signal=1 %then %do; 
+    by Key &signal_var;
+%end;
+%else %do;
+		by Key desending &signal_var;
+%end;
+run;
+%put Warning: duplicate records by Key and &signal_var are saved into the data set _dup_records_;;
+
 proc sort data=&dsdout;by &grp_var &signal_var;run;
 
 proc sql;
@@ -129,6 +140,8 @@ cards;
 2 0.001 1
 2 0.011 40
 2 0.00001 1000
+2 0.0000001 1002
+2 0.0000001 1002
 2 0.0005 1500
 2 0.001 3000000
 2 0.001 90
@@ -149,6 +162,6 @@ options mprint mlogic symbolgen;
                            ,pos_var=BP
                            ,pos_dist_thrshd=1000000
                            ,dsdout=tops1
-                           ,signal_thrshd=1e-6);
+                           ,signal_thrshd=1e-3);
 */
 

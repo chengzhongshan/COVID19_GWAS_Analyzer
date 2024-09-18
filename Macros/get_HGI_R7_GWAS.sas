@@ -3,6 +3,7 @@ gwas_name=, /*such as B1_ALL, B2_ALL, and C2_ALL;
 furthermore, except B1, all others have subpopulation GWASs,
 such as B2_AFR, B2_EAS, B2_SAS, B2_HIS;
 Note: A2_HIS, C2_HIS and B2_HIS tar gz file was broken! No A1_ALL
+Only SNPs with het_p>0.05 will be kept!
 */
 hgi_gwas=hgi_gwas_out, /*sas dsd output*/
 build=hg38 /*Genome build for the GWAS summary statistics, such as hg19 and hg38*/

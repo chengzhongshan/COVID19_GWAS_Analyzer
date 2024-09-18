@@ -18,10 +18,11 @@ colaxis_max=,
 where_condition4cells=%nrstr(), /*Add where condition to filter cell types*/
 marker_size=2,/*scatter plot marker size; the smaller the better for large sc dataset*/
 cell_label_size=12, /*text label font size for cell labels*/
-fig_column_num4sample_grps=1 /*this value will be assigned to the columns in proc sgpanel;
+fig_column_num4sample_grps=1, /*this value will be assigned to the columns in proc sgpanel;
 when columns=1, the umaps for different sample groups will be put into a single column;
 when columns=total_number_of_grps, the umaps will be put into a single row;
 when columns (1,total_nummber_of_grps), the umaps will be put by columns and rows one by one!*/
+add_sc_legend=0	/*To release space, it is better to remove autolegend for single-cell umap*/
 );
 
 data _UMAP_;
@@ -92,7 +93,12 @@ run;
 %if %length(&sample_grp_var)=0 %then %do;
 
 ods graphics on/reset=all width=&fig_width height=&fig_height;
-proc sgplot data=_UMAP_ noborder;
+proc sgplot data=_UMAP_ noborder
+%if &add_sc_legend=0 %then %do;
+	 %str(noautolegend);
+%end;
+;
+
 %if %length(&where_condition4cells)>0 %then %do;
 where &where_condition4cells;
 %end;
@@ -120,8 +126,13 @@ circlefilled starfilled triangle diamond square circle
 scatter x=x y=y/group=&cluster_var markerattrs=(size=&marker_size) name='sc';
 text x=x_ y=y_ text=&cluster_var/sizeresponse=y_ sizemin=&cell_label_size sizemax=&cell_label_size position=center;
 label x="UMAP_1" y="UMAP_2";
+
+%if &add_sc_legend=1 %then %do;
 *Need to use autoitemsize to increase the symbol size;
 keylegend 'sc'/ autoitemsize;
+%end;
+
+
 %if %length(&rowaxis_min)>0 or %length(&rowaxis_max)>0 %then %do;
 xaxis 
  %if %length(&rowaxis_min)>0 %then %str(min=&rowaxis_min); 

@@ -44,7 +44,7 @@ data tmp;
 set tmp_:;
 *where filename contains '.sas';
 if prxmatch("/&fileRgx/i",filename) and prxmatch("/\.sas/oi",filename) and 
-   not prxmatch("/\.sas\.bak/i",filename) and not prxmatch("/importallmacros.sas/i",filename);
+   not prxmatch("/\.sas\.bak/i",filename) and not prxmatch("/importallmacros.*.sas/i",filename);
 run;
 
 %if &verbose=0 %then %do;

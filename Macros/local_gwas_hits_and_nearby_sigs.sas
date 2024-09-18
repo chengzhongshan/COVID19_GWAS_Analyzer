@@ -62,12 +62,13 @@ outputfmt=gif /*Output figure format, such as svg, jpg,gif, and others*/
                  dsdout=&GWAS_dsdout);
 */               
    %put Now we are going to keep SNPs &Mb_SNPs_Nearby Mb up/downstream of GWS hits;
-   data tops;
+   data _tops_;
+   length _grp_ $50.;
    set &GWAS_SAS_DSD;
    *Add a group column and center position column;
    *Note: here we use scaled pos, which it at the center of a window with 1000 bp;
    center_pos=500;
-   grp=&Marker_Col_Name;
+   _grp_=&Marker_Col_Name;
    where &Marker_Col_Name in (%quotelst(&snps));
    run;
    /*make snp grp for ordering it in the final manhanttan plot*/
@@ -75,21 +76,21 @@ outputfmt=gif /*Output figure format, such as svg, jpg,gif, and others*/
    
    *Merge these top signals and only keep the most significant signals around specific dist;
    *Makse the signal_thrshd as 1e-6 to prevent from excluding all SNPs if no top snps pass the p threshold;
-   %get_top_signal_within_dist(dsdin=tops
+   %get_top_signal_within_dist(dsdin=_tops_
                            ,grp_var=&Xaxis_Col_Name
                            ,signal_var=&Yaxis_Col_Name
                            ,pos_var=&Marker_Pos_Col_Name
                            ,pos_dist_thrshd=&Mb_SNPs_Nearby*1
-                           ,dsdout=tops
+                           ,dsdout=_tops_
                            ,signal_thrshd=1 /*filter the input dsdin by &signal_val <= &signal_thrshd*/);
-%let nobs=%totobsindsd(work.tops); 
+%let nobs=%totobsindsd(work._tops_); 
 %if &nobs=0 %then %do;
-   %put No SNP passed the p threshold 1e-4 in the top SNP dataset tops;
+   %put No SNP passed the p threshold 1e-4 in the top SNP dataset _tops_;
    %abort 255;
 %end;
 %else %if &nobs<%ntokens(&snps) %then %do;
    title "Obtained top snps (n=&nobs)";
-   proc print data=work.tops noobs;
+   proc print data=work._tops_ noobs;
    title "";
    %put The number of target snps %ntokens(&snps) is larger than the number of snps (&nobs) passed the signal threshold of p < 1e-4;
    %put Please make sure all input snps are top independent snps passed the p < 1e-4 threshold;
@@ -99,14 +100,14 @@ outputfmt=gif /*Output figure format, such as svg, jpg,gif, and others*/
 *No need to merge the above top signals, as we will put the query snps at the center of each window;
 *To keep the script simple, we just make the pos_dist_threhd as 1=&Mb_SNPs_Nearby*1, which will not;
 *merge these signals;
-                         
+ *Need to creat a copy of _grp_ as a new var grp, which may be required by other processes;                       
    proc sql;
    create table &GWAS_dsdout(where=(tmp^="")) as
-   select a.*,b.&Marker_Col_Name as tmp,b.grp,b.center_pos,
-          catx(':',b.&Xaxis_Col_Name,b.grp) as new_chr_tag
+   select a.*,b.&Marker_Col_Name as tmp,b._grp_ as grp,b.center_pos,
+          catx(':',b.&Xaxis_Col_Name,b._grp_) as new_chr_tag
    from &GWAS_SAS_DSD as a
    right join
-   tops as b
+   _tops_ as b
    on    a.&Xaxis_Col_Name=b.&Xaxis_Col_Name and 
          a.&Marker_Pos_Col_Name between 
          (b.&Marker_Pos_Col_Name-&Mb_SNPs_Nearby*1000000*0.5) and (b.&Marker_Pos_Col_Name+&Mb_SNPs_Nearby*1000000*0.5)
@@ -200,7 +201,7 @@ outputfmt=gif /*Output figure format, such as svg, jpg,gif, and others*/
     title "Scatterplots for &snps";
     ods graphics /reset=all height=&design_height.px width=&design_width.px
     antialiasmax=50000000 attrpriority=none noborder
-    imagename="TopSig4%sysfunc(prxchange(s/ /_/,-1,&snps))"  outputfmt=&outputfmt;
+    imagename="TopSig%RandBetween(min=1, max=100)"  outputfmt=&outputfmt;
 /*     Need to make attrpriority as none to use the combination of color and symbol */
      proc sgpanel data=&GWAS_dsdout noautolegend;
 /*   panelby num_grps/layout=columnlattice onepanel novarname noheader; */

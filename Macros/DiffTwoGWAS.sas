@@ -2,7 +2,12 @@
 %macro DiffTwoGWAS(/*Note: only common SNPs will be kept; 
 also requires to have two allele vars common to both GWASs:
 such as allele1 and allele2 in both GWAS;
-duplicate snps in each GWAS will be excluded*/
+duplicate snps in each GWAS will be excluded
+
+Important: it is necessary to sort the two input GWAS by chr and pos before
+applying current macro!
+
+*/
 gwas1dsd=,
 gwas2dsd=,
 gwas1chr_var=,

@@ -132,8 +132,9 @@ run;
 
 ***************************************************************************;
 *Boxplot for cell percent;
-title "Cell type percent for SAS data set &longformdsd with &exp_var>&exp_cutoff";
-ods graphics on /reset=all height=&boxplot_height width=&boxplot_width noborder;  
+/*title "Cell type % for SAS data set &longformdsd with &exp_var>&exp_cutoff";*/
+title "% of single-cell type with &exp_var>&exp_cutoff";
+ods graphics on /reset=all height=&boxplot_height width=&boxplot_width noborder imagename="cell_type_percent";  
 proc sgpanel data=&frqout;
 %if %length(&where_cnd_for_sgplot) >0 %then %do;
 where %unquote(&where_cnd_for_sgplot);;
@@ -154,7 +155,7 @@ vbox percent /group=&pheno_var groupdisplay=cluster
          medianattrs=(color=black thickness=2 pattern=1) 
          meanattrs=(color=black symbol=circlefilled color=darkblue size=8);
 keylegend /noborder valueattrs=(size=10);
-label percent="Cell percent";
+label percent="% of single-cell type";
 run;
 proc sql;
 select distinct
@@ -168,8 +169,8 @@ title "";
 
 ***************************************************************************;
 *Boxplot for cell counts;
-title "Cell type count for SAS data set &longformdsd with &exp_var>&exp_cutoff";
-ods graphics on /reset=all height=&boxplot_height width=&boxplot_width noborder;  
+title "# of each single-cell type with &exp_var>&exp_cutoff";
+ods graphics on /reset=all height=&boxplot_height width=&boxplot_width noborder imagename="cell_type_counts";  
 proc sgpanel data=&frqout;
 %if %length(&where_cnd_for_sgplot) >0 %then %do;
 where %unquote(&where_cnd_for_sgplot);;
@@ -190,7 +191,7 @@ vbox count /group=&pheno_var groupdisplay=cluster
          medianattrs=(color=black thickness=2 pattern=1) 
          meanattrs=(color=black symbol=circlefilled color=darkblue size=8);
 keylegend /noborder valueattrs=(size=10);
-label percent="Cell percent";
+label count="# of each single-cell type";
 /* rowaxis type=log logbase=10 logstyle=logexponent; */
 rowaxis type=log logbase=10 logstyle=logexpand;
 run;
@@ -226,8 +227,9 @@ group by &sample_grp_var, &cell_type_var
 /* proc sort data=_tmp_ nodupkeys; by _all_; */
 /* run; */
 
-title "Cell type gene expression at sample level for SAS data set &longformdsd with &exp_var>&exp_cutoff";
-ods graphics on /reset=all height=&boxplot_height width=&boxplot_width noborder;  
+/*title "Cell type gene expression at sample level for SAS data set &longformdsd with &exp_var>&exp_cutoff";*/
+title "Sample-level gene expression with &exp_var>&exp_cutoff";
+ods graphics on /reset=all height=&boxplot_height width=&boxplot_width noborder imagename="cell_type_sample_level_gene_exp";  
 proc sgpanel data=_tmp_;
 %if %length(&where_cnd_for_sgplot) >0 %then %do;
 where %unquote(&where_cnd_for_sgplot);;
@@ -268,8 +270,9 @@ title "";
 %if %eval(&sample_level_exp_analysis=0 or &sample_level_exp_analysis=2) %then %do;
 ***************************************************************************;
 *Boxplot for cell exp;
-title "Cell type gene expression for SAS data set &longformdsd with &exp_var>&exp_cutoff";
-ods graphics on /reset=all height=&boxplot_height width=&boxplot_width noborder;  
+/*title "Cell type gene expression for SAS data set &longformdsd with &exp_var>&exp_cutoff";*/
+title "Single-cell type level gene expression with &exp_var>&exp_cutoff";
+ods graphics on /reset=all height=&boxplot_height width=&boxplot_width noborder imagename="cell_level_gene_exp";  
 proc sgpanel data=&longformdsd;
 %if %length(&where_cnd_for_sgplot) >0 %then %do;
 where %unquote(&where_cnd_for_sgplot);;

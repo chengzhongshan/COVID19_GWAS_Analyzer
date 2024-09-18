@@ -1,3 +1,30 @@
+	/*
+	gwas_names:
+such as A1_ALL, B1_ALL, B2_ALL, and C2_ALL;
+Long COVID HGI - DF4 W1 => gwas number 91854
+Long COVID HGI - DF4 N2 => gwas number 192226
+Long COVID HGI - DF4 W2=> gwas number 826733
+Long COVID HGI - DF4 N1=> gwas number 793752
+
+Strict cases of long COVID after test-verified SARS-CoV-2 infection (n = 3,018) vs. general population controls (n = 994,582), 
+with its download link provided as (https://my.locuszoom.org/gwas/192226/?token=09a18cf9138243db9cdf79ff6930fdf8).
+DF4-N2
+
+Broad long COVID cases identified as infected by any SARS-CoV-2 virus (n = 6,450) vs. general population controls (n = 1,093,995), 
+with its download link provided as (https://my.locuszoom.org/gwas/826733/?token=c7274597af504bf3811de6d742921bc8).
+DF4-W2
+
+Strict long COVID cases defined (n = 2,975) vs. strict controls restricted to individuals who were infected by SARS-CoV-2 but were not diagnosed 
+with long COVID (n = 37,935): with its download link provided as (https://my.locuszoom.org/gwas/793752/?token=0dc986619af14b6e8a564c580d3220b4).
+DF4-N1
+
+Broad long COVID cases defined (n = 6,407) vs. strict controls as defined in (n = 46,208): 
+with its download link provided as (https://my.locuszoom.org/gwas/91854/?token=723e672edf13478e817ca44b56c0c068).
+DF4-W1
+
+
+*/
+
   %macro get_locuszoom_GWAS(
   gwas_num=826733, /*Go to locuszoom to search for gwas and nevigate to specific gwas and obtain its gwas number in the weblink*/
   gwasout=locus_gwas,

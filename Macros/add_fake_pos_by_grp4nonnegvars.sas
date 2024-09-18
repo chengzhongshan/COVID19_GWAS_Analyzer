@@ -4,7 +4,12 @@ axis_var,/*No negative values are allowed for the target axis var*/
 axis_grp,
 new_fake_axis_var,
 dsdout, /*Two new variables, tag var and tpos, can be used to draw a ref line to separe each group*/
-axis_step=1 /*Add extra step to separate each group for the end value of axis_var*/
+axis_step=1, /*Add extra step to separate each group for the end value of axis_var*/
+concise_output=0, /*Provide value 1 to only keep 3 vars and other vars included in the original input dsdin, 
+including axis_var, axis_grp, and new_fake_axis_var, and others in the output dsdout*/
+reset_1st_value_as_one=0 /*Default is not to reset the 1st value of each group as one;
+Provide the value 1 to reset the 1st value of each group as 1 and other values to minus the 1st value in the input dsdin;
+this would be helpful if the 1st position value of each group is too large to draw plot by group!*/ 
 );
 
 /*
@@ -49,16 +54,31 @@ proc sort data=&dsdin;
 by &axis_grp &axis_var;
 run;
 
-data &dsdin;
+data _dsdin_;
 set &dsdin;
 *Scale position value and make it larger by fold change;
 *if &axis_var>0 then &axis_var=&fc2scale_pos_vals*&axis_var;
 run;
 
+*Reset the 1st axis_var as 1;
+%if &reset_1st_value_as_one=1 %then %do;
+%put Going to reset the 1st value of each group as one and other values will adjusted accordingly;
+ proc sql;
+create table _dsdin_ (drop=&axis_var) as
+select a.*,
+           a.&axis_var-min(a.&axis_var)+1 as _new_
+from _dsdin_ as a
+group by &axis_grp
+order by &axis_grp,_new_;
+data _dsdin_;
+set _dsdin_;
+rename _new_=&axis_var;
+run;
+%end;
 
 data &dsdout;
 retain tpos 0 step &axis_step grp_n 0 grpnum 0;
-set &dsdin;
+set _dsdin_;
 
 n=_n_;
 *add the var grp_n for sorting the values inside each group;
@@ -118,7 +138,12 @@ data &dsdout;
 set &dsdout end=eoff;
 if eoff then tpos=tpos-step;
 run;
-
+%if &concise_output=1 %then %do;
+data &dsdout;
+set &dsdout;
+drop mid_val tpos step grp_n grpnum n fst_tag tag;
+run;
+%end;
 
 %mend;
 
@@ -148,7 +173,9 @@ axis_var=y,
 axis_grp=g,
 new_fake_axis_var=fy,
 dsdout=b,
-axis_step=1
+axis_step=1,
+concise_output=1,
+reset_1st_value_as_one=1
 );
 
 *Demo2: for a dataset with all negative axis values;

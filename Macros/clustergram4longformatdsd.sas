@@ -5,11 +5,17 @@ as this macro will sort the long format data by rowname_var and colname_var, and
 tranpose it for cluster if either one of them is subjected to clustering!
 Thus please use clustergram4sas whenever it is possible;
 see demos for clustergram4sas, which include all possible scenarios!
+Note: clustergram4sas is better in terms of more custom parameters 
+when input dataset is in a table format!
 */
 dsdin=_last_,/*The input dataset is a matrix contains rownames and other numeric columns*/
-rowname_var=,/*the elements of rowname_var will be used to label heatmap columns*/
+rowname_var=,/*the elements of rowname_var will be used to label heatmap columns;
+Note: it would be easier to switch rownames with column names by providing target column names here
+and supply rowname variable for colname_var at the same time!*/
 colname_var=,/*These column-wide names will be used to label heatmap rowlabels*/
 value_var=,/*numeric data for heatmap cells*/
+colaxis_font_setting=%str(Style=italic size=10 weight=normal),/*column label setting for font style, size, and weight*/
+rowaxis_font_setting=%str(Style=italic size=10 weight=normal),/*column label setting for font style, size, and weight*/
 height= ,/*figure height in cm, such as 20;
 if empty, it will use the number of rownames * 0.8 as height*/
 width= ,/*figure width in cm, such as 24;
@@ -250,6 +256,37 @@ y_name_=prxchange('s/_+/ /',-1,y_name_);
 x_name_=prxchange('s/_+/ /',-1,x_name_);
 run;
 
+proc sort data=heatmap out=rownames nodupkeys;
+by row;
+proc sort data=heatmap out=colnames nodupkeys;
+by col;
+proc sql noprint;
+select count(row) into: nrows
+from rownames;
+select count(col) into: ncols
+from colnames;
+%put There &nrows unique rows and &ncols unique columns in the input heatmap dataset;
+
+
+*Note: the variable row and col will be used to draw Y-axis and X-axis labels!;
+*This is a little confusing, but need to pay attention to it!;
+*Decide whether to draw x-axis labels;
+%if &nrows<100 %then %do; 
+  %let colaxis_label_setting=tickvalues; 
+%end; 
+%else %do; 
+  %let colaxis_label_setting=line; 
+%end;
+
+ *Decide whether to draw y-axis labels;
+%if &ncols<100 %then %do; 
+  %let rowaxis_label_setting=tickvalues; 
+%end; 
+%else %do; 
+  %let rowaxis_label_setting=line; 
+%end;
+
+
 
 /*Note: make sure to let rowdata and columndata with union range*/
 %let rnd=%randbetween(1,1000);
@@ -287,9 +324,10 @@ proc template;
 														%end;
             endlayout;
             *To remove outline, add "walldisplay=none";
+            *When there are more than 100 unique rows or columns, do not label them in the heatmap;
             layout overlay /walldisplay=none  yaxisopts=(display=none reverse=true
-                                        displaysecondary=(tickvalues))
-                             xaxisopts=(display=(tickvalues));
+                                        displaysecondary=(&colaxis_label_setting) TICKVALUEATTRS=(&rowaxis_font_setting))
+                             xaxisopts=(display=(&rowaxis_label_setting) TICKVALUEATTRS=(&colaxis_font_setting));
                heatmapparm y=col x=row 
                                %if %length(&rangemap_setting)>0 %then %do;
                                 colorresponse=RangeVar/
@@ -370,7 +408,7 @@ width=10,
 columnweights=0.15 0.85, 
 rowweights=0.15 0.85, 
 cluster_type=3,
-show_heatmap_grid=0
+show_heatmap_grid=1
 );
 
 %clustergram4longformatdsd(

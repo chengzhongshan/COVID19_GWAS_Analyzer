@@ -5,7 +5,8 @@ A SAS Macro for estimating and testing for the effect of a genetic pathway
 on a disease outcome using logistic kernel machine regression via logistic 
 mixed models.;
 https://content.sph.harvard.edu/xlin/software.html
-Liu, D., Ghosh, D. and Lin, X. (2008) Estimation and Testing for the Effect of a Genetic Pathway on a Disease Outcome Using 
+Liu, D., Ghosh, D. and Lin, X. (2008) Estimation and Testing for the Effect 
+of a Genetic Pathway on a Disease Outcome Using 
 Logistic Kernel Machine Regression via Logistic Mixed Models. BMC Bioinformatics, 9, 292.
 
 Estimation and testing for the effect of a genetic pathway on a disease 
@@ -134,10 +135,9 @@ dd=diag(mu_mat*(1-mu_mat)`);
 *Note: H*Y=Y_bar;
 *gg is the projection matrix H, with dd equivalent to W, representing the diagonal matrix of weights (often representing the variance structure).;
 gg=xmat*inv(xmat`*dd*xmat)*xmat`*dd;
-*sa is like the remain variance after removal of covar x's variance from the total variance dd;
-*sa is P0 = D0 – D0X(X'D0X)**(-1)X'D0;
+*sa is like the remain variance after removal of covar x variance from the total variance dd;
 *see page 11 of the BMC bioinformatics paper;
-*Constructs the matrix sa as the residual variance after removing the covariate x's contribution from the total variance dd;
+*Constructs the matrix sa as the residual variance after removing the covariate x contribution from the total variance dd;
 sa=dd-dd*gg;
 *pp seems to be predicted probability;
 pp=inv(dd)*(ymat-mu_mat)+eta_mat;
@@ -165,12 +165,10 @@ do ii=1 to grid;
       
    scl=start+(ii-1)*delta;    
    k1=calk(zmat,scl);
-	 *Q_tau_beta_rho=(r - xbeta)'*D*K(rho)*D*(r-xbeta);
+	 *Q_tau_beta_rho=(r - xbeta)_trans*D*K(rho)*D*(r-xbeta);
    uu=0.5*rr`*dd*k1*dd*rr;
-	 *www is muQ and sa is P0 = D0 – D0X(X'D0X)**(-1)X'D0;
    www=k1*sa;
    ee=0.5*sum(diag(www));
-	 *eee is sigmaQ square: 2tr{P0K(?)P0K(?)};
    eee=0.5*sum(diag(www*www));
    *ss is S(rho), see formula 11 at page 11 of the lkm BMC bioinformatics paper;           
    ss=(uu-ee)/sqrt(eee);
@@ -202,7 +200,7 @@ test_statistic=m00;
 title "Score Test Result:";
 print p_value;
 *Print other parameters, added by zhongshan;
-*m00 is the maximum of S(rho) over the range of rhoin the score test;
+*m00 is the maximum of S(rho) over the range of rho in the score test;
 print m00;
 *W = |S(rho1) – S(L)| + | S(rho2) – S(rho1) | + ... + | S(U) – S(rhom) |;
 *L and U are the lower and upper bound of rho respectively and rhol, l = 1, ..., m are the m grid points between L and U.;

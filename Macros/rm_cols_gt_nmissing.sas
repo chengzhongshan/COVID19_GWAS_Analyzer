@@ -5,8 +5,8 @@ var_type,	/*_numeric_ or _character_;
 if only specific numeric or character vars are targeted, please subset the input dsd 
 based on specific variable names*/
 missing_summary=missing_summ_dsd, /*Output a dataset containg the NMissing and missing % for all targetted vars*/
-missing_N_cutoff=3, /*When reverse=0, remove the var with missing n >= the cutoff; when reverse=1, keep the var with at 
-least the cutoff of number of non-missing value*/
+missing_N_cutoff=3, /*When reverse=0, remove the var with missing n >= the cutoff; 
+when reverse=1, keep the var with at least the cutoff of number of non-missing value*/
 reverse=0,/*Remove or keep var based on the missing_N_cutoff*/
 filtered_dsdout=filtered_dsdout, /*The sas dataset after filtering with the above criteria*/
 print_missing_summary=0 /*Print out the missing summary dataset*/
@@ -49,7 +49,7 @@ create table &missing_summary as
 select 
 %do vi=1 %to &nvars;
     %let colvar=%scan(&colvars,&vi,%str( ));
-    %str(nmiss(&colvar) as NM4&colvar, nmiss(&colvar)/&tot_rows as MR4&colvar)
+    %str(nmiss(&colvar) as NM4&colvar, nmiss(&colvar)/&tot_rows as MR4&colvar, &tot_rows as tot4&colvar)
     %if &vi<&nvars %then %do;
 		        %str( ,)
      %end;
@@ -72,15 +72,25 @@ set _&missing_summary._2;
 Varname=prxchange('s/^(MR|NM)4//',-1,Varname);
 run;
 
+proc transpose data=&missing_summary out=_&missing_summary._3(rename=(_name_=Varname col1=Total));
+var tot4:;
+data _&missing_summary._3;
+set _&missing_summary._3;
+Varname=prxchange('s/^(MR|NM|tot)4//',-1,Varname);
+run;
+data 	_&missing_summary._2;
+merge _&missing_summary._2 _&missing_summary._3;
+run;
+
 proc sql;
 create table &missing_summary as 
 select *,&tot_rows as tot_counts,&missing_N_cutoff as Missing_Cutoff,
 
 				 %if &reverse=1 %then %do;
-           %str(Nmissing<&missing_N_cutoff as LT_Missing_Cutoff)
+           %str(Total-Nmissing>=&missing_N_cutoff as LE_Missing_Cutoff)
          %end;
          %else %do;
-           %str(Nmissing>&missing_N_cutoff as GT_Missing_Cutoff)
+           %str(Nmissing>=&missing_N_cutoff as GE_Missing_Cutoff)
           %end;
 
 from _&missing_summary._1
@@ -97,10 +107,10 @@ title;
 data _&missing_summary._;
 set &missing_summary;
 %if &reverse=1 %then %do;
-  if 	LT_Missing_Cutoff=0 then delete;
+  if 	LE_Missing_Cutoff=0 then delete;
 %end;
 %else %do;
-  if 	GT_Missing_Cutoff=1 then delete;
+  if 	GE_Missing_Cutoff=1 then delete;
 %end;
 run;
 
@@ -108,21 +118,25 @@ run;
 proc sql noprint;
 select varname into: kept_vars separated by ' '
 from _&missing_summary._;
-
+%if %symexist(kept_vars)=0 %then %do;
+					 %put After filtering, no column vars included in the dataset _&missing_summary._;
+           %abort 255;
+%end;
 data &filtered_dsdout;
 set _&dsd._;
 keep &kept_vars;
 run;
+
 
 *Add back these vars that are not the target variable type;
 data &filtered_dsdout;
 merge &filtered_dsdout _&dsd._1;
 run;
 
-proc datasets lib=work nolist;
-delete 	_&missing_summary: _&dsd._
-            Vars_list _&dsd._1;
-run;
+/*proc datasets lib=work nolist;*/
+/*delete 	_&missing_summary: _&dsd._*/
+/*            Vars_list _&dsd._1;*/
+/*run;*/
 
 %mend;
 /*Demo:
