@@ -307,7 +307,10 @@ data _null_;
 
     *Exclude these files matched with file regular expression;
    %if %length(&excluded_files_rgx)>0 %then %do;
-    if prxmatch("/(&excluded_files_rgx)/",memname) then stop;
+    if prxmatch("/(&excluded_files_rgx)/i",memname) then do;
+          put '/*Excluded*/';
+          stop;
+    end;
    %end;
 
     put '/* hat tip: "data _null_" on SAS-L */';
