@@ -307,14 +307,7 @@ data _null_;
 
     *Exclude these files matched with file regular expression;
    %if %length(&excluded_files_rgx)>0 %then %do;
-    if prxmatch("/(&excluded_files_rgx)/i",memname) then do;
-         call symputx('run_inc',0);
-    end;
-    else do;
-         call symputx('run_inc',1);
-     end;
-   %end;
-
+    if not prxmatch("/(&excluded_files_rgx)/i",memname) then do;
     put '/* hat tip: "data _null_" on SAS-L */';
     put 'data _null_;';
     put '  infile &f1 ' bname ' lrecl=32767 recfm=F length=length eof=eof unbuf;';
@@ -325,12 +318,24 @@ data _null_;
     put 'eof:';
     put '  stop;';
     put 'run;';
+    end;
+   %end;
+	 %else %do;
+    put '/* hat tip: "data _null_" on SAS-L */';
+    put 'data _null_;';
+    put '  infile &f1 ' bname ' lrecl=32767 recfm=F length=length eof=eof unbuf;';
+    put '  file ' qname ' lrecl=32767 recfm=N;';
+    put '  input;';
+    put '  put _infile_ $varying32767. length;';
+    put '  return;';
+    put 'eof:';
+    put '  stop;';
+    put 'run;';
+   %end;
   end;
 run;
 
-%if &run_inc=1 %then %do; 
-   %inc &f2/source2;
-%end;
+%inc &f2/source2;
  
 filename &f2 clear;
  
