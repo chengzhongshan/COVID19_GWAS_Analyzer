@@ -1,4 +1,5 @@
-%macro import_sc_mtex_meta_umap_data(
+%macro _import_sc_mtex_meta_umap_data(
+/*This macro is replaced by import_sc_mtex_meta_umap_data*/
 umap_file=https://cells.ucsc.edu/covid-hypertension/Seurat_umap.coords.tsv.gz,
 /*local uncompressed or compressed (.gz) umap file or http link for compressed umap gz file*/
 meta_file=https://cells.ucsc.edu/covid-hypertension/meta.tsv,

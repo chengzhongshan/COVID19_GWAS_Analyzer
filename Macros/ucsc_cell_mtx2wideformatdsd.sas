@@ -567,9 +567,9 @@ where a.row=b.rowtag;
 *The input files can be gz, url, or plain files;
 
 %ucsc_cell_mtx2wideformatdsd(
-mtx_gzfile_or_url=E:/JAK2_New_papers/sc_toppedCells_ucsc/exp.matrix.gz,
-feat_gzfile_or_url=E:/JAK2_New_papers/sc_toppedCells_ucsc/feature.gz,
-barcode_gzfile_or_url=E:/JAK2_New_papers/sc_toppedCells_ucsc/barcodes.gz,
+mtx_gzfile_or_url=E:\JAK2_APOBEC3_and_MAP3K4_papers\sc_toppedCells_ucsc\exp.matrix.gz,
+feat_gzfile_or_url=E:\JAK2_APOBEC3_and_MAP3K4_papers\sc_toppedCells_ucsc\feature.gz,
+barcode_gzfile_or_url=E:\JAK2_APOBEC3_and_MAP3K4_papers\sc_toppedCells_ucsc\barcodes.gz,
 dsdout4headers=header,
 dsdout4data=exp,
 extra_cmd4infile=,

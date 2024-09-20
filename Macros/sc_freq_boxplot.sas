@@ -315,7 +315,7 @@ proc sort data=&frqout;by &cell_type_var;
 ods graphics on/reset=all noborder;
 /* ods trace on; */
 title "Cell type PERCENT GLM analysis &longformdsd with &exp_var>&exp_cutoff";
-ods output MANOVA=PCT_MANOVA  Diff=&frqout._pdiff;
+ods output ModelANOVA=PCT_MANOVA  Diff=&frqout._pdiff;
 proc glm data=&frqout;
 class &pheno_var &other_glm_classes;
 model percent=&pheno_var &other_glm_classes/ss3;
@@ -337,7 +337,7 @@ proc sort data=&frqout;by &cell_type_var;
 ods graphics on/reset=all noborder;
 /* ods trace on; */
 title "Cell type COUNT GLM analysis &longformdsd with &exp_var>&exp_cutoff";
-ods output MANOVA=CNT_MANOVA  Diff=&frqout._pdiff_cnt;
+ods output ModelANOVA=CNT_MANOVA  Diff=&frqout._pdiff_cnt;
 proc glm data=&frqout;
 class &pheno_var &other_glm_classes;
 model count=&pheno_var &other_glm_classes/ss3;
@@ -362,7 +362,7 @@ proc sort data=_tmp_;by &cell_type_var;
 ods graphics on/reset=all noborder;
 /* ods trace on; */
 title "Cell type GENE EXPRESSION at sample level GLM analysis &longformdsd with &exp_var>&exp_cutoff";
-ods output MANOVA=&aggre_sc_glm_pdiff_dsd._sample_MANOVA  Diff=&aggre_sc_glm_pdiff_dsd._sample_pdiff;
+ods output ModelANOVA=&aggre_sc_glm_pdiff_dsd._sample_MANOVA  Diff=&aggre_sc_glm_pdiff_dsd._sample_pdiff;
 proc glm data=_tmp_;
 class &_pheno_var &other_glm_classes;
 model &exp_var=&_pheno_var &other_glm_classes/ss3;
@@ -386,7 +386,7 @@ proc sort data=&longformdsd;by &cell_type_var;
 ods graphics on/reset=all noborder;
 /* ods trace on; */
 title "Cell type GENE EXPRESSION GLM analysis &longformdsd with &exp_var>&exp_cutoff";
-ods output MANOVA=&aggre_sc_glm_pdiff_dsd._celltype_MANOVA  Diff=&aggre_sc_glm_pdiff_dsd._celltype_pdiff;
+ods output ModelANOVA=&aggre_sc_glm_pdiff_dsd._celltype_MANOVA  Diff=&aggre_sc_glm_pdiff_dsd._celltype_pdiff;
 proc glm data=&longformdsd;
 class &_pheno_var &other_glm_classes;
 model &exp_var=&_pheno_var &other_glm_classes/ss3;
