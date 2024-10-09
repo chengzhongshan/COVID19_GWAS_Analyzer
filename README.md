@@ -7,6 +7,8 @@ This package provides SAS scripts that perform differential effect size analysis
 
 Once users have the free SAS account, they can login into the SAS OnDemand for Academics and install our package by following one of the two steps:
 
+###########################################################################################################
+
 EASY IMPLEMENTATION OF COVID19_GWAS_ANALYZER
 
 To install and load the necessary SAS macros from COVID19_GWAS_Aanalyzer, users can execute the following commands in SAS Studio:
@@ -27,6 +29,8 @@ If users want to run COVID19_GWAS_Analyzer locally using SAS 9.4 workbench in Wi
    %importallmacros(MacroDir=path2MacrosDirectory);
    
 Note: a handy macro called “%macroparas(macrorgx=regular_expression2macro)” can be used to print contents of each macro.
+
+###########################################################################################################
 
 MANUAL IMPLEMENTATION OF COVID19_GWAS_ANALYZER 
 
