@@ -10,14 +10,22 @@ Once users have the free SAS account, they can login into the SAS OnDemand for A
 EASY IMPLEMENTATION OF COVID19_GWAS_ANALYZER
 
 To install and load the necessary SAS macros from COVID19_GWAS_Aanalyzer, users can execute the following commands in SAS Studio:
+
    filename M url "https://raw.githubusercontent.com/chengzhongshan/COVID19_GWAS_Analyzer/main/Macros/importallmacros_ue.sas";
+   
    %include M;
+   
    Filename M clear;
-   %importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=.,verbose=0);  
+   
+   %importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=.,verbose=0); 
+   
 These macros streamline various aspects of GWAS analysis, including data preparation, statistical comparisons, and visualization. The macro “%importallmacros_ue” ensures that all functions needed for analyses are available. 
 If users want to run COVID19_GWAS_Analyzer locally using SAS 9.4 workbench in Windows or Linux, please download all macros provided by COVID19_GWAS_Analyzer from github and add the ‘Macros’ directory into the macro searching path by running the code as follows:
+
    options insert=(sasautos=”path2MacrosDirectory”);
+   
    %importallmacros(MacroDir=path2MacrosDirectory);
+   
 Note: a handy macro called “%macroparas(macrorgx=regular_expression2macro)” can be used to print contents of each macro.
 
 MANUAL IMPLEMENTATION OF COVID19_GWAS_ANALYZER 
