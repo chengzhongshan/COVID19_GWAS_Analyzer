@@ -7,7 +7,7 @@ This package provides SAS scripts that perform differential effect size analysis
 
 Once users have the free SAS account, they can login into the SAS OnDemand for Academics and install our package by following one of the two steps:
 
-###########################################################################################################
+####################################################################################
 
 EASY IMPLEMENTATION OF COVID19_GWAS_ANALYZER
 
@@ -30,13 +30,13 @@ If users want to run COVID19_GWAS_Analyzer locally using SAS 9.4 workbench in Wi
    
 Note: a handy macro called “%macroparas(macrorgx=regular_expression2macro)” can be used to print contents of each macro.
 
-###########################################################################################################
+####################################################################################
 
 MANUAL IMPLEMENTATION OF COVID19_GWAS_ANALYZER 
 
 After logging into the SAS studio of SAS OnDemand for Academics, please create a directory called 'Macros' under the 'HOME' directory (such as /home/username) of the account. Please upload all SAS macros shared in the 'Macros' directory in this package. These macros will be used by the shared SAS scripts to download GWAS data from the HGI or GRASP databases, perform GWAS comparison, draw Manhattan plot and QQ plot, and conduct single cell expression analyses with data shared by UCSC Cell Browser.
 
-###########################################################################################################
+####################################################################################
 
 Please read our iScience ans STAR Protocol papers, as well as the SAS SESUG2024 conferennce paper for how we used the COVID19_GWAS_Analyzer to perform intergative GWAS analysis.
 
@@ -50,7 +50,7 @@ Please read the annotations for all SAS macros included in the "Macros" director
 https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/blob/main/Macros/Available_SAS_Macros_and_its_annotations4STAR_PROTOCOL.csv
 
 
-###########################################################################################################
+####################################################################################
 
 Demonstration codes for the investigation of a regulatory SNP of MAP3K19 predisposing to COVID-19 hospitalization specific to populations with African ancestry.
 
@@ -62,7 +62,7 @@ Demonstration codes for the investigation of a regulatory SNP of MAP3K19 predisp
 
 %importallmacros_ue;
 
-###########################################################################################################
+####################################################################################
 
 *Step1;
 
@@ -85,7 +85,7 @@ mk_manhattan_qqplots4twoGWASs=1
 ![Slide4](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/2b52f7dd-9ea9-4615-8077-54e545f73b29)
 ![Slide5](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/31e65af4-fcec-465d-a52d-88f059964fe6)
 
-###########################################################################################################
+####################################################################################
 
 *Step2;
 
@@ -105,7 +105,7 @@ Other_P_vars=GWAS2_P Pval
 
 );
 
-###########################################################################################################
+####################################################################################
 
 *Step3;
 
@@ -125,7 +125,7 @@ outdsd=D.GTF_HG19
 
 );
 
-###########################################################################################################
+####################################################################################
 
 *Step4;
 
@@ -167,7 +167,7 @@ design_height=750
 *Expected figures for Step 2 to 4;
 ![Slide6](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/983ffe35-e137-4eb4-b48b-0edb992bb1d0)
 
-###########################################################################################################
+####################################################################################
 
 *Step5;
 
@@ -188,7 +188,7 @@ create_eqtl_boxplots=1
 *Expected figures:;
 ![Slide7](https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/assets/24280206/88b6ef9a-0e7d-4e5a-bf6b-02be42ffd9c8)
 
-###########################################################################################################
+####################################################################################
 
 *Step6;
 
@@ -236,7 +236,7 @@ will be randomly selected.*/
 
 *Note: if the total number of cells in the matrix is more than 1 million, the macro will randomly select 1 million cells automatically, which will avoid using up the limited disk space (~5GB) in SAS OnDemand for Academics.
 
-###########################################################################################################
+####################################################################################
 
 *Step7;
 
