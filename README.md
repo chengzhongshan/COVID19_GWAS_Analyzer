@@ -5,7 +5,7 @@
 
 This package provides SAS scripts that perform differential effect size analysis between two COVID19 GWASs freely available from HGI or GRASP databases. Users need to have an account of SAS OnDemand for Academics, which can be freely accessed here (https://www.sas.com/en_us/software/on-demand-for-academics.html). 
 
-Once users have the free SAS account, they can login into the SAS OnDemand for Academics and install our packabe by following one of the two steps:
+Once users have the free SAS account, they can login into the SAS OnDemand for Academics and install our package by following one of the two steps:
 
 EASY IMPLEMENTATION OF COVID19_GWAS_ANALYZER
 
