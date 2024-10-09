@@ -32,6 +32,8 @@ MANUAL IMPLEMENTATION OF COVID19_GWAS_ANALYZER
 
 After logging into the SAS studio of SAS OnDemand for Academics, please create a directory called 'Macros' under the 'HOME' directory (such as /home/username) of the account. Please upload all SAS macros shared in the 'Macros' directory in this package. These macros will be used by the shared SAS scripts to download GWAS data from the HGI or GRASP databases, perform GWAS comparison, draw Manhattan plot and QQ plot, and conduct single cell expression analyses with data shared by UCSC Cell Browser.
 
+###########################################################################################################
+
 Please read our iScience ans STAR Protocol papers, as well as the SAS SESUG2024 conferennce paper for how we used the COVID19_GWAS_Analyzer to perform intergative GWAS analysis.
 
 https://www.sciencedirect.com/science/article/pii/S2589004223016322
