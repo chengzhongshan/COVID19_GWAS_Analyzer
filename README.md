@@ -36,7 +36,7 @@ Please read the annotations for all SAS macros included in the "Macros" director
 https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/blob/main/Macros/Available_SAS_Macros_and_its_annotations4STAR_PROTOCOL.csv
 
 
-#############################################################################################
+########################################################################################################################################
 
 Demonstration codes for the investigation of a regulatory SNP of MAP3K19 predisposing to COVID-19 hospitalization specific to populations with African ancestry.
 
