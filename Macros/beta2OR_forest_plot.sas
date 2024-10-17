@@ -116,7 +116,8 @@ datalabelattrs=(size=&both_y_font_size)
 group=grp xerrorlower=lowercl  grouporder=ASCENDING attrid=grp
 xerrorupper=uppercl	 name="dotsc"
 markerattrs=(symbol=circleFilled size=&dotsize);
-refline 1 / axis=x;
+*https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/grstatproc/p0er4dg9tojp05n1sf7maeqdz1d8.htm;
+refline 1 / axis=x lineattrs=(pattern=solid color=darkgray thickness=1) ;
 xaxis label="OR and 95% CI " min=&min_axis valueattrs=(size=&both_y_font_size) max=&max_axis values=(&xaxis_value_range);
 *It is necessary to add the type=discrete to fix the yaxis using the newly created new_grp_var with its numeric format;
 yaxis label="&marker_label" valueattrs=(size=&both_y_font_size style=normal) type=discrete display=(nolabel)

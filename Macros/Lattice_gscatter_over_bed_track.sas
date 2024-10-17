@@ -22,13 +22,13 @@ debug=0,
 add_grp_anno=1, /*This will add group names, such as gene labels, to each member of grp_var*/
 grp_font_size=8,
 grp_anno_font_type=italic, /*other type: normal*/
-shift_text_yval=-0.2, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
-                      to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;
+shift_text_yval=-0.25, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
+                      to liftup or lower text labels on the y axis; the default value is -0.25 to put gene lable under gene tracks;
                       Change it with the macro var pct4neg_y!
                       Provide very large or small values, such as 9999 or -9999 to remove test labels for genes!*/
 yaxis_offset4min=0.05, /*provide 0-1 value or auto to offset the min of the yaxis*/
 yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the yaxis*/
-yoffset4max_drawmarkersontop=0.2,/*If draw scatterplot marker labels on the top of track, 
+yoffset4max_drawmarkersontop=0.15,/*If draw scatterplot marker labels on the top of track, 
 this fixed value will be used instead of yaxis_offset4max!*/
 xaxis_offset4min=0.02, /*provide 0-1 value or auto  to offset the min of the xaxis*/
 xaxis_offset4max=0.02, /*provide 0-1 value or auto to offset the max of the xaxis*/
@@ -78,7 +78,7 @@ betweent the first label to the last label and
 define labels into cluster if they are too close to each other
 if their distance is less than pct_of_total_dist*/
 fc2distant_close_labels=3,/*increase the distance among close labels by input fold change*/
-reflinecolor4selecteddots=grey,/*asign color for the vertical reference lines for userselected dots*/
+reflinecolor4selecteddots=gray,/*asign color for the vertical reference lines for userselected dots*/
 text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
 Yoffset4textlabels=2.5, /*Move up the text labels for target SNPs in specific fold; the default value 2.5 fold works for most cases*/
 font_size4textlabels=10,/*Font size for these text labels*/
@@ -86,7 +86,7 @@ font_size4textlabels=10,/*Font size for these text labels*/
 mk_fake_axis_with_updated_func=1, /*The new func make the xaxis more compacted 
                                    between gene tracks and scatter plots;*/
 sameyaxis4scatter=1,/*Make the same y-axis for scatterplots*/ 
-maxyvalue4truncat=30,/*Asign yaxis_value >maxyvalue4trancat as the value of maxyvalue4trancat*/ 
+maxyvalue4truncat=30,/*Asign yaxis_value >maxyvalue4trancat as the designated value of maxyvalue4trancat*/ 
 adjval4header=-0.5, /*In terms of header of each subscatterplot, provide postive value to move up scatter group header by the input value*/
 ordered_sc_grpnames= ,/*Labels for each scatter plot from down to up in order
                        Use _ to replace blank space within each name and all
@@ -1061,9 +1061,9 @@ begingraph / designwidth=&track_width designheight=&track_height
 *https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/grstatgraph/n1jn4duv8s510xn1y2nlbefm0p46.htm;
 *https://blogs.sas.com/content/graphicallyspeaking/2018/01/15/advanced-ods-graphics-draw-statements;
 *The drawline is better with the drawspace controling the line positions;
-              drawline x1=%scan(&markers_pos,&mki)  y1=0 x2=%scan(&markers_pos,&mki)  y2=%sysevalf(&max_y-0.5) / drawspace=datavalue
+              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=0 x2=%scan(&markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y-0.5) / drawspace=datavalue
                                                        lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);
-              drawline x1=%scan(&markers_pos,&mki)  y1=%sysevalf(&max_y-0.5) x2=%scan(&new_markers_pos,&mki)  y2=%sysevalf(&max_y) / drawspace=datavalue
+              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=%sysevalf(&max_y-0.5) x2=%scan(&new_markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y) / drawspace=datavalue
                                                        lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);                                       
           %end;   
           
@@ -1368,7 +1368,7 @@ set x0;
 scatterlabel=catx('-',grp,_n_);
 if gscatter_grp<0 then scatterlabel="";
 run;
-
+%debug_macro;
 %Lattice_gscatter_over_bed_track(
 bed_dsd=x0,
 chr_var=chr,
@@ -1389,8 +1389,9 @@ add_grp_anno=1,
 grp_font_size=8,
 grp_anno_font_type=italic,
 shift_text_yval=0.2, 
-yaxis_offset4min=0.025, 
-yaxis_offset4max=0.025, 
+yaxis_offset4min=0.01, 
+yaxis_offset4max=0.01,
+yoffset4max_drawmarkersontop=0.1, 
 xaxis_offset4min=0.01, 
 xaxis_offset4max=0.01,
 xaxis_viewmin=,
@@ -1410,7 +1411,7 @@ Yoffset4textlabels=1.5,
 font_size4textlabels=10,
 mk_fake_axis_with_updated_func=1,
 sameyaxis4scatter=1,
-maxyvalue4truncat=16,
+maxyvalue4truncat=10,
 adjval4header=0,
 ordered_sc_grpnames=a_a b_b c_c,          
 scatterdotcols=green yellow, 

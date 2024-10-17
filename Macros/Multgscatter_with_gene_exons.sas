@@ -44,6 +44,8 @@ min_xaxis=,/*These two parameters will restrict the min and max position for xax
 max_xaxis=,
 yaxis_offset4min=0.05, /*provide 0-1 value or auto to offset the min of the yaxis*/
 yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the yaxis*/
+yoffset4max_drawmarkersontop=0.15,/*If draw scatterplot marker labels on the top of track, 
+this fixed value will be used instead of yaxis_offset4max!*/
 xaxis_offset4min=0.02, /*provide 0-1 value or auto  to offset the min of the xaxis*/
 xaxis_offset4max=0.02, /*provide 0-1 value or auto to offset the max of the xaxis*/
 
@@ -281,6 +283,8 @@ from &bed_dsd;
     xaxis_viewmax=&max_xaxis,/*arbitrary xaxis max vale to show the figure, and it requires to go along with thresholdmax=0*/
     yaxis_offset4min=&yaxis_offset4min, /*provide 0-1 value or auto to offset the min of the yaxis*/
     yaxis_offset4max=&yaxis_offset4max, /*provide 0-1 value or auto or to offset the max of the yaxis*/
+   yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop,/*If draw scatterplot marker labels on the top of track, 
+   this fixed value will be used instead of yaxis_offset4max!*/
     xaxis_offset4min=&xaxis_offset4min, /*provide 0-1 value or auto  to offset the min of the xaxis*/
     xaxis_offset4max=&xaxis_offset4max, /*provide 0-1 value or auto to offset the max of the xaxis*/
 

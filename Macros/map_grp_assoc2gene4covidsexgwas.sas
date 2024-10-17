@@ -55,11 +55,13 @@ based on its real value in the heatmap plot; To keep the original dot y axis val
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
 the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
 */
-var4label_scatterplot_dots= /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+var4label_scatterplot_dots=, /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
+yoffset4max_drawmarkersontop=0.15 /*If draw scatterplot marker labels on the top of track, 
+ this fixed value will be used instead of yaxis_offset4max!*/
 );
 %if %ntokens(&gwas_labels_in_order)^=%ntokens(&AssocPVars) %then %do;
   %put Please ensure the gwas_labels_in_order has the same number of elements as that of AssocPVars;
@@ -228,7 +230,8 @@ Customize this for different gene exon track!*/
 sc_labels_in_order=&gwas_labels_in_order, /*Provide scatter names matched with the numeric scatter_grp_var*/
 min_xaxis=&orig_minst,
 max_xaxis=&orig_maxend,
-
+yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop,/*If draw scatterplot marker labels on the top of track, 
+this fixed value will be used instead of yaxis_offset4max!*/
 shift_text_yval=&shift_text_yval, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
                       to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;
                       Change it with the macro var pct4neg_y!*/

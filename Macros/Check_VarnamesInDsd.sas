@@ -7,7 +7,7 @@
 *Add quit here to quit process that may prevent the script from running proc contents;
 quit;
 %put Going to run proc contents to obtain variable list!;
-proc contents data=&indsd out=_tmp_(keep=name type) print;
+proc contents data=&indsd out=_tmp_(keep=name type) noprint;
 run;
 
 %if not %sysfunc(exist(_tmp_)) %then %do;

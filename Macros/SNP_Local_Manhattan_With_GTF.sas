@@ -1,15 +1,21 @@
-%macro SNP_Local_Manhattan_With_GTF(/*As this macro use other sub-macros, it is not uncommon that some global macro
-vars would be in the same name, such as macro vars chr and i, thus, to avoid of crash, chr_var is used instead of macro
-var chr in this macro*/
+%macro SNP_Local_Manhattan_With_GTF(
+/*
+As this macro use other sub-macros, it is not uncommon that some global macro
+vars would be in the same name, such as macro vars chr and i, thus, to avoid of crash, 
+chr_var is used instead of macro var chr in this macro;*/
+/*
+Important: there are many other parameters of the sub-macro Lattice_gscatter_over_bed_track,
+which can be modified by changing the default values for them to improve the quality of final produced figure!
+*/
 gwas_dsd=,
 chr_var=chr,
 AssocPVars=pval1 pval2,
 SNP_IDs=rs370604612 rs2070788 9:5114773,
 /*if providing chr:pos or chr:st:end, it will query by pos;
 Please also enlarge the dist2snp to extract the whole gene body and its exons,
-altought the final plots will be only restricted by the input st and end positions!*/
+although the final plots will be only restricted by the input start and end positions!*/
 dist2snp=2000000,
-/*in bp; left or right size distant to each target SNP for the Manhattan plot*/
+/*assign value in bp, and the final figure will be add extend this distance for both start and end positions*/
 SNP_Var=snp,
 Pos_Var=pos,
 gtf_dsd=FM.GTF_HG19,
@@ -23,8 +29,14 @@ design_width=800,
 design_height=600, 
 barthickness=10, /*gene track bar thinkness*/
 dotsize=6, 
-dist2sep_genes=100000,/*Distance to separate close genes into different rows in the gene track; provide negative value
-to have all genes in a single row in the final gene track*/
+dist2sep_genes=100000,/*Distance to separate close genes into different rows in the gene track; provide negative value or 0
+to have all genes in a single row in the final gene track
+this will ensure these genes close to each other to 
+be separated in the final gene track; 
+(1) give 0 or negative value to plot ALL genes in the same line;
+(2) give value >0 and <1 to separate genes based on the pct distance to the whole region;
+(3) give value > 1 to use absolute distance to separate genes into different groups;
+Customize this for different gene exon track!*/
 where_cndtn_for_gwasdsd=%str(), /*where condition to filter input gwas_dsd*/
 
 shift_text_yval=0.1, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
@@ -60,9 +72,14 @@ Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the 
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
-SNPs2label_scatterplot_dots= /*Add multiple SNP rsids to label dots within or at the top of scatterplot
+SNPs2label_scatterplot_dots=, /*Add multiple SNP rsids to label dots within or at the top of scatterplot
 Note: if this parameter is provided, it will replace the parameter var4label_scatterplot_dots!
+If there are too much space on the top for these SNP labels, please manually change default value of
+the macro variable yoffset4max_drawmarkersontop included in the macro Lattice_gscatter_over_bed_track
+ from 0.2 to a smaller value, such as 0.1;
 */
+yoffset4max_drawmarkersontop=0.15 /*If draw scatterplot marker labels on the top of track, 
+ this fixed value will be used instead of yaxis_offset4max!*/
 );
 *Note: the macro map_grp_assoc2gene4covidsexgwas requires the input dsd contain the var chr;
 %if "&chr_var"^="chr" %then %do;
@@ -73,22 +90,25 @@ run;
 %end;
 
 *Add labels for target SNPs if they exist;
+%if %length(&SNPs2label_scatterplot_dots)>0 %then %do;
+ %let var4label_scatterplot_dots=_Target_SNP_;
 data &gwas_dsd;
 set &gwas_dsd;
-%if %length(&SNPs2label_scatterplot_dots)>0 %then %do;
- %let var4label_scatterplot_dots=Target_SNP;
-length Target_SNP $25.;
- Target_SNP="";
+length _Target_SNP_ $25.;
+ _Target_SNP_="";
  %do _si_=1 %to %ntokens(&SNPs2label_scatterplot_dots);
-    if &SNP_Var="%scan(&SNPs2label_scatterplot_dots,&_si_)" then Target_SNP=&SNP_Var;
+    if &SNP_Var="%scan(&SNPs2label_scatterplot_dots,&_si_)" then _Target_SNP_=&SNP_Var;
  %end;
-%end;
 run;
+%end;
 
 %do snpi=1 %to %ntokens(&SNP_IDs);
   *query SNP using the index snpi (do not use i that may interupt with other macro var i used other sub-macros!);
   %let qsnp=%scan(&SNP_IDs,&snpi,%str( ));
-  
+   %if %sysfunc(countc(&qsnp,%str(:)))=1 %then %do;
+      *Manually add the start position as end position when the input is in the format of chrNum:Pos!;
+      %let qsnp=%sysfunc(prxchange(s/^([^:]+):(\d+)/$1:$2:$2/,-1,&qsnp));
+   %end;
   *determine whether input snp is a chrpos based markder;
   %if %sysfunc(prxmatch(/:/,&qsnp)) %then %do;
     %let qsnp=%sysfunc(prxchange(s/chr//i,-1,&qsnp));
@@ -181,6 +201,12 @@ run;
   barthickness=&barthickness, 
   dotsize=&dotsize, 
   dist2sep_genes=&dist2sep_genes,
+ /*this will ensure these genes close to each other to 
+be separated in the final gene track; 
+(1) give 0 to plot ALL genes in the same line;
+(2) give value between 0 and 1 to separate genes based on the pct distance to the whole region;
+(3) give value > 1 to use absolute distance to separate genes into different groups;
+Customize this for different gene exon track! */
   where_cndtn_for_gwasdsd=&where_cndtn_for_gwasdsd,
   gwas_pos_var=&Pos_Var,
   shift_text_yval=&shift_text_yval, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
@@ -210,11 +236,13 @@ based on its real value in the heatmap plot; To keep the original dot y axis val
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
 the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
 */
-var4label_scatterplot_dots=&var4label_scatterplot_dots /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+var4label_scatterplot_dots=&var4label_scatterplot_dots, /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
+yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop /*If draw scatterplot marker labels on the top of track, 
+this fixed value will be used instead of yaxis_offset4max!*/
   ); 
   ods printer close;
   *Also need to close the fileref out generated by the macro;
@@ -232,6 +260,14 @@ scatterplots;*/
   run;
   title;
   
+%end;
+
+*Reove target SNPs if they exist;
+%if %length(&SNPs2label_scatterplot_dots)>0 %then %do;
+data &gwas_dsd;
+set &gwas_dsd;
+drop _Target_SNP_;
+run;
 %end;
 
 %mend;
