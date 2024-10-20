@@ -134,6 +134,8 @@ dd=diag(mu_mat*(1-mu_mat)`);
 *In the context of GLMs, the projection matrix typically refers to a matrix that projects the observed responses Y onto the predicted values Y_bar based on the model.;
 *Note: H*Y=Y_bar;
 *gg is the projection matrix H, with dd equivalent to W, representing the diagonal matrix of weights (often representing the variance structure).;
+*To calculate a projection matrix incorporating variance, you need to use the standard projection matrix formula, but with the covariance matrix;
+*(which includes variance information) in place of the usual dot product matrix;
 gg=xmat*inv(xmat`*dd*xmat)*xmat`*dd;
 *sa is like the remain variance after removal of covar x variance from the total variance dd;
 *see page 11 of the BMC bioinformatics paper;

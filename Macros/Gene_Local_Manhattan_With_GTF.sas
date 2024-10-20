@@ -1,8 +1,9 @@
 %macro Gene_Local_Manhattan_With_GTF(/*As this macro use other sub-macros, it is not uncommon that some global macro
 vars would be in the same name, such as macro vars chr and i, thus, to avoid of crash, chr_var is used instead of macro
-var chr in this macro;
-Note: this macro will use the gene name to query GTF and GWAS, and then
-make local Manhattan plot with the top SNP at the center around the query gene!*/
+var chr in this macro;this macro will use the gene name to query GTF and GWAS, and then
+make local Manhattan plot with the top SNP at the center around the query gene!
+Please use the updated macro SNP_Local_Manhattan_With_GTF, which is modified to
+draw figures with more customiable parameters!*/
 gwas_dsd=,
 gwas_chr_var=chr,/*GTF uses numeric chr notation; ensure the type of chr is consistent with input gwas dsd*/
 gwas_AssocPVars=pval1 pval2,

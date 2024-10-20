@@ -17,7 +17,9 @@ linethickness=20,
 track_width=800,
 track_height=400,
 dist2st_and_end=0,
-dotsize=10,
+dotsize=10,/*Scatter plot marker symbol size, and the default marker is circlefilled dot*/
+scattermarker_symbol=circlefilled,/*Assign specific marker symbol, such as circlefilled, circle, dot, squarefilled, or square, for scatter plot;
+Note the size of the designated marker symbol will be defined by the macro variable dotsize*/ 
 debug=0,
 add_grp_anno=1, /*This will add group names, such as gene labels, to each member of grp_var*/
 grp_font_size=8,
@@ -30,6 +32,8 @@ yaxis_offset4min=0.05, /*provide 0-1 value or auto to offset the min of the yaxi
 yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the yaxis*/
 yoffset4max_drawmarkersontop=0.15,/*If draw scatterplot marker labels on the top of track, 
 this fixed value will be used instead of yaxis_offset4max!*/
+yaxis_auto_ticks=0,/*Provide value 1 to let SAS automatically reduce the number of ticks, which may be useful when non-integer ticks are required for y-axis;
+otherwise, only integer ticks will be used to label ticks!*/
 xaxis_offset4min=0.02, /*provide 0-1 value or auto  to offset the min of the xaxis*/
 xaxis_offset4max=0.02, /*provide 0-1 value or auto to offset the max of the xaxis*/
 fig_fmt=svg, /*output figure formats: svg, png, jpg, and others*/
@@ -53,7 +57,8 @@ This enables the upper and lower part have enough blank space for gene track*/
 
 makedotheatmap=0,/*use colormap to draw dots in scatterplot instead of the discretemap;
 Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
-the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
+the negative and postive values of lattice_subgrp_var to color dots in scatterplot
+Note: if makedotheatmap=1, autolegend will be canceled internally!*/
 
 color_resp_var=,/*Use value of the var to draw colormap of dots in scatterplot
 if empty, the default var would be the same as that of yval_var;*/
@@ -63,6 +68,8 @@ based on its real value in the heatmap plot; To keep the original dot y axis val
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
 the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
 */
+dot_yvalue4heatmap_at_oneline=1.5,/*When drawing dot in one line for heatmap, sometimes the arbitrary y value assigned to each dot
+may not be optimum, it is advicible to evaluate the initially generated plot and update the value of this macro variable*/
 drawdotintooneline_if_totsc_gt=10,/*When there are too many scatter groups,  let the macro change the macro var makeheatmapdotintooneline=1*/
 var4label_scatterplot_dots=,/*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
@@ -95,7 +102,7 @@ xaxis_label=%nrstr(Position (bp) on chromosome &chr_name), /*The macro var &chr_
 xaxis_viewmin=,/*arbitrary xaxis min value to show the figure, and it requires to work with thresholdmin=0*/
 xaxis_viewmax=,/*arbitrary xaxis max vale to show the figure, and it requires to go along with thresholdmax=0*/
 scatterdotcols=green orange, /*set colors for the beta directions 
-(negative and positve values) in scatterplots*/             
+(negative and positve values) in scatterplots*/            
 dataContrastCols=%str()
 /*Note: these colors will be used for the gene track but not the scatterplot;
 %str(lightblue lightgreen
@@ -270,7 +277,7 @@ old_y=&color_resp_var;
 
 %if &makeheatmapdotintooneline=1 %then %do;
 %*Change all positive y values into 0.75;
-if &yval_var>=0 then &yval_var=0.75;
+if &yval_var>=0 then &yval_var=&dot_yvalue4heatmap_at_oneline;
 %end;
 
 run;
@@ -440,21 +447,30 @@ select unique(abs(&yval_var)) into: yvals4reflines separated by ' '
 from x2;
 
 data tmp;
-do i=&min_y to &max_y;
+do i=&min_y to &max_y ;
 output;
 end;
 run;
+/*proc print;run;*/
 proc sql noprint;
 select i into: y_axis_values separated by " "
 from tmp;
 drop table tmp;
+/*%abort 255;*/
 
 *Can not replace negative values with empty, as these axis values are for genes;
 *The following codes should be deleted;
 /*%let y_axis_values=%sysfunc(prxchange(s/-\d+/ /,-1,&y_axis_values));*/
 *Also replace -1.0 and other similar negative values;
+*This will remove negative and numbers containing ".5" in the final y-axis ticks;
+%if &yaxis_auto_ticks=0 %then %do;
+%let ylabelsmacro_var=%sysfunc(prxchange(s/(-[\d\.]+|\d+\.5)/ /,-1,&ylabelsmacro_var));
+%let ylabelsmacro_var=%sysfunc(prxchange(s/\.0/ /,-1,&ylabelsmacro_var));
+%end;
+%else %do;
+*This will only remove negative values that are specific to the bottom gene tracks, and the y-axis of scatter plot will kept as it is;
 %let ylabelsmacro_var=%sysfunc(prxchange(s/-[\d\.]+/ /,-1,&ylabelsmacro_var));
-
+%end;
 /***********************No need this, as it generates missing group that will be put into the legend
 in in the final figure*/
 /*data x2;*/
@@ -996,19 +1012,20 @@ begingraph / designwidth=&track_width designheight=&track_height
 /*                         type=linear offsetmin=%sysevalf(&yaxis_offset4min*&totsc/200)  */
 /*                         offsetmax=%sysevalf(&yaxis_offset4max*&totsc/200) */
 /*                      The offset min and max will affect the upper and lower parts of the tracks   */
-                        type=linear offsetmin=%sysevalf(&yaxis_offset4min*5/&totsc) 
+                        offsetmin=%sysevalf(&yaxis_offset4min*5/&totsc) 
                         offsetmax=%sysevalf(&yaxis_offset4max*5/&totsc)
                     %end;
                     %else %if &totsc>5 %then %do;
-                        type=linear offsetmin=%sysevalf(&yaxis_offset4min*5/&totsc) 
+                        offsetmin=%sysevalf(&yaxis_offset4min*5/&totsc) 
                         offsetmax=%sysevalf(&yaxis_offset4max*5/&totsc)                    
                     %end;
                     %else %do;
-                         type=linear offsetmin=&yaxis_offset4min 
+                        offsetmin=&yaxis_offset4min 
                         offsetmax=&yaxis_offset4max                    
                     %end;
 /*			linearopts=(minorticks=false tickvaluelist=(&y_axis_values) )      */
-                        linearopts=(
+                         type=linear
+                         linearopts=(
                          %*expand the min and max value with 0.1 when only drawing gene track;
                          %if &NotDrawScatterPlot=1 %then %do;
                          %*it is hard to optimize;
@@ -1017,11 +1034,17 @@ begingraph / designwidth=&track_width designheight=&track_height
                          %else %do;
 /*                          viewmax=%sysevalf(&max_y+&offsety*2/&totsc) */
 /*                          viewmin=%sysevalf(&min_y-&&offsety*2/&totsc) */
+/*                      This part will affect the union of y-axis, with othe optimized value 1 to be added or removed from max and min, respectively               */
                          viewmax=%sysevalf(&max_y+0.1)
                          viewmin=%sysevalf(&min_y-0.1)                         
                          %end;
-                         minorticks=false tickvaluelist=(&y_axis_values) tickdisplaylist=(&ylabelsmacro_var))
-                        )
+                         minorticks=false tickvaluelist=(&y_axis_values) tickdisplaylist=(&ylabelsmacro_var)
+/*This is the key part to make the y-axis as desinged: read https://www.lexjansen.com/nesug/nesug12/bb/bb04.pdf*/
+                        %if &yaxis_auto_ticks=0 %then %do;
+                         tickvaluefitpolicy=none
+                         %end;
+                         )
+                       )
                         xaxisopts=(
                         linearopts=(
                         
@@ -1171,9 +1194,9 @@ begingraph / designwidth=&track_width designheight=&track_height
                                        filledoutlinedmarkers=false
                                        name="sc" 
                                        markerattrs=(
-                                       symbol=circlefilled size=&dotsize
+                                       symbol=&scattermarker_symbol size=&dotsize
                                        );
-       continuouslegend "sc"/title="scatter dot value";
+       continuouslegend "sc"/title="Dot value";
  %end;
  %else %do;
          scatterplot x=pos y=&yval_var/ 
@@ -1182,7 +1205,7 @@ begingraph / designwidth=&track_width designheight=&track_height
                                 %end;
                                        name="sc" 
                                        markerattrs=(
-                                       symbol=circlefilled size=&dotsize);
+                                       symbol=&scattermarker_symbol size=&dotsize);
 %end;                                       
                                        
        %if &add_grp_anno=1 %then %do;                              
@@ -1209,17 +1232,18 @@ begingraph / designwidth=&track_width designheight=&track_height
 			  different colors in the 1st &grp_var1, which contain all gene grps;
 			*/
  %if &makedotheatmap=1 %then %do;
-      discretelegend "series1"
+      /*Remove the legend for gene tracks to save space and also keep the figure with the same height as the number of genes will affect the heights of data areas*/
+      /*discretelegend "series1" /border=false valueattrs=(color=black size=&grp_font_size weight=normal style=&grp_anno_font_type); */
  %end;
  %else %do;
 /*	  discretelegend "sc" "series1"*/
- discretelegend "sc" "series1"
+ discretelegend "sc" "series1"	/border=false valueattrs=(color=black size=&grp_font_size weight=normal style=&grp_anno_font_type); 
  %end;
 /*   Only add legends for scatter plot and gene track*	  
 /* 	  discretelegend "sc" %do i=1 %to &max_ord; */
 /*                           "series&i" */
 /*                          %end; */
-          /border=false valueattrs=(color=black size=&grp_font_size weight=normal style=&grp_anno_font_type); 
+
 	  endsidebar;
    endlayout;
 endgraph;
@@ -1242,11 +1266,11 @@ run;
 %let outimagename=&yval_var.Chr%trim(%left(&chr_name))_&st_var%trim(%left(&min_x))_&end_var%trim(%left(&max_x));
 %put The final figure is put here:;
 %put &workdir/&outimagename..&fig_fmt;
-
-ods graphics /
+ods html image_dpi=300;
+ods graphics on /
 reset=all
 outputfmt=&fig_fmt 
-imagename="&outimagename" 
+imagename="&outimagename%RandBetween(1,100)" 
 noborder
 MAXOBS=100000000
 ;
@@ -1266,7 +1290,13 @@ colors=red blue green
 ods html style=Newstyle;
 */
 
+*This will relabel the variable newpos as 'Position' in the final figure;
+data final;
+set final;
+label newpos="Position";
+run;
 
+*Draw the final figure with data set final and the template BedGraph;
 proc sgrender data=WORK.final template=BedGraph;
 dynamic _chr="&chr_var";
 format &lattice_subgrp_var direction_fmt.;
