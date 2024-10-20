@@ -199,7 +199,7 @@ if &end_var > &xaxis_viewmax
 then delete;
 %end;
 run;
-
+/*%abort 255;*/
 %if %sysevalf(%length(&xaxis_viewmin)>0 or %length(&xaxis_viewmax)>0) %then %do;
   *Also need to adjust the negative y values;
   *for the genes after exclusion of bed regions by customized axis range;

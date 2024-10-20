@@ -167,7 +167,19 @@ from &bed_dsd;
    
    select min(st)-&dist2st_and_end,max(end)+&dist2st_and_end into: min_st,:max_end
    from bed&_chr_;
-      
+
+   create table exon&_chr_ as
+   select chr,st,end,grp,
+          -1 as &yval_var
+   from &gene_exon_bed_dsd
+   where chr="&_chr_" and (
+         (st<=&min_xaxis and end>=&min_xaxis and end<=&max_xaxis ) or 
+         (st>=&min_xaxis and end<=&max_xaxis) or 
+         (end>=&max_xaxis and st<=&max_xaxis)
+   );  
+/*  
+*Because the min_st and max_end is larger than then the actual disigned &min_xaxis and &max_xaxis;
+*There will be more genes included in the output data set, leading to the wrong adjusted gene group number for drawing lattice scatter plot;  
    create table exon&_chr_ as
    select chr,st,end,grp,
           -1 as &yval_var
@@ -177,6 +189,9 @@ from &bed_dsd;
          (st>=&min_st and end<=&max_end) or 
          (end>=&max_end and st<=&max_end)
    );
+ %put min_st is &min_st;
+ %put max_end is &max_end;
+ */
 
    %delete_empty_dsd(dsd_in=work.exon&_chr_);
    %if %eval(%sysfunc(exist(work.exon&_chr_))^=1) %then %do;
@@ -218,6 +233,7 @@ from &bed_dsd;
    dsdout=exon&_chr_,
    outnumgrp=_numgrp_
    );
+/*%abort 255;*/
    *Asign negative value to &yval_var;
    *Note: the above macro can not output the var outnumgrp with the same name of &yval_var in the table exon&_chr_;
    data exon&_chr_(drop=_numgrp_);
