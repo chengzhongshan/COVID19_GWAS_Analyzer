@@ -1,4 +1,15 @@
-%macro make_fake_axis4NegPosVal_by_grps(
+%macro make_fake_axis4NegPosVal_by_grps(/*The macro will scale up or down positive or negative values and generate 
+yaxis macro labels with the original postive values; To keep using the original positive value but also to scale the ratio
+between these positve and negative values, the macro variable NotChangePosVals is set to 1.
+The other global macro variable called fake_refline_values, can be used by other procedures to
+draw reference lines to separate each group into the final figure if required!
+Note: if NotChangePosVals=1, the final negative tick values are scaled values and the macro is updated 
+to adjust the axis labels for negative values; since the negative values
+are used to draw gene track at the bottom, they will be replaced as " " in the final figure
+Note: the output put dsdout contain modified values based on the input scale;
+However, the macro variable yaxis_macro_labels is updated to use the original values 
+to label axis, although the negative positive values may use different steps in the final axis labels!
+*/
 dsdin,
 axis_var,/*Both negative and positive values of axis var are allowed to use this macro,
            but in each group, only positve (>0) or negative (<0) values are allowed,
@@ -8,8 +19,16 @@ axis_grp,
 new_fake_axis_var,
 dsdout,
 yaxis_macro_labels=ylabelsmacro_var,
-fc2scale_pos_vals=1 /*Use this fc to enlarge the proportion of positive values in the plots
+fc2scale_pos_vals=1, /*Use this fc to enlarge the proportion of positive values in the plots
                It seems that fc=2 is the best for the final ticks of different tracks;*/
+NotChangePosVals=1 /*When fc2scale_pos_vals is < 1, the original positive values will be
+scaled down to generate fake values; sometimes it is necessary to keep the original values 
+but also achieve the goal of scale down these positve values. The workaround method is 
+to scale up the negative value with the fold change 1/&fcscale_pos_vals;
+Reason for keep the positive values but scale up the negative values:
+The coveat for squeezing the positive values by amplifying the value for negative values is that;
+the final figure ticks for the positive values will be with very few ticks in the y-axis; 
+To rescue this, it is better to multiple both negative and positive values by the same scale value &yscale again;*/
 );
 
 *This para is important for making correct fake axis;
@@ -20,6 +39,9 @@ data &dsdin._neg;
 set &dsdin (where=(&axis_var<0));
 *temporarily make all negative axis_var as positve ones;
 &axis_var=&axis_var*-1;
+%if &NotChangePosVals=1 %then %do;
+&axis_var=&axis_var/&fc2scale_pos_vals;
+%end;
 run;
 
 %if %totobsindsd(&dsdin._neg)=0 %then %do;
@@ -36,6 +58,16 @@ new_fake_axis_var=&new_fake_axis_var,
 dsdout=&dsdin._neg_fk,
 axis_step=&axis_step
 );
+/*
+data &dsdin._neg_fk;
+set &dsdin._neg_fk;
+%if &NotChangePosVals=1 %then %do;
+%end;
+%else %do;
+&new_fake_axis_var=&new_fake_axis_var*&fc2scale_pos_vals;
+%end;
+run;
+*/
 
 *change back all newly created vars into negative ones;
 *including mid_val, tpos, &axis_var, fake&axis_grp, and grp_n;
@@ -55,7 +87,9 @@ data &dsdin._pos;
 set &dsdin (where=(&axis_var>=0));
 *set &dsdin (where=(&axis_var>0));
 *Scale position value and make it larger by fold change;
-&axis_var=&fc2scale_pos_vals*&axis_var;
+%if &NotChangePosVals=0 %then %do;
+&axis_var=&axis_var*&fc2scale_pos_vals;
+%end;
 run;
 
 %if %totobsindsd(&dsdin._pos)=0 %then %do;
@@ -168,17 +202,37 @@ run;
 		%put _min_y is &_min_y;
 			
 		%if %eval(&xi=1) %then %do;
+       %if &NotChangePosVals=0 %then %do;
                   %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
                    filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1);
+        %end;
+       %else  %do;/*Scale back the nums when NotChangePosVals is true;*/
+                  %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
+                   filter4scaledvals=%str(>0),scale=1,quote=1);
+                  *Need to scale the negative values back to its original values for the axis ticks;
+                  %if %sysfunc(prxmatch(/\-/,&&nums&xi)) %then %let nums&xi=%scale_nums_in_list(list=&&nums&xi,factor=%sysevalf(&fc2scale_pos_vals),contain_double_quote=1);
+                  %let nums&xi=%sysfunc(prxchange(s/\.0//,-1,&&nums&xi));
+       %end;        
 		 %let nums=&&nums&xi;
+     %put &nums;
+     %let nums=%sysfunc(prxchange(s/\.0//,-1,&nums));
+     %put &nums;
+/*     %abort 255;*/
 		 *Need to replace the last value as empty;
-                 %let nums=%sysfunc(prxchange(s/\S+$/" "/,-1,&nums));
+      %let nums=%sysfunc(prxchange(s/\S+$/" "/,-1,&nums));
 		%end;
 		
-                %else %do;
-		 %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
+    %else %do;
+       %if &NotChangePosVals=0 %then %do;
+		              %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
                    filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1);
+       %end;
+       %else %do;/*Scale back the negative nums when NotChangePosVals is true;*/
+		              %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
+                   filter4scaledvals=%str(>0),scale=1,quote=1);
+       %end;
 		 *Need to replace the last value as empty;
+     %let nums&xi=%sysfunc(prxchange(s/\.0//,-1,&&nums&xi));
 		 %let new_nums=%sysfunc(prxchange(s/\S+$/" "/,-1,&&nums&xi));
 		 %put modified new_nums are: &new_nums;
 		 %let nums=&nums &new_nums;
@@ -201,18 +255,18 @@ run;
 *******Test 1;
 data a;
 *blank space is represented by '20'x;
-*infile cards dlm='20'x dsd truncover;
-infile cards dlm='09'x dsd truncover;
+infile cards dlm='20'x dsd truncover;
+*infile cards dlm='09'x dsd truncover;
 input x1 x2 grp $;
 cards;
--3	3	x
--2	3	x
--1	3	x
-2	4.5	y
-5	7	w
-11	4	w
-3	4	y
-10	7	w
+-4 3 x
+-2 3 x
+-6 3 x
+2 4.5 y
+5 7 w
+11 4 w
+3 4 y
+10 7 w
 ;
 run;
 
@@ -224,8 +278,14 @@ axis_grp=grp,
 new_fake_axis_var=new_x1,
 dsdout=b,
 yaxis_macro_labels=ylabelsmacro_var,
-fc2scale_pos_vals=1
+fc2scale_pos_vals=2,
+NotChangePosVals=1
 );
+
+*Note that when NotChangePosVals=1, these negative values will be squeezed by the fc change;
+*The above macro is updated to adjust the axis labels for negative values;
+*Due to the use of discrete x-axis, any noninteger will be rounded into close integer!;
+
 proc print data=b;run;
 
 proc sgplot data=b;
@@ -277,6 +337,8 @@ yaxis_macro_labels=ylabelsmacro_var,
 fc2scale_pos_vals=1
 );
 proc print data=b;run;
+%put &ylabelsmacro_var;
+%put &fake_refline_values;
 
 ods graphics /reset=all height=800;
 *Need to allocate enough height to use linear numbers by step for the yaxis;
@@ -300,8 +362,6 @@ refline &ref1/axis=y lineattrs=(thickness=5 color=darkgrey);
 refline &ref2/axis=y lineattrs=(thickness=5 color=darkgrey);
 %let ref3=%scan(&fake_refline_values,3);
 refline &ref3/axis=y lineattrs=(thickness=5 color=darkgrey);
-%let ref4=%scan(&fake_refline_values,4);
-refline &ref4/axis=y lineattrs=(thickness=5 color=darkgrey);
 run;
 
 */

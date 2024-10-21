@@ -32,14 +32,17 @@ yaxis_offset4min=0.05, /*provide 0-1 value or auto to offset the min of the yaxi
 yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the yaxis*/
 yoffset4max_drawmarkersontop=0.15,/*If draw scatterplot marker labels on the top of track, 
 this fixed value will be used instead of yaxis_offset4max!*/
-yaxis_auto_ticks=0,/*Provide value 1 to let SAS automatically reduce the number of ticks, which may be useful when non-integer ticks are required for y-axis;
+yaxis_auto_ticks=1,/*Provide value 1 to let SAS automatically reduce the number of ticks, which may be useful when non-integer ticks are required for y-axis;
 otherwise, only integer ticks will be used to label ticks!*/
 xaxis_offset4min=0.02, /*provide 0-1 value or auto  to offset the min of the xaxis*/
 xaxis_offset4max=0.02, /*provide 0-1 value or auto to offset the max of the xaxis*/
 fig_fmt=svg, /*output figure formats: svg, png, jpg, and others*/
 refline_thickness=5,/*Use thick refline to separate different tracks*/
 refline_color=lightgray,/*Color for reflines*/
-pct4neg_y=2, /*the most often used value is 1;
+pct4neg_y=2, /*the most often used value is 1, and if the value is too large, it will affect the 
+              y-axis tick labels by leading to very few y-axis ticks in the final figure!
+              So if the above occurs, it is feasible to reduce the value of pct4neg_y or increase
+              the value of macro variable track_height inaccordingly.
               compacting the bed track y values by increasing the scatterplot scale, 
               which can reduce the bed trace spaces; It seems that two-fold increasement
               leads to better ticks for different tracks!
@@ -368,6 +371,7 @@ fc2scale_pos_vals=&yscale
 /*Use this fc to enlarge the proportion of positive values in the plots
 It seems that fc=2 is the best for the final ticks of different tracks;*/
 );
+
 
 %end;
 %else %do;

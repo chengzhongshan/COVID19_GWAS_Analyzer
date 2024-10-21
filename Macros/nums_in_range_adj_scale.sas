@@ -1,4 +1,5 @@
 %macro nums_in_range_adj_scale(
+/*Note: the scale can only be integer with value >=1, as the macro will only be able to scale down the numbers in range!*/
 st,/*start value that can be negative and position*/
 end,/*end value*/
 by,/*by value for each step; make sure it is matchable with st and end values*/
