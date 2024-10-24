@@ -176,7 +176,12 @@ from &bed_dsd;
          (st<=&min_xaxis and end>=&min_xaxis and end<=&max_xaxis ) or 
          (st>=&min_xaxis and end<=&max_xaxis) or 
          (end>=&max_xaxis and st<=&max_xaxis)
-   );  
+   ); 
+*Remove duplicate gene positions, otherwise, these genes will be plotted multiple times in the gene track;
+proc sort data=exon&_chr_ nodupkeys out=exon&_chr_ dupout=exondup&_chr_;
+by _all_;
+run; 
+
 /*  
 *Because the min_st and max_end is larger than then the actual disigned &min_xaxis and &max_xaxis;
 *There will be more genes included in the output data set, leading to the wrong adjusted gene group number for drawing lattice scatter plot;  

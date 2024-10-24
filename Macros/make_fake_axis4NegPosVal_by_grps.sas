@@ -21,7 +21,7 @@ dsdout,
 yaxis_macro_labels=ylabelsmacro_var,
 fc2scale_pos_vals=1, /*Use this fc to enlarge the proportion of positive values in the plots
                It seems that fc=2 is the best for the final ticks of different tracks;*/
-NotChangePosVals=1 /*When fc2scale_pos_vals is < 1, the original positive values will be
+NotChangePosVals=1, /*When fc2scale_pos_vals is < 1, the original positive values will be
 scaled down to generate fake values; sometimes it is necessary to keep the original values 
 but also achieve the goal of scale down these positve values. The workaround method is 
 to scale up the negative value with the fold change 1/&fcscale_pos_vals;
@@ -29,6 +29,9 @@ Reason for keep the positive values but scale up the negative values:
 The coveat for squeezing the positive values by amplifying the value for negative values is that;
 the final figure ticks for the positive values will be with very few ticks in the y-axis; 
 To rescue this, it is better to multiple both negative and positive values by the same scale value &yscale again;*/
+mod_num2keep= /*For the final yaxis_macro_labels, default value for the current var  is empty for not filtering these elements by mod; when values, 
+such as 2 or 3 are provided, only keep numbers that fulfil the mod(element,num)=0; 
+Note that this will only be applied on numbers that are positve!*/
 );
 
 *This para is important for making correct fake axis;
@@ -204,47 +207,75 @@ run;
 		%if %eval(&xi=1) %then %do;
        %if &NotChangePosVals=0 %then %do;
                   %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
-                   filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1);
+                   filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1,mod_num2keep=&mod_num2keep);
         %end;
        %else  %do;/*Scale back the nums when NotChangePosVals is true;*/
                   %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
-                   filter4scaledvals=%str(>0),scale=1,quote=1);
+                   filter4scaledvals=%str(>0),scale=1,quote=1,mod_num2keep=&mod_num2keep);
                   *Need to scale the negative values back to its original values for the axis ticks;
                   %if %sysfunc(prxmatch(/\-/,&&nums&xi)) %then %let nums&xi=%scale_nums_in_list(list=&&nums&xi,factor=%sysevalf(&fc2scale_pos_vals),contain_double_quote=1);
-                  %let nums&xi=%sysfunc(prxchange(s/\.0//,-1,&&nums&xi));
+                  %let nums&xi=%sysfunc(prxchange(s/\.\d+//,-1,&&nums&xi));
+
        %end;        
 		 %let nums=&&nums&xi;
      %put &nums;
-     %let nums=%sysfunc(prxchange(s/\.0//,-1,&nums));
+     %let nums=%sysfunc(prxchange(s/\.\d+//,-1,&nums));
      %put &nums;
-/*     %abort 255;*/
 		 *Need to replace the last value as empty;
-      %let nums=%sysfunc(prxchange(s/\S+$/" "/,-1,&nums));
+     *Note: the rgx will remove the last tick label that is overlapped with reference line;
+      %let nums=%sysfunc(prxchange(s/.(\d+).$/" "/,-1,&nums));
+/*      %let nums=%trim(%left(&nums));*/
 		%end;
 		
     %else %do;
        %if &NotChangePosVals=0 %then %do;
 		              %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
-                   filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1);
+                   filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1,mod_num2keep=&mod_num2keep);
        %end;
        %else %do;/*Scale back the negative nums when NotChangePosVals is true;*/
 		              %nums_in_range_adj_scale(st=&_min_y,end=&_end_,by=1,outmacrovar=nums&xi,
-                   filter4scaledvals=%str(>0),scale=1,quote=1);
+                   filter4scaledvals=%str(>0),scale=1,quote=1,mod_num2keep=&mod_num2keep);
        %end;
+
 		 *Need to replace the last value as empty;
+
      %let nums&xi=%sysfunc(prxchange(s/\.0//,-1,&&nums&xi));
-		 %let new_nums=%sysfunc(prxchange(s/\S+$/" "/,-1,&&nums&xi));
-		 %put modified new_nums are: &new_nums;
+     %put Unmodified num&xi are:;
+     %put &&nums&xi;
+     *Note: the rgx will remove the last element as empty;
+     *Note: the rgx will remove the last tick label that is overlapped with reference line;
+		 %let new_nums=%qsysfunc(prxchange(s/.(\d+).$/" "/,-1,&&nums&xi));
+		 %put modified new_nums are:; 
+     %put &new_nums;
 		 %let nums=&nums &new_nums;
+     *If the value of &nums is too long to be truncated to contain an unmatched quote;
+
 		%end;
 		
-        %end;
+   %end;
+
+   *Need to remove fake_refline_values in the list of yaxis_macro_labels;
+   %do ni=1 %to %ntokens(&fake_refline_values);
+           %if &ni=1 %then %do;
+               %let _refnum_=%scan(&fake_refline_values,1,%str( ));
+           %end;
+           %else %do;
+               *Note: the fake refline values need to be substracted with the fake refline value before it;
+						   %let _refnum_=%sysevalf(%scan(&fake_refline_values,&ni,%str( )) - %scan(&fake_refline_values,&ni-1,%str( )));
+            %end;
+            %let nums=%sysfunc(prxchange(s/&_refnum_/ /,1,&nums));
+    %end;
+     *Also need to remove the last fake refline value as the top value;
+     *Note: the rgx will remove the last tick label that is overlapped with reference line;
+     %let nums=%sysfunc(prxchange(s/.(\d+).$/" "/,1,&nums));
+
 	%let &yaxis_macro_labels=&nums;
 	%put generated the global macro var &&yaxis_macro_labels for labeling y axis, which are: &&&yaxis_macro_labels;
 		%put generated the global macro var fake_min_y, the value of which are all 0s;
 	 %put generated the global macro var fake_max_y, the value of which is &fake_max_y;
 		%put generated the global macro var fake_refline_values, the value of which can be used to make reflines to separate grps:;
 		%put &fake_refline_values;
+
 %mend;
 
 /*Demo:
@@ -279,13 +310,13 @@ new_fake_axis_var=new_x1,
 dsdout=b,
 yaxis_macro_labels=ylabelsmacro_var,
 fc2scale_pos_vals=2,
-NotChangePosVals=1
+NotChangePosVals=1,
+mod_num2keep=3
 );
 
 *Note that when NotChangePosVals=1, these negative values will be squeezed by the fc change;
 *The above macro is updated to adjust the axis labels for negative values;
 *Due to the use of discrete x-axis, any noninteger will be rounded into close integer!;
-
 proc print data=b;run;
 
 proc sgplot data=b;

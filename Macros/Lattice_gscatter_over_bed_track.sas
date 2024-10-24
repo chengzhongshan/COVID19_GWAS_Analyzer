@@ -32,8 +32,9 @@ yaxis_offset4min=0.05, /*provide 0-1 value or auto to offset the min of the yaxi
 yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the yaxis*/
 yoffset4max_drawmarkersontop=0.15,/*If draw scatterplot marker labels on the top of track, 
 this fixed value will be used instead of yaxis_offset4max!*/
-yaxis_auto_ticks=1,/*Provide value 1 to let SAS automatically reduce the number of ticks, which may be useful when non-integer ticks are required for y-axis;
+yaxis_auto_ticks=0,/*Provide value 1 to let SAS automatically reduce the number of ticks, which may be useful when non-integer ticks are required for y-axis;
 otherwise, only integer ticks will be used to label ticks!*/
+draw_grid4y=0, /*Assign value 1 to draw grid for y axis; default value is 0 for not drawing y grid*/
 xaxis_offset4min=0.02, /*provide 0-1 value or auto  to offset the min of the xaxis*/
 xaxis_offset4max=0.02, /*provide 0-1 value or auto to offset the max of the xaxis*/
 fig_fmt=svg, /*output figure formats: svg, png, jpg, and others*/
@@ -356,6 +357,33 @@ where &yval_var>0;
 
 %if %eval(&mk_fake_axis_with_updated_func=1 and &NotDrawScatterPlot=0) %then %do;
 
+*This will decide the step value used to draw the final y-axis for the scatter plot;
+proc sql noprint;
+select max(&yval_var) into: _max_pos_y
+from x1;
+
+%let mod_num2keep=2;
+*The following contains bugs that would lead to unmatched ticks in the final y-axis;
+*If there are too many tick labels genrated from 1 to largest y value, SAS might crash;
+*This is because the macro var storing the tick labels is limited to < 256*2;
+%if &_max_pos_y>12 %then %do;
+		 %let mod_num2keep=4;
+%end;
+%if &_max_pos_y>24 %then %do;
+		 %let mod_num2keep=6;
+%end;
+%put _max_pos_y is &_max_pos_y and the mod_num2keep is set as &mod_num2keep!;
+
+*Note that when the scatter max y value is too large, the step value is increased from 2 to 6;
+*When the largest value of y-axis is too large, let set yaxis_auto_ticks=1;
+
+/*A workaround method in case of largest y-axis value >10, which does not address the problem;
+   To completely solve the issue, enlarge the height for the final output figure!*/
+/*%if &_max_pos_y>20 %then %do;*/
+/*  %let mod_num2keep=2;*/
+/*  %let yaxis_auto_ticks=1;*/
+/*%end;*/
+
 %make_fake_axis4NegPosVal_by_grps(
 dsdin=x1,
 axis_var=&yval_var, 
@@ -367,12 +395,25 @@ axis_grp=&scatter_grp_var, /*although using the same input, this para is differe
 new_fake_axis_var=&yval_var._new,
 dsdout=x1,
 yaxis_macro_labels=ylabelsmacro_var,
-fc2scale_pos_vals=&yscale
+fc2scale_pos_vals=&yscale,
 /*Use this fc to enlarge the proportion of positive values in the plots
 It seems that fc=2 is the best for the final ticks of different tracks;*/
+mod_num2keep=&mod_num2keep /*For the final yaxis_macro_labels, default value for the current var  is empty for not filtering these elements by mod; when values, 
+such as 2 or 3 are provided, only keep numbers that fulfil the mod(element,num)=0; 
+Note that this will only be applied on numbers that are positve!*/
 );
+%if %length(&ylabelsmacro_var)=0 %then %do;
+	 %put The y-axis label macro variable is empty, which is wrong!;
+   %abort 255;
+%end;
 
+%if %length(&ylabelsmacro_var)>256 %then %do;
+    *Prevent SAS from crash due to the truncated macro var containing single quote;
+	 %put The y-axis label macro variable is too long, and SAS might crash!;
+%end;
 
+%put Generated y-axis ticks are:;
+%put &ylabelsmacro_var;
 %end;
 %else %do;
 
@@ -562,7 +603,7 @@ run;
 *Only if the dsd is not empty, run other command;
 *Decide to skip the other processing if the _y&_gi_ dsd was deleted;
 %iscolallmissing(dsd=_y&_gi_,colvar=pos&_gi_,outmacrovar=tot_missing);
-%put &tot_missing;
+/*%put &tot_missing;*/
 /* %if %sysfunc(exist(work._y&_gi_._)) %then %do; */
 %if "&tot_missing" eq "0" and %sysfunc(exist(work._y&_gi_._)) %then %do;
 data _y&_gi_._missing;
@@ -1128,7 +1169,9 @@ begingraph / designwidth=&track_width designheight=&track_height
                             *Note: - is added before the number;
                             %if &NotDrawScatterPlot=0 %then %do;
                              %if &totsc<=5 %then %do;
-                             referenceline y=-%scan(&yvals4reflines,&_yneg_i,%str( )) /lineattrs=(color=&refline_color pattern=thindot thickness=1);
+                            		 %if &draw_grid4y=1 %then %do;
+                                  referenceline y=-%scan(&yvals4reflines,&_yneg_i,%str( )) /lineattrs=(color=&refline_color pattern=thindot thickness=1);
+                                  %end;
                              %end;
                             %end;
                           %end;
@@ -1137,7 +1180,9 @@ begingraph / designwidth=&track_width designheight=&track_height
 						
 						%do yi=1 %to &max_y;
 						    %if &totsc<=5 and &totsc>=2 %then %do;
-							 referenceline y=&yi /lineattrs=(color=&refline_color pattern=thindot thickness=1);
+                        %if &draw_grid4y=1 %then %do;
+							            referenceline y=&yi /lineattrs=(color=&refline_color pattern=thindot thickness=1);
+                         %end;
 						    %end; 
 						    *fix a bug when mk_fake_axis_with_updated_func=1 by getting rid of the last unwanted refline;
 						    *also need to restrict it with %sysfunc(countw(&fake_refline_values))=2;
@@ -1297,7 +1342,7 @@ ods html style=Newstyle;
 *This will relabel the variable newpos as 'Position' in the final figure;
 data final;
 set final;
-label newpos="Position";
+label newpos="%trim(%left(&chr_name)) position";
 run;
 
 *Draw the final figure with data set final and the template BedGraph;
@@ -1315,6 +1360,9 @@ proc datasets nolist;
 delete _y: y1for:;
 run;
 %end;
+
+%put Lattice gscatter plot is completed!;
+%put ;
 
 %mend;
 

@@ -78,9 +78,17 @@ If there are too much space on the top for these SNP labels, please manually cha
 the macro variable yoffset4max_drawmarkersontop included in the macro Lattice_gscatter_over_bed_track
  from 0.2 to a smaller value, such as 0.1;
 */
-yoffset4max_drawmarkersontop=0.15 /*If draw scatterplot marker labels on the top of track, 
+yoffset4max_drawmarkersontop=0.15, /*If draw scatterplot marker labels on the top of track, 
  this fixed value will be used instead of yaxis_offset4max!*/
+verbose=0 /*Not print any notes in SAS log*/
 );
+
+%if &verbose=0 %then %do;
+%put To prevent too many notes printed in the SAS log, we will enable options nonotes;
+options nonotes;
+%end;
+
+
 *Note: the macro map_grp_assoc2gene4covidsexgwas requires the input dsd contain the var chr;
 %if "&chr_var"^="chr" %then %do;
 data &gwas_dsd;
@@ -268,6 +276,11 @@ data &gwas_dsd;
 set &gwas_dsd;
 drop _Target_SNP_;
 run;
+%end;
+
+%if &verbose=0 %then %do;
+%put We will enable options notes;
+options notes;
 %end;
 
 %mend;

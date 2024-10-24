@@ -1,13 +1,17 @@
 %macro make_fake_axis_values4grps(
+/*This macro has issue when axis_var containing positve and negative values among different grps*/
 dsdin,
 axis_var,
 axis_grp,
 new_fake_axis_var,
 dsdout,
 yaxis_macro_labels=ylabelsmacro_var,
-fc2scale_pos_vals=2 /*Use this fc to enlarge the proportion of positive values in the plots
+step4yaxis_macro_labels=1,/*Only keep ticks with mod(t,step)=0, which will prevent the y-axis ticks from too compacted with each other!*/
+fc2scale_pos_vals=2, /*Use this fc to enlarge the proportion of positive values in the plots
 It seems that fc=2 is the best for the final ticks of different tracks;
 */
+mod_num2keep= /*Default is empty for not filtering these elements by mod; when values, 
+such as 2 or 3 are provided, only keep numbers that fulfil the mod(element,num)=0*/
 );
 
 *Fix a bug when only one record in a group;
@@ -155,7 +159,7 @@ run;
 		%if %eval(&xi=1) %then %do;
    /* %nums_in_range(st=&_min_y,end=%eval(%scan(&max_y4grps,&xi,%str( ))-1),by=1,outmacrovar=nums&xi,quote=1);*/
     %nums_in_range_adj_scale(st=&_min_y,end=%eval(%scan(&max_y4grps,&xi,%str( ))-1),by=1,outmacrovar=nums&xi,
-                   filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1);
+                   filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1,mod_num2keep=&mod_num2keep);
 				%let nums=&&nums&xi;
 				*Need to replace the last value as empty;
    %let nums=%sysfunc(prxchange(s/\S+$/" "/,-1,&nums));
@@ -163,7 +167,7 @@ run;
 		%else %do;
 /*		  %nums_in_range(st=&_min_y,end=%eval(%scan(&max_y4grps,&xi,%str( ))-1),by=1,outmacrovar=nums&xi,quote=1); */
 		  %nums_in_range_adj_scale(st=&_min_y,end=%eval(%scan(&max_y4grps,&xi,%str( ))-1),by=1,outmacrovar=nums&xi,
-                                 filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1);
+                                 filter4scaledvals=%str(>0),scale=&fc2scale_pos_vals,quote=1,mod_num2keep=&mod_num2keep);
 				*Need to replace the last value as empty;
 				%let new_nums=%sysfunc(prxchange(s/\S+$/" "/,-1,&&nums&xi));
 				%put modified new_nums are: &new_nums;
@@ -186,19 +190,19 @@ run;
 *******Test 1;
 data a;
 *blank space is represented by '20'x;
-*infile cards dlm='20'x dsd truncover;
-infile cards dlm='09'x dsd truncover;
+infile cards dlm='20'x dsd truncover;
+*infile cards dlm='09'x dsd truncover;
 input x1 x2 grp $;
 cards;
--3	3	x
--2	3	x
-1	3	x
-2	4.5	y
-5	7	w
-11	4	w
-7	4	x
-3	4	y
-10	7	w
+-3 3 x
+-2 3 x
+1 3 x
+2 4.5 y
+5 7 w
+11 4 w
+7 4 x
+3 4 y
+10 7 w
 ;
 run;
 
@@ -210,7 +214,8 @@ axis_grp=grp,
 new_fake_axis_var=new_x1,
 dsdout=b,
 yaxis_macro_labels=ylabelsmacro_var,
-fc2scale_pos_vals=1
+fc2scale_pos_vals=1,
+mod_num2keep=2
 );
 proc print data=b;run;
 
