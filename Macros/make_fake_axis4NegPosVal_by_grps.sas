@@ -21,7 +21,10 @@ dsdout,
 yaxis_macro_labels=ylabelsmacro_var,
 fc2scale_pos_vals=1, /*Use this fc to enlarge the proportion of positive values in the plots
                It seems that fc=2 is the best for the final ticks of different tracks;*/
-NotChangePosVals=1, /*When fc2scale_pos_vals is < 1, the original positive values will be
+NotChangePosVals=1, /*For making manhattan plot, it is better to fix the positive y values,
+as scale down the positive values will lead to the y tick labels containing decimals, and
+the SAS macro to making local Manhattan plot is set in default to only show integer ticks;
+When fc2scale_pos_vals is < 1, the original positive values will be
 scaled down to generate fake values; sometimes it is necessary to keep the original values 
 but also achieve the goal of scale down these positve values. The workaround method is 
 to scale up the negative value with the fold change 1/&fcscale_pos_vals;

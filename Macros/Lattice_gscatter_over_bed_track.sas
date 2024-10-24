@@ -28,6 +28,8 @@ shift_text_yval=-0.25, /*in terms of gene track labels, add positive or negative
                       to liftup or lower text labels on the y axis; the default value is -0.25 to put gene lable under gene tracks;
                       Change it with the macro var pct4neg_y!
                       Provide very large or small values, such as 9999 or -9999 to remove test labels for genes!*/
+amplify_scatterheader_pos=1, /*Provide value 1 to the macro var when the max value for each scatter plot is too large, 
+the header position for it should be amplified automatically by the macro*/
 yaxis_offset4min=0.05, /*provide 0-1 value or auto to offset the min of the yaxis*/
 yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the yaxis*/
 yoffset4max_drawmarkersontop=0.15,/*If draw scatterplot marker labels on the top of track, 
@@ -363,14 +365,25 @@ select max(&yval_var) into: _max_pos_y
 from x1;
 
 %let mod_num2keep=2;
+%if &amplify_scatterheader_pos=1 %then %let adjval4header=%sysevalf(1*&adjval4header);
+
+*When y max value is small, use all integer ticks;
+%if &_max_pos_y<7 %then %do;
+		 %let mod_num2keep=1;
+     %if &amplify_scatterheader_pos=1 %then %let adjval4header=%sysevalf(0.5*&adjval4header);
+%end;
+
 *The following contains bugs that would lead to unmatched ticks in the final y-axis;
 *If there are too many tick labels genrated from 1 to largest y value, SAS might crash;
-*This is because the macro var storing the tick labels is limited to < 256*2;
+*Also when the max value for each scatter plot is too large, the header position for it should be amplified;
+
 %if &_max_pos_y>12 %then %do;
 		 %let mod_num2keep=4;
+     %if &amplify_scatterheader_pos=1 %then %let adjval4header=%sysevalf(1.5*&adjval4header);
 %end;
 %if &_max_pos_y>24 %then %do;
 		 %let mod_num2keep=6;
+     %if &amplify_scatterheader_pos=1 %then %let adjval4header=%sysevalf(2*&adjval4header);
 %end;
 %put _max_pos_y is &_max_pos_y and the mod_num2keep is set as &mod_num2keep!;
 
@@ -509,8 +522,9 @@ drop table tmp;
 *Also replace -1.0 and other similar negative values;
 *This will remove negative and numbers containing ".5" in the final y-axis ticks;
 %if &yaxis_auto_ticks=0 %then %do;
-%let ylabelsmacro_var=%sysfunc(prxchange(s/(-[\d\.]+|\d+\.5)/ /,-1,&ylabelsmacro_var));
-%let ylabelsmacro_var=%sysfunc(prxchange(s/\.0/ /,-1,&ylabelsmacro_var));
+*Remove all negative nums as well as these positive numbers with decimal;
+%let ylabelsmacro_var=%sysfunc(prxchange(s/(-[\d\.]+|\d+\.\d+|-.*)/ /,-1,&ylabelsmacro_var));
+%let ylabelsmacro_var=%sysfunc(prxchange(s/\.d+/ /,-1,&ylabelsmacro_var));
 %end;
 %else %do;
 *This will only remove negative values that are specific to the bottom gene tracks, and the y-axis of scatter plot will kept as it is;
@@ -1342,7 +1356,8 @@ ods html style=Newstyle;
 *This will relabel the variable newpos as 'Position' in the final figure;
 data final;
 set final;
-label newpos="%trim(%left(&chr_name)) position";
+*Update the x-axis label, which might be revised if the macro is not used for drawing GWAS local Manhattan plot;
+label newpos="%trim(%left(%sysfunc(prxchange(s/^chr/Chromosome /,1,&chr_name)))) (hg19)";
 run;
 
 *Draw the final figure with data set final and the template BedGraph;
