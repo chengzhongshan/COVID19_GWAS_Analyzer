@@ -521,15 +521,24 @@ drop table tmp;
 /*%let y_axis_values=%sysfunc(prxchange(s/-\d+/ /,-1,&y_axis_values));*/
 *Also replace -1.0 and other similar negative values;
 *This will remove negative and numbers containing ".5" in the final y-axis ticks;
+
+%put Before modification, the contents of ylabelsmacro_var are:;
+%put &ylabelsmacro_var;
+
 %if &yaxis_auto_ticks=0 %then %do;
 *Remove all negative nums as well as these positive numbers with decimal;
-%let ylabelsmacro_var=%sysfunc(prxchange(s/(-[\d\.]+|\d+\.\d+|-.*)/ /,-1,&ylabelsmacro_var));
+%let ylabelsmacro_var=%sysfunc(prxchange(s/(\-[\d\.]+|\d+\.\d+|\-.*)/ /,-1,&ylabelsmacro_var));
 %let ylabelsmacro_var=%sysfunc(prxchange(s/\.d+/ /,-1,&ylabelsmacro_var));
 %end;
 %else %do;
 *This will only remove negative values that are specific to the bottom gene tracks, and the y-axis of scatter plot will kept as it is;
 %let ylabelsmacro_var=%sysfunc(prxchange(s/-[\d\.]+/ /,-1,&ylabelsmacro_var));
 %end;
+
+%put Final modified yaxis_auto_ticks are:;
+%put &ylabelsmacro_var;
+
+
 /***********************No need this, as it generates missing group that will be put into the legend
 in in the final figure*/
 /*data x2;*/

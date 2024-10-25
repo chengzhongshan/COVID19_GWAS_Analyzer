@@ -217,7 +217,9 @@ run;
                    filter4scaledvals=%str(>0),scale=1,quote=1,mod_num2keep=&mod_num2keep);
                   *Need to scale the negative values back to its original values for the axis ticks;
                   %if %sysfunc(prxmatch(/\-/,&&nums&xi)) %then %let nums&xi=%scale_nums_in_list(list=&&nums&xi,factor=%sysevalf(&fc2scale_pos_vals),contain_double_quote=1);
-                  %let nums&xi=%sysfunc(prxchange(s/\.\d+//,-1,&&nums&xi));
+                  *Note: use . to represent single double quote, as SAS will crash if using single quote in prxchange;
+                  %let nums&xi=%sysfunc(prxchange(s/[^\-][\-\d]+\.\d+./" "/,-1,&&nums&xi));
+                  %put nums&xi are: &&nums&xi;
 
        %end;        
 		 %let nums=&&nums&xi;
@@ -226,7 +228,9 @@ run;
      %put &nums;
 		 *Need to replace the last value as empty;
      *Note: the rgx will remove the last tick label that is overlapped with reference line;
-      %let nums=%sysfunc(prxchange(s/.(\d+).$/" "/,-1,&nums));
+     *Let the rgx not match -\d+, such as -1, -2, ..., and other negative numbers;
+     *Otherwise, this bug would lead to unmatched quotes in the macro;
+      %let nums=%sysfunc(prxchange(s/[^\-](\d+).$/" "/,-1,&nums));
 /*      %let nums=%trim(%left(&nums));*/
 		%end;
 		
@@ -247,7 +251,7 @@ run;
      %put &&nums&xi;
      *Note: the rgx will remove the last element as empty;
      *Note: the rgx will remove the last tick label that is overlapped with reference line;
-		 %let new_nums=%qsysfunc(prxchange(s/.(\d+).$/" "/,-1,&&nums&xi));
+		 %let new_nums=%qsysfunc(prxchange(s/[^\-](\d+).$/" "/,-1,&&nums&xi));
 		 %put modified new_nums are:; 
      %put &new_nums;
 		 %let nums=&nums &new_nums;
@@ -266,11 +270,11 @@ run;
                *Note: the fake refline values need to be substracted with the fake refline value before it;
 						   %let _refnum_=%sysevalf(%scan(&fake_refline_values,&ni,%str( )) - %scan(&fake_refline_values,&ni-1,%str( )));
             %end;
-            %let nums=%sysfunc(prxchange(s/&_refnum_/ /,1,&nums));
+            %let nums=%sysfunc(prxchange(s/[^\-]&_refnum_\D/" "/,1,&nums));
     %end;
      *Also need to remove the last fake refline value as the top value;
      *Note: the rgx will remove the last tick label that is overlapped with reference line;
-     %let nums=%sysfunc(prxchange(s/.(\d+).$/" "/,1,&nums));
+     %let nums=%sysfunc(prxchange(s/[^\-](\d+).$/" "/,1,&nums));
 
 	%let &yaxis_macro_labels=&nums;
 	%put generated the global macro var &&yaxis_macro_labels for labeling y axis, which are: &&&yaxis_macro_labels;
@@ -278,6 +282,7 @@ run;
 	 %put generated the global macro var fake_max_y, the value of which is &fake_max_y;
 		%put generated the global macro var fake_refline_values, the value of which can be used to make reflines to separate grps:;
 		%put &fake_refline_values;
+/*    %abort 255;*/
 
 %mend;
 
