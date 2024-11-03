@@ -37,8 +37,8 @@ this fixed value will be used instead of yaxis_offset4max!*/
 yaxis_auto_ticks=0,/*Provide value 1 to let SAS automatically reduce the number of ticks, which may be useful when non-integer ticks are required for y-axis;
 otherwise, only integer ticks will be used to label ticks!*/
 draw_grid4y=0, /*Assign value 1 to draw grid for y axis; default value is 0 for not drawing y grid*/
-xaxis_offset4min=0.02, /*provide 0-1 value or auto  to offset the min of the xaxis*/
-xaxis_offset4max=0.02, /*provide 0-1 value or auto to offset the max of the xaxis*/
+xaxis_offset4min=0.04, /*provide 0-1 value or auto  to offset the min of the xaxis*/
+xaxis_offset4max=0.04, /*provide 0-1 value or auto to offset the max of the xaxis*/
 fig_fmt=svg, /*output figure formats: svg, png, jpg, and others*/
 refline_thickness=5,/*Use thick refline to separate different tracks*/
 refline_color=lightgray,/*Color for reflines*/
@@ -86,16 +86,17 @@ label_dots_once_on_top=1,/*Put value 1 to label each unique label once on top of
 provide 0 for labeling selected dots in inside scatterplots;
 The script will enlarge the macro var yaxis_offset4max to be 0.1!
 */
-dist_pct_to_cluster_pos=0.02,/*Use the input pct to calcuate dist based on the distance 
+dist_pct_to_cluster_pos=0.02,/*In terms of labels for top SNPs, use the input pct to calcuate dist based on the distance 
 betweent the first label to the last label and 
 define labels into cluster if they are too close to each other
 if their distance is less than pct_of_total_dist*/
-fc2distant_close_labels=3,/*increase the distance among close labels by input fold change*/
+fc2distant_close_labels=3,/*In terms of labels for top SNPs, increase the distance among close labels by input fold change*/
 reflinecolor4selecteddots=gray,/*asign color for the vertical reference lines for userselected dots*/
 text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
 Yoffset4textlabels=2.5, /*Move up the text labels for target SNPs in specific fold; the default value 2.5 fold works for most cases*/
 font_size4textlabels=10,/*Font size for these text labels*/
-
+move_right_genetxt_pct=0.08,/*When the right most genes are too close to the right boudary, it is necessary to reduce its x-axis position
+using the designated pct based on the whole window size that will be automatically calcuated by the macro*/
 mk_fake_axis_with_updated_func=1, /*The new func make the xaxis more compacted 
                                    between gene tracks and scatter plots;*/
 sameyaxis4scatter=1,/*Make the same y-axis for scatterplots*/ 
@@ -370,6 +371,7 @@ from x1;
 *When y max value is small, use all integer ticks;
 %if &_max_pos_y<7 %then %do;
 		 %let mod_num2keep=1;
+		 %if &track_height<400 %then %let mod_num2keep=2;
      %if &amplify_scatterheader_pos=1 %then %let adjval4header=%sysevalf(0.5*&adjval4header);
 %end;
 
@@ -957,7 +959,16 @@ run;
     where &var4label_scatterplot_dots^="" and pos^=.;
     keep &var4label_scatterplot_dots xtag _tmp_ pos;
     run;
+  *When there is less then 4 SNPs for labeling at the top of the local Manhattan plot, reset the following rotation anger macro var to 0;
+  *and increase 4 fold for the the dist_pct_to_cluster_pos and increase 4 folds for &fc2distant_close_labels;
+  %if %totobsindsd(_xtag_)<4 %then %do;
+	   %let dist_pct_to_cluster_pos=%sysevalf(4*&dist_pct_to_cluster_pos);
+	   %let  fc2distant_close_labels=%sysevalf(4*&fc2distant_close_labels);
+  %end;
+
    *Also need to adjust labels with too close positions;
+  %if &track_height<700 %then %let Pct4OnlyTwoPos=0.5;
+  %else %let Pct4OnlyTwoPos=0.25;
    %adjust_close_positions(
    indsd=_xtag_,
    outdsd=_xtag_,
@@ -965,6 +976,8 @@ run;
    new_pos_var=newpos,
    dist_pct_to_cluster_pos=&dist_pct_to_cluster_pos,
    amplificaiton_fc=&fc2distant_close_labels,
+   Pct4OnlyTwoPos=&Pct4OnlyTwoPos,/*In case of only two positions, it is necessary to use arbitrary proportion of dist_step to separate them,
+   i.e., minus and add Pct4OnlyTwoPos*dist_step and for the first and second positions, respectively*/
    fixed_min_pos=&min_x,
    fixed_max_pos=&max_x
    );     
@@ -1011,7 +1024,100 @@ run;
 *dots, lengths and numbers of dashes, numbers and sizes of dots.;
 %let reflinepattern=Dot;
 
+*Also add the marker ids into the output figure name;
+%let  vars4figurename=;
+%if %length(&var4label_scatterplot_dots)>0 %then %do;
+proc sql noprint;
+select distinct trim(left(&var4label_scatterplot_dots)) into: vars4figurename separated by '_'
+from final
+where &var4label_scatterplot_dots^="";
+*When there is only one SNP for labeling at the top of the local Manhattan plot, reset the following rotation anger macro var to 0;
+*Also reduce the top cell space represented by the macro var yoffset4max_drawmarkersontop from the default value 0.15 to 0.05;
+*Other parameters restrict the upper and lower offset are also resetted;
+%if %sysfunc(countc(&vars4figurename,_))<4 %then %do;
+    %let text_rotate_angle=0;
 
+/*	%let yoffset4max_drawmarkersontop=0.01;*/
+	/*Setting this as 0 does not change the figure, so this parameter is not needed to be reset!*/
+
+	%let Yoffset4textlabels=%sysevalf(0.55*500/&track_height);;/*This will enable the snp label locate in the middle at the top cell*/
+	%if &track_height<400 %then %let Yoffset4textlabels=0.55;
+	%let yaxis_offset4max=%sysevalf(0.04*500/&track_height);
+	%let yaxis_offset4min=%sysevalf(0.02*500/&track_height);/*This will reduce the lower offset of y-axis*/
+%end;
+%end;
+
+ *In terms of gene labels in the gene track, if a gene is too close to the right most position in the figure;
+*It is necessary to move the gene label position to left to prevent the gene label is truncated in the figure;
+%if (%length(&xaxis_viewmax)>0 and %length(&xaxis_viewmin)>0) %then %do;
+     %let window_dist=%sysevalf(&xaxis_viewmax - &xaxis_viewmin + 1);
+	 %let _maxpos_=&xaxis_viewmax;
+%end;
+%else %do;
+     %let window_dist=%sysevalf(&max_x - &min_x + 1);
+	 %let _maxpos_=&max_x;
+%end;
+
+*********************************************SAS codes to adjust gene label positions, preventing them too close to each other*********************;
+/*proc sql noprint;*/
+/*select max(pos1), min(pos1)into: max_pos1, :min_pos1*/
+/*from final;*/
+data final ;
+set final;
+pfactor=IFC(length(grp_label)<3,0,length(grp_label))/4;
+if pfactor>3 then pfactor=3;
+*Further adjust it by figure track_width by comparing it to the optimized figure with width 450;
+pfactor=pfactor*450/&track_width;
+*If track_width>600, it is necessary to reduce the factor 2 folder;
+if &track_width>750 then pfactor=0.5*pfactor;
+if grp_label^="" and (&_maxpos_ - pos1+1)/&window_dist<((1+pfactor)*&move_right_genetxt_pct) then do;
+      *Also move the gene label by its length;
+	   _pos1_=pos1-0.65*&window_dist*&move_right_genetxt_pct*pfactor;
+end;
+else do;
+	  _pos1_=pos1;
+end;
+run; 
+
+*Further adjust the gene lable x-axis positions if two gene labels are in the same row and have distance less than designated pct of the whole window;
+data final_gene;
+set final(keep=grp_label grp1 var4log10P1 _pos1_ pfactor);
+where grp_label^="";
+run;
+proc sort;by var4log10P1 _pos1_;run;
+data final_gene;
+set final_gene;
+lag_pos1=lag(_pos1_);
+if first.var4log10P1 then do;
+ lag_pos1=.;
+end;
+else do;
+   if  (_pos1_ - lag_pos1+1)/&window_dist<(pfactor*&move_right_genetxt_pct)  then lag_pos1_adj=lag_pos1-0.65*&window_dist*&move_right_genetxt_pct*pfactor;
+end;
+by var4log10P1;
+run;
+*Now update the new lag_pos1_adj for these genes that are too close in the final data set;
+data final;
+set final;
+_ord_=_n_;
+run;
+proc sql;
+create table final as
+select a.*,b.lag_pos1_adj
+from final as a
+left join
+final_gene as b
+on a.var4log10P1=b.var4log10P1 and
+	 a._pos1_=b.lag_pos1
+order by _ord_;
+data final(drop=pfactor lag_pos1_adj _ord_);
+set final;
+if lag_pos1_adj^=. then _pos1_=lag_pos1_adj;
+run;
+
+proc sql;
+drop table final_gene;
+****************************************End of SAS codes to adjust gene label positions, preventing them too close to each other***************;
 
 *****************************************************************************************************************;
 /*
@@ -1285,7 +1391,7 @@ begingraph / designwidth=&track_width designheight=&track_height
          *MARKERCHARACTERPOSITION=CENTER | TOP | BOTTOM | LEFT | RIGHT | TOPLEFT | TOPRIGHT | BOTTOMLEFT | BOTTOMRIGHT;
 /*         scatterplot x=pos1 y=&yval_var.1 / MARKERCHARACTER=grp_label MARKERCHARACTERPOSITION=left */
 /*         use text customized y values to label these genes                                         */
-         scatterplot x=pos1 y=_y_ / MARKERCHARACTER=grp_label MARKERCHARACTERPOSITION=topright
+         scatterplot x=_pos1_ y=_y_ / MARKERCHARACTER=grp_label MARKERCHARACTERPOSITION=topright
                                     MARKERCHARACTERATTRS=(color=black size=&grp_font_size 
                                     style=&grp_anno_font_type weight=normal);
        %end;
@@ -1335,7 +1441,13 @@ data _null_;
 rc=dlgcdir("&workdir");
 run;
 
-%let outimagename=&yval_var.Chr%trim(%left(&chr_name))_&st_var%trim(%left(&min_x))_&end_var%trim(%left(&max_x));
+%if %length(&vars4figurename)>0 %then %do;
+     %let outimagename=&vars4figurename._%trim(%left(&chr_name))_&st_var%trim(%left(&min_x))_&end_var%trim(%left(&max_x));
+%end;
+%else %do;
+     %let outimagename=&yval_var.Chr%trim(%left(&chr_name))_&st_var%trim(%left(&min_x))_&end_var%trim(%left(&max_x));
+%end;
+
 %put The final figure is put here:;
 %put &workdir/&outimagename..&fig_fmt;
 ods html image_dpi=300;

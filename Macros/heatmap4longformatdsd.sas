@@ -7,12 +7,16 @@ Limitation: cells with missing values will be displayed without grid, even the o
 A workaround is to transform the input dataset by filling missing values of combinations of x and y
 with specific value, such as -1 or 0;
 */
-dsdin,
-xvar,
-yvar,
-colorvar,
-fig_height,
-fig_width,
+dsdin=,
+xvar=,
+xaxis_valuesrotate_type=vertical,/*xaxis tick rotation type: vertical, diognal, or diognal2*/
+xaix_valuefitpolicy=rotate,/*automatically fit the xaxis tick labels if they are too long, which includes
+none, rotate, rotatethin, split, splitalways, splitrotate, stackedalways, stackedalwaysthin, stagger, staggerroate, 
+stagerthin, thin. See details at https://documentation.sas.com/doc/en/pgmsascdc/v_056/grstatproc/p07m2vpyq75fgan14m6g5pphnwlr.htm#n1bkk2fwzh9l7in1que4qmkricsx*/
+yvar=,
+colorvar=,
+fig_height=,
+fig_width=,
 outline_thickness=0,/*Provide number > 0 to add white outline to separate each cell in heatmap*/
 outline_color=white,/*Add gride line to separate each cell in designated color*/
 user_yvarfmt=,	/*default is to not use format*/
@@ -94,7 +98,7 @@ xaxis
   display=(noline)
  %end;
   display=all
-  valueattrs=(style=&xfont_style size=10 weight=normal);
+  valueattrs=(style=&xfont_style size=10 weight=normal) valuesrotate=&xaxis_valuesrotate_type fitpolicy=&xaix_valuefitpolicy;
 %end;
  
 yaxis fitpolicy=split 

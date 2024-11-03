@@ -129,7 +129,7 @@ yaxis label="&marker_label" valueattrs=(size=&both_y_font_size style=normal) typ
 *Note: decrease the dot size to minimum, as we only want the addition of y2axis;
 scatter x=effect y=&y2axis_ticket_var /y2axis group=grp markerattrs=(symbol=circleFilled size=0.1) grouporder=ASCENDING attrid=grp;
 y2axis valueattrs=(size=&both_y_font_size style=italic) type=discrete display=(nolabel noticks)           
-            offsetmax=&yoffsetmax offsetmin=&yoffsetmin;
+            offsetmax=&yoffsetmax offsetmin=&yoffsetmin grid gridattrs=(color=gray pattern=thindot thickness=1);
 %end;
 
 %if &autolegend=1 %then %do;

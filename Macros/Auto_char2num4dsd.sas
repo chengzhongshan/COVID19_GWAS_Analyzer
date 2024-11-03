@@ -28,23 +28,26 @@
 	run;
 	proc sql noprint;
 	select _NAME_ into: tgt_vars_nums separated by ' '
-	from _vars_;
+	from _vars_
+    order by VARNUM;
 
    /*Guess the percentage of each char col are actually numbers*/
    data _tmp_;
    set &dsdin end=eof;
    retain &tgt_vars_nums 0;
    tot=_n_;
-   patternID = prxparse("/^[\s\.]*\d+[\.\d]*\s*$/");
+   patternID = prxparse("/^[\-\s\.]*\d+[\.\d]*\s*$/");
    array C{*} $ &ALL_Char_Vars;
-   array N{*} &tgt_vars_nums;
+   *Make sure the array not have the same time as the name of any variables included in the input dsta set &dsdin;
+   *otherwise, sas would stop the data step; 
+   array NX{*} &tgt_vars_nums;
 
    do i=1 to dim(C);
       if prxmatch(patternID,C{i}) and not prxmatch("/[a-z]/i",C{i}) then do;
-	   N{i}=N{i}+1;
-	   if eof then do;
-	   N{i}=N{i}/tot;
-	   end;
+	   NX{i}=NX{i}+1;
+	  end;
+	  if eof then do;
+	   NX{i}=NX{i}/tot;
 	  end;
    end;
    if not eof then do;
@@ -58,11 +61,11 @@
    run;
    proc sort data=_tmp_tr;by _NAME_;run;
    proc sort data=_vars_;by _NAME_;run;
-   data _combined_(where=(col1>=&col_num_pct));
+   data _combined_(where=(col1>=&col_num_pct and col1<=1));
    merge _tmp_tr _vars_;
    by _name_;
    run;
-   
+
    /*Create macro vars for these cols*/
    proc sql noprint;
    select NAME into: cols4num separated by ' '

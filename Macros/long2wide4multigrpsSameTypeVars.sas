@@ -2,7 +2,8 @@
 /*Note: this macro is handy when there are multiple target numeric or characteric variables needs to be transposed to rowwide;
 *Tranditional transpose procedure usually handle one type of variable to rowwide by other group variables;
 *But this macro can abtain wide format table for multiple variables at rowwide at the same time by other group variables;
-*The key macro parameter to represent these multiple variables is "SameTypeVars";*/
+*The key macro parameter to represent these multiple variables is "SameTypeVars";
+Note: if the maximum length of grp_vars >32, it is suggested to set ShortenColnames=1*/
 long_dsd,
 outwide_dsd,
 grp_vars=,/*If grp_vars and SameTypeVars are overlapped,
@@ -130,10 +131,21 @@ from wide_ids_lookup;
 
 
 *Check duplicate wide_ids before transposing the tabel;
-proc sort data=&long_dsd._1st_trans nodupkeys dupout=dups;
+data &long_dsd._1st_trans;
+set &long_dsd._1st_trans;
+*Ensure the longest id of wide_ids not exceeding the limit of variable length defined by SAS in proc tranpose;
+*This is probamatic, as some different elements may have the same strings for the first 32 chars;
+*The same issue will occur when extracting the last 32 chars; 
+*if length(wide_ids)>32 then wide_ids=substr(wide_ids,1,32);
+if  length(wide_ids)>32 then wide_ids=substr(wide_ids,1,32);
+run;
+
+
+proc sort data=&long_dsd._1st_trans out=&long_dsd._1st_trans nodupkeys dupout=dups;
 by &grp_vars wide_ids;
 run;
 
+%if %totobsindsd(work.dups)>0 %then %do;
 *Get these original duplicate wide ids, including _wide_ids_1 and _wide_ids_2;
 proc sql;
 create table dups(drop=values rename=(_wide_ids_=_wide_ids_1)) as
@@ -142,12 +154,17 @@ from &long_dsd._1st_trans
 natural join
 dups(keep=&grp_vars wide_ids _wide_ids_ rename=(_wide_ids_=_wide_ids_2))
 ;
+%end;
+%else %do;
+ %put No duplicates in the data set &long_dsd._1st_trans;
+%end;
 
 %if %rows_in_sas_dsd(test_dsd=work.dups) > 0 %then %do;
             title "First 10 obs of duplicate wide ids in the sas dataset dups";
 					  proc print data=dups(obs=10);run;
            %put Error: there are duplicate records for the two group variables, &grp_vars and wide_ids, that are used for proc transpose;
             %put Please check the dataset dups to evaluate these wide_ids, and further modification for the input group variables are needed to have the above two unique groups for proc transpose!;
+            %put To address the issue, just change the value the macro var ShortenColnames from 0 to 1!;
            %abort 255;
 %end;
 
@@ -158,7 +175,7 @@ var values;
 id wide_ids;
 by &grp_vars;
 run;
-/* %abort 255; */
+
 
 data &outwide_dsd;
 set &outwide_dsd;

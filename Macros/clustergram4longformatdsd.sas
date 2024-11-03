@@ -6,7 +6,10 @@ tranpose it for cluster if either one of them is subjected to clustering!
 Thus please use clustergram4sas whenever it is possible;
 see demos for clustergram4sas, which include all possible scenarios!
 Note: clustergram4sas is better in terms of more custom parameters 
-when input dataset is in a table format!
+when input dataset is in a table format! Please consider transforming
+longformat dataset using long2wide4multigrpsSameTypeVars and Rename_Del_Rgx4All_Vars
+ for clustergram4sas! If you do not want to cluster the data and just need to generate a heatmap,
+please use the macro heatmap4longformatdsd!
 */
 dsdin=_last_,/*The input dataset is a matrix contains rownames and other numeric columns*/
 rowname_var=,/*the elements of rowname_var will be used to label heatmap columns;
@@ -290,7 +293,7 @@ from colnames;
 
 /*Note: make sure to let rowdata and columndata with union range*/
 %let rnd=%randbetween(1,1000);
-ods graphics /reset=all noborder outputfmt=&outputfmt imagename="Clustergram_random&rnd";
+ods graphics /noborder outputfmt=&outputfmt imagename="Clustergram_random&rnd";
 *The above failed sometimes due to unknown reasons;
 *It is necessary to remove previous setting;
 proc template;

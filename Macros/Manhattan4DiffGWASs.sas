@@ -51,7 +51,10 @@ Manhattano around target SNPs when the macro var target_SNPs is provided or top 
 is empty and the macro var top_hit_thresd is supplied with specific association p threshold, such as p < 1e-6*/
 snp_var=rsid,/*It is necessary to have snp_var supplied when drawing local Manhattan plot*/
 target_SNPs=,/*Default is empty; please provide rsid that can be matched with the snp macro variable*/
-Keep_order_of_target_SNPs=1, /*Draw local Manhattan plot according to the order of target SNPs*/
+Keep_order_of_target_SNPs=0, /*Draw local Manhattan plot according to the order of target SNPs
+Note: need to set this macro with value 1 if drawing local Manhattan plots for target SNPs or top hits, 
+which means if either target_SNPs or top_hit_thresd is not empty, please assign value 1 to this macro var!
+When draw genome-wide Manhattan plots, it is required to assign value 1 to this macro var.*/
 top_hit_thresd=,/*provide a p value threshold to only draw local Manhattan plot for the smallest top hit around a specific genomic window,such as p < 1e-6 within a window of 1e7 bp*/
 dist4get_smallest_top_hit=1e7,/*Select the smallest top SNP around a genomic window of the supplied distance in bp*/
 
@@ -105,9 +108,8 @@ dist4get_smallest_top_hit=1e7,/*Select the smallest top SNP around a genomic win
            keep_target_snps_order=&Keep_order_of_target_SNPs,
            dist4get_uniq_top_hit=&dist4get_smallest_top_hit 
            );
-          *Note: the above macro will generate a global macro variable:;
-          *_chr_colors_, which will be used to draw Manhattan plots by chr;
-          *Reset these macro var values for making local Manhattan plot;
+          *Note: the above macro will generate new variable tag_snp and a global macro variable _chr_colors_;
+          *which will be used to draw Manhattan plots by chr, and it is necessary to reset these macro var values for making local Manhattan plot;
           %let dsdin=_tgthits_;
            *Draw local Manhattan plots by sorted order of target SNPs;
            %let chr_var=tag_snp;
@@ -134,7 +136,7 @@ dist4get_smallest_top_hit=1e7,/*Select the smallest top SNP around a genomic win
              p_thrsd=&top_hit_thresd, 
             dist4get_uniq_top_hit=&dist4get_smallest_top_hit
              );
-/*             *Note: the above macro will create a global macro var _top_snps_ that will be used to capture these top SNPs;*/
+/*             *Note: the above macro will create new variable tag_snp and a global macro var _top_snps_ that will be used to capture these top SNPs;*/
 /*             %let top_snps=&top_snps &_top_snps_;*/
            %end;
 					 %put We will extract associaiton signals around these top SNPs within a genomic window of &dist4get_smallest_top_hit bp that pass the p value threshold of &top_hit_thresd;
@@ -321,7 +323,9 @@ used later to position x-axis labels
 proc summary data=manhattan nway;
 %if &Keep_order_of_target_SNPs=1 %then %do;
 *Draw local Manhattan plots by keeping the original order of target SNPs;
-class &chr_var tag_snp;
+/*class &chr_var tag_snp;*/
+*No need to add tag_snp as &chr_var is updated as tag_snp;
+class &chr_var;
 %end;
 %else %do;
 class &chr_var;
@@ -359,7 +363,9 @@ retain position '8' xsys ysys '2' y 0 function 'label' text 'xx' ;
 do until (last1);
   %if &Keep_order_of_target_SNPs=1 %then %do;
   *Draw local Manhattan plots by keeping the original order of target SNPs;
-   set mbp (keep = Fake_position &chr_var  tag_snp) end=last1;
+/*   set mbp (keep = Fake_position &chr_var  tag_snp) end=last1;*/
+   *No need to add tag_snp as &chr_var is tag_snp when keep_order_of_target_SNPs is true;
+     set mbp (keep = Fake_position &chr_var) end=last1;
   %end;
   %else %do;
    set mbp (keep = Fake_position &chr_var) end=last1;

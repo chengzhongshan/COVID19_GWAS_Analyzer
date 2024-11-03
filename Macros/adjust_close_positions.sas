@@ -1,14 +1,19 @@
 %macro adjust_close_positions(
+/*Limitation: where there are only 2 closely related positions, a fixed distance with Pct4OnlyTwoPos*step will be used to separate them*/
 indsd=,
 outdsd=,
 pos_var=pos,
 new_pos_var=newpos,
-dist_pct_to_cluster_pos=0.01,/*Use the pct of range of positions to cluster these positions*/
+dist_pct_to_cluster_pos=0.01,/*Use the pct of range of positions to cluster these positions
+Note: positions with distance less then ceil(&dist_pct_to_cluster_pos*(max(&pos_var)-min(&pos_var)+1)) will
+be asigned into a single cluster for further adjusting distance using amplification_fc!*/
 amplificaiton_fc=1.5, /*Increase the distance fold change among among these close records*/
-make_even_pos=1, /*If provide value 1, which will ensure all position with the same distance between min ans max pos;
+make_even_pos=1, /*If provide value 1, which will ensure all position with the same distance between min and max pos;
 This will replace previous setting of dist_pct_to_cluster_pos and amplificaiton_fc;
 Note: *Only when the total number of records is gt the number of distant cluster, the macro will generate even positions for all records
 */
+Pct4OnlyTwoPos=0.5,/*In case of only two positions, it is necessary to use arbitrary proportion of dist_step to separate them,
+i.e., minus and add Pct4OnlyTwoPos*dist_step and for the first and second positions, respectively*/
 fixed_min_pos=,/*Provide fixed minimum and maximum positions for generating even psotions;
 Default is empty to use the minimum and maximum positions from input dsd!*/
 fixed_max_pos=
@@ -114,10 +119,12 @@ from &outdsd;
 data &outdsd;
 set &outdsd;
 if _n_=1 then do;
-  &new_pos_var=&new_pos_var-0.1*&dist_step;
+/*  &new_pos_var=&new_pos_var-0.1*&dist_step;*/
+  &new_pos_var=&new_pos_var-&Pct4OnlyTwoPos*&dist_step;
 end;
 else do;
-  &new_pos_var=&new_pos_var+0.1*&dist_step;
+/*  &new_pos_var=&new_pos_var+0.1*&dist_step;*/
+  &new_pos_var=&new_pos_var+&Pct4OnlyTwoPos*&dist_step;
 end;
 run;
 %end;
