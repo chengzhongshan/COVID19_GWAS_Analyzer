@@ -28,7 +28,6 @@ numcolumns4fig=3
  %end;
 %end;
 
-
 %let ncutoffs=%numargs(&target_cutoffs);
 %put &ncutoffs;
 
@@ -103,6 +102,7 @@ on a.cutoff_g=b.cutoff_g and a.cutoff_threshold=b.cutoff_threshold and
    &byid_condition
 order by cutoff_g,cutoff_threshold,&_byids_
 ;
+
 proc datasets lib=work noprint;
 delete ZX: byids tmp dsdout;
 run;
@@ -120,8 +120,9 @@ SameTypeVars=_numeric_,
 debug=0 
 ); 
 
+
 data all_trans; 
-set all_trans; 
+set &dsdout._trans; 
 if total_n_1=. then total_n_1=0; 
 Passed_pct=100*total_n_1/(total_n_1+total_n_0); 
 *Also keep the the total number of obs passed the the input cutoff;

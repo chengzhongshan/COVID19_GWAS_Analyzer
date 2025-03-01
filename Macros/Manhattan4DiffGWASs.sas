@@ -55,9 +55,13 @@ Keep_order_of_target_SNPs=0, /*Draw local Manhattan plot according to the order 
 Note: need to set this macro with value 1 if drawing local Manhattan plots for target SNPs or top hits, 
 which means if either target_SNPs or top_hit_thresd is not empty, please assign value 1 to this macro var!
 When draw genome-wide Manhattan plots, it is required to assign value 1 to this macro var.*/
-top_hit_thresd=,/*provide a p value threshold to only draw local Manhattan plot for the smallest top hit around a specific genomic window,such as p < 1e-6 within a window of 1e7 bp*/
-dist4get_smallest_top_hit=1e7,/*Select the smallest top SNP around a genomic window of the supplied distance in bp*/
-
+top_hit_thresd=,/*provide a p value threshold to only draw local Manhattan plot for the smallest 
+top hit around a specific genomic window,such as p < 1e-6 within a window of 1e7 bp*/
+dist4get_smallest_top_hit=1e7, /*Select the smallest top SNP around a genomic window of the supplied distance in bp*/
+only_get_top_hit4n_th_gwas=0 /*The parameter enables the macro to focus on top hits from specific gwas represented by 
+its order starting from 1 to n for the 1st gwas and other gwass inferred by their supplied P variables; the default value 0 means
+to query all gwas top hits; if only want to query top hits from the 1 gwas, please supply value 1, and this applicable to 
+other gwass if the correct numeric order for the gwas is supplied here!*/
 );
 
 /**fake data;*/
@@ -71,6 +75,11 @@ dist4get_smallest_top_hit=1e7,/*Select the smallest top SNP around a genomic win
 /*end;*/
 /*end;*/
 /*run;*/
+
+%if %length(&Other_P_vars)=0 %then %do;
+    %put This macro is designed for working with >= 2 GWAS and needs to have the macro var Other_P_vars supplied with a variable of P value for the 2nd GWAS;
+	%abort 255;
+%end;
 
 %if %varexist(ds=&dsdin,var=&chr_var) = 0 %then %do;
 					 %put Input chr var &chr_var does not exit!;
@@ -125,7 +134,8 @@ dist4get_smallest_top_hit=1e7,/*Select the smallest top SNP around a genomic win
            %if %length(&top_hit_thresd)=0 %then %let top_hit_thresd=1e-6;
            %let top_snps=;
            %local _mh_;
-					 %do _mh_= 1 %to %sysevalf(%ntokens(&Other_P_vars)+1);
+		   %do _mh_= 1 %to %sysevalf(%ntokens(&Other_P_vars)+1);
+			 %if &only_get_top_hit4n_th_gwas=0 %then %do;
              %get_top_hits4Manhattan(
               dsdin=&dsdin,
               snp_var=&snp_var,
@@ -138,6 +148,21 @@ dist4get_smallest_top_hit=1e7,/*Select the smallest top SNP around a genomic win
              );
 /*             *Note: the above macro will create new variable tag_snp and a global macro var _top_snps_ that will be used to capture these top SNPs;*/
 /*             %let top_snps=&top_snps &_top_snps_;*/
+			%end;
+			%else %if (&_mh_=&only_get_top_hit4n_th_gwas) %then %do;
+
+             %get_top_hits4Manhattan(
+              dsdin=&dsdin,
+              snp_var=&snp_var,
+              chr_var=&chr_var,
+             pos_var=&pos_var,
+             p_var=%scan(&P_var &Other_P_vars,&_mh_,%str( )),
+             dsdout=_tophits_&_mh_,
+             p_thrsd=&top_hit_thresd, 
+            dist4get_uniq_top_hit=&dist4get_smallest_top_hit
+             ); 
+ 
+			%end;
            %end;
 					 %put We will extract associaiton signals around these top SNPs within a genomic window of &dist4get_smallest_top_hit bp that pass the p value threshold of &top_hit_thresd;
            %put These top SNPs are &top_snps;
@@ -320,7 +345,21 @@ quit;
 find mean of BP within each chromosome (C)
 used later to position x-axis labels
 ;
-proc summary data=manhattan nway;
+
+*A potential bug here especially when there are a lot of SNPs with missing p values;
+*were removed from the data set before calculating the mean of these positions;
+*Try to generate a temporary data set;
+proc sort data=manhattan(keep=&chr_var Fake_position) out=_manhattan_ nodupkeys;
+by &chr_var Fake_position;
+run;
+proc sql;
+create table _manhattan_ as
+select *
+from _manhattan_
+group by &chr_var
+having Fake_position=min(Fake_position) or Fake_position=max(Fake_position);
+*If the above invite some bugs, it is feasible to use the data set manhattan to replace _manhattan_;
+proc summary data=_manhattan_ nway;
 %if &Keep_order_of_target_SNPs=1 %then %do;
 *Draw local Manhattan plots by keeping the original order of target SNPs;
 /*class &chr_var tag_snp;*/
@@ -429,7 +468,7 @@ run;
 *If put reset=all inside the command of goptions, the title will be removed;
 *It is necessary to reset all here, otherwise, the figure may be distorted;
 *Albany AMT is equivalent to Arial in SAS;
-goptions reset=all ftext=Arial htext=&fontsize gunit=pct 
+goptions reset=all ftext="Albany AMT" htext=&fontsize gunit=pct 
          dev=gif xpixels=&fig_width ypixels=&fig_height gsfname=gout;
 
  

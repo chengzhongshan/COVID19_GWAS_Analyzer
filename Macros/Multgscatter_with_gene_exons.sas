@@ -46,9 +46,10 @@ yaxis_offset4min=0.05, /*provide 0-1 value or auto to offset the min of the yaxi
 yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the yaxis*/
 yoffset4max_drawmarkersontop=0.15,/*If draw scatterplot marker labels on the top of track, 
 this fixed value will be used instead of yaxis_offset4max!*/
+Yoffset4textlabels=3.5, /*Move up the text labels for target SNPs in specific fold; 
+the default value 2.5 fold works for most cases*/
 xaxis_offset4min=0.02, /*provide 0-1 value or auto  to offset the min of the xaxis*/
 xaxis_offset4max=0.02, /*provide 0-1 value or auto to offset the max of the xaxis*/
-
 shift_text_yval=-0.2, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
                       to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;
                       Change it with the macro var pct4neg_y!*/
@@ -78,11 +79,18 @@ based on its real value in the heatmap plot; To keep the original dot y axis val
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
 the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
 */
-var4label_scatterplot_dots= /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+var4label_scatterplot_dots=, /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
+text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=0, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+pct2adj4dencluster=0.25 /*For SNP labels on the top, please try to use this parameter, which only works when 
+there are less than or equal to 3 top SNPs if track_width <= 500, or 5 top SNPs if track_width between 500 and 800, or 6 top SNPs if 
+track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
+and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
+avoid this issue by increasing the pct or reducing it, respectively*/
 );
 
 %let missingscatterdsd=0;
@@ -227,6 +235,7 @@ run;
 /* 			run; */
 *Use a macro to asign yval_var by separating genes too close to each other;
 *reg_type and focused_reg_type4grouping can be omitted if wanting to use the longest region as gene;
+/*%abort 255;*/
    %adj_grpnum4close_gene_bed_regs(
    gene_bed_dsd=exon&_chr_,
    st_var=st,
@@ -249,9 +258,9 @@ run;
    data _x1_;
    set bed&_chr_ exon&_chr_;
 			*enlarge the dist between st and end, which will make the square visible in scatter plot; 
-			st=st-&dist4scatterplot;
+/*			st=st-&dist4scatterplot;*/
 			if st<0 then st=0;
-			end=end+&dist4scatterplot;
+/*			end=end+&dist4scatterplot;*/
    run;
 			
 
@@ -306,6 +315,8 @@ run;
     yaxis_offset4max=&yaxis_offset4max, /*provide 0-1 value or auto or to offset the max of the yaxis*/
    yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop,/*If draw scatterplot marker labels on the top of track, 
    this fixed value will be used instead of yaxis_offset4max!*/
+      Yoffset4textlabels=&Yoffset4textlabels, /*Move up the text labels for target SNPs in specific fold; 
+the default value 2.5 fold works for most cases*/
     xaxis_offset4min=&xaxis_offset4min, /*provide 0-1 value or auto  to offset the min of the xaxis*/
     xaxis_offset4max=&xaxis_offset4max, /*provide 0-1 value or auto to offset the max of the xaxis*/
 
@@ -337,11 +348,14 @@ based on its real value in the heatmap plot; To keep the original dot y axis val
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
 the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
 */
- var4label_scatterplot_dots=&var4label_scatterplot_dots /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+ var4label_scatterplot_dots=&var4label_scatterplot_dots, /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
-scatterplots;*/    
+scatterplots;*/ 
+text_rotate_angle=&text_rotate_angle, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=&auto_rotate2zero, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+pct2adj4dencluster=&pct2adj4dencluster 
     );
   
    *options notes;

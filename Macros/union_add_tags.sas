@@ -1,12 +1,20 @@
 %macro union_add_tags(dsds=,     /*Name of the datasets, separated by space    */
                        out=       /*Name of combined data set     */);
+ %local vars_all_numeric nobs;
+ %let vars_all_numeric=0;
  %let i=1;  
  %do %while(%scan(&dsds,&i,%str( )) ne);
   %let f=%scan(&dsds,&i,%str( ));	 
   %put going to process &f and name it temporarily as _D_&i;
+  *The original macro only selects char variables by restricting type=2;
+  *it would fail when all vars from these dataset are numeric vars;
   proc contents data=&f noprint 
       out=_D_&i(keep=name type length where=(type=2));
   run;
+  
+ %let nobs=%totobsindsd(work._D_&i);
+ %if &nobs=0 %then %let vars_all_numeric=1;
+
   proc sort data=_D_&i;by name;run;
 
   data _D_&i;
@@ -41,6 +49,7 @@
            );*/
 %let cwd= %sysfunc(getoption(work));
 
+%if &vars_all_numeric=0 %then %do;
    /*Delete combined.sas*/
    %del_file_with_fullpath(fullpath=&cwd/combined.sas);
 
@@ -67,6 +76,13 @@
    run;
 
    %include "&cwd/combined.sas";
+   %end;
+   %else %do;
+      *When all vars are numeric, just use set to combine all these datasets;
+       data &out;
+	   set _DD_:;
+	   run;
+   %end;
 
    /*Delete combined.sas*/
    %del_file_with_fullpath(fullpath=&cwd/combined.sas);

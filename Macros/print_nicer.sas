@@ -1,10 +1,12 @@
 %macro print_nicer(
 fontsize=12,
-fontcol=dark
+fontcol=dark,
+column_font=Bold /*When requiring for monospaced font, 
+use Courier, or Consolas, among which Consolas is the best!*/
 );
 
 %str(
-var _all_/style(column)=[fontsize=&fontsize.pt color=&fontcol fontfamily=bold]
+var _all_/style(column)=[fontsize=&fontsize.pt color=&fontcol fontfamily=&column_font]
 style(header)=[fontsize=&fontsize.pt];
 );
 

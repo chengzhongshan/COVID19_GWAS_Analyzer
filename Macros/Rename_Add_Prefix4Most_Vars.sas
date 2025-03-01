@@ -3,6 +3,8 @@ from dataset indsd to target_dsd */
 *options mprint;
 %macro Rename_Add_Prefix4Most_Vars(indsd,prefix,excluded,replace_rgx_in_varname=);
 *The macro requires to have the input dataset in the format of lib.dsd;
+*Note: ensure the excluded vars are in exact lowercase or uppercase as that of the column names of input data set!;
+
 %if %index(&indsd,.) =0	%then %let indsd=work.&indsd;
 %put your input dataset is assumed as &indsd;
 /*%abort 255;*/
@@ -24,7 +26,8 @@ data temp;
 	set temp;
 	where name not in %str(%("&rm_list"%));
 run;
-	
+
+
 %if %length(&replace_rgx_in_varname)>0 %then %do;
 proc sql noprint;
    select count(*) into :n from temp;

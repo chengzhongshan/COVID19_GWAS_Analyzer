@@ -278,7 +278,43 @@ to have all genes in a single row in the final gene track*/
 where_cndtn_for_gwasdsd=&where_cndtn_for_gwasdsd, /*where condition to filter input gwas_dsd*/
 gwas_labels_in_order=&gwas_labels_in_order,
 /*The order will be from down to up in the final tracks*/
-fig_fmt=&outfigfmt
+fig_fmt=&outfigfmt,
+shift_text_yval=-0.2, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
+                      to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;
+                      Change it with the macro var pct4neg_y!*/
+pct4neg_y=2, /*the most often used value is 1;
+              compacting the bed track y values by increasing the scatterplot scale, 
+              which can reduce the bed trace spaces; It seems that two-fold increasement
+              leads to better ticks for different tracks!
+              Use value >1 will increase the gene tract, while value < 1 will reduce it!
+              Note: when there are only 1 or 2 scatterplots, it is better to provide value = 0.5;
+              Modify this parameter with the parameter shift_text_yval to adjust gene label!
+              Typically, when there are more scatterplots, it is necessary to increase the value of pct4neg_y accordingly;
+              If there are only <4 scatterplots, the value would be usually set as 1 or 2;
+              */
+adjval4header=-2, /*In terms of header of each subscatterplot, provide postive value to move up scatter group header by the input value*/
+
+makedotheatmap=0,/*use colormap to draw dots in scatterplot instead of the discretemap;
+Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
+the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
+
+color_resp_var=,/*Use value of the var to draw colormap of dots in scatterplot
+if empty, the default var would be the same as that of yval_var;*/
+
+makeheatmapdotintooneline=0,/*This will make all dots have the same yaxis value but have different colors 
+based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var
+This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
+the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
+*/
+var4label_scatterplot_dots= ,/*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+the variable should contain values of target SNPs and other non-targets are asigned with empty values;
+Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
+label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
+default is empty; provide a variable that include non-empty strings for specific dots in the 
+scatterplots;*/
+SNPs2label_scatterplot_dots= /*Add multiple SNP rsids to label dots within or at the top of scatterplot
+Note: if this parameter is provided, it will replace the parameter var4label_scatterplot_dots!
+*/
 );
 
  %end;

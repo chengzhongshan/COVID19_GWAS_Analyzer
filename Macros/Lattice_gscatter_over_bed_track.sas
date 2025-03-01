@@ -35,7 +35,7 @@ yaxis_offset4max=0.05, /*provide 0-1 value or auto or to offset the max of the y
 yoffset4max_drawmarkersontop=0.15,/*If draw scatterplot marker labels on the top of track, 
 this fixed value will be used instead of yaxis_offset4max!*/
 yaxis_auto_ticks=0,/*Provide value 1 to let SAS automatically reduce the number of ticks, which may be useful when non-integer ticks are required for y-axis;
-otherwise, only integer ticks will be used to label ticks!*/
+otherwise, only integer ticks will be used to label ticks! However, sometimes this will lead to abnomal yaxis ticks generated!*/
 draw_grid4y=0, /*Assign value 1 to draw grid for y axis; default value is 0 for not drawing y grid*/
 xaxis_offset4min=0.04, /*provide 0-1 value or auto  to offset the min of the xaxis*/
 xaxis_offset4max=0.04, /*provide 0-1 value or auto to offset the max of the xaxis*/
@@ -90,9 +90,15 @@ dist_pct_to_cluster_pos=0.02,/*In terms of labels for top SNPs, use the input pc
 betweent the first label to the last label and 
 define labels into cluster if they are too close to each other
 if their distance is less than pct_of_total_dist*/
-fc2distant_close_labels=3,/*In terms of labels for top SNPs, increase the distance among close labels by input fold change*/
+fc2distant_close_labels=3,/*In terms of labels for top SNPs, increase the distance among close labels by input fold change
+default value 3 would be good for most situations!*/
+pct2adj4dencluster=2,/*Input value can be ranging from 0.0001 to 10 or even higher value!
+For SNP labels on the top, please try to use this parameter, which only works when 
+there are less than or equal to 3 top SNPs if track_width <= 500, or 4 top SNPs if track_width between 500 and 800, or 5 top SNPs if 
+track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!*/
 reflinecolor4selecteddots=gray,/*asign color for the vertical reference lines for userselected dots*/
 text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=0, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
 Yoffset4textlabels=2.5, /*Move up the text labels for target SNPs in specific fold; the default value 2.5 fold works for most cases*/
 font_size4textlabels=10,/*Font size for these text labels*/
 move_right_genetxt_pct=0.08,/*When the right most genes are too close to the right boudary, it is necessary to reduce its x-axis position
@@ -175,7 +181,6 @@ WHEAT #D8D8BF
 *https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/grstatproc/p0i3rles1y5mvsn1hrq3i2271rmi.htm;
 *SAS marker symbols;
 
-
 %Check_VarnamesInDsd(indsd=&bed_dsd,Rgx=&color_resp_var,exist_tag=HasVar);
 %if %length(&HasVar)=0 %then %do;
  %put The color_resp_var: &color_resp_var does not exist in the sas dsd &bed_dsd;
@@ -187,8 +192,7 @@ WHEAT #D8D8BF
  %put The color_resp_var: &var4label_scatterplot_dots does not exist in the sas dsd &bed_dsd;
  %abort 255;
 %end;
-
-
+ 
 *Restrict the min and max positions based on the customized viewmin and viewmax;
 %put Going to reset the bed positions between xaxis_viewmin and xaxis_viewmax;
 data &bed_dsd;
@@ -959,29 +963,77 @@ run;
     where &var4label_scatterplot_dots^="" and pos^=.;
     keep &var4label_scatterplot_dots xtag _tmp_ pos;
     run;
-  *When there is less then 4 SNPs for labeling at the top of the local Manhattan plot, reset the following rotation anger macro var to 0;
-  *and increase 4 fold for the the dist_pct_to_cluster_pos and increase 4 folds for &fc2distant_close_labels;
-  %if %totobsindsd(_xtag_)<4 %then %do;
-	   %let dist_pct_to_cluster_pos=%sysevalf(4*&dist_pct_to_cluster_pos);
-	   %let  fc2distant_close_labels=%sysevalf(4*&fc2distant_close_labels);
+	proc sql noprint;
+	select count(*) into: total_target_labels
+	from (
+	select distinct &var4label_scatterplot_dots 
+    from _xtag_
+    ); 
+  *When there is less then 4 SNPs for labeling at the top of the local Manhattan plot, reset the following rotation angle macro var to 0;
+  *and increase 4 fold for the the dist_pct_to_cluster_pos;
+  *First decide the cutoff of total_target_labels based on the width of figure;
+ %if &track_width <= 500 %then %do;
+     %let label_n_cutoff=3;
+%end;
+%else %if (&track_width>500 and  &track_width<800) %then %do;
+     %let label_n_cutoff=4;
+%end;
+%else %if (&track_width>=800) %then %do;
+    %let label_n_cutoff=5;
+%end;
+%else %do;
+    %let label_n_cutoff=0;
+%end;
+
+  %if &total_target_labels<=&label_n_cutoff %then %do;
+/*	   %let dist_pct_to_cluster_pos=%sysevalf(4*&dist_pct_to_cluster_pos);*/
+/*       %let dist_pct_to_cluster_pos=%sysevalf(1/&total_target_labels);*/
+         %let dist_pct_to_cluster_pos=%sysevalf(0.5/&total_target_labels);
+/*	   %let  fc2distant_close_labels=%sysevalf(4*&fc2distant_close_labels);*/
+	   %let make_even_pos=0;
+  %end;
+  %else %do;
+	  %let make_even_pos=1;
+	  *No need to make even positions when rotation angle is set as 90;
+	  %if &text_rotate_angle=90 %then %let make_even_pos=0;
   %end;
 
    *Also need to adjust labels with too close positions;
-  %if &track_height<700 %then %let Pct4OnlyTwoPos=0.5;
-  %else %let Pct4OnlyTwoPos=0.25;
+  %if &track_width<700 %then %let Pct4OnlyTwoPos=0.25;
+  %else %let Pct4OnlyTwoPos=0.1;
+
    %adjust_close_positions(
    indsd=_xtag_,
    outdsd=_xtag_,
    pos_var=pos,
    new_pos_var=newpos,
    dist_pct_to_cluster_pos=&dist_pct_to_cluster_pos,
-   amplificaiton_fc=&fc2distant_close_labels,
+   amplification_fc=&fc2distant_close_labels,
+   make_even_pos=&make_even_pos,
    Pct4OnlyTwoPos=&Pct4OnlyTwoPos,/*In case of only two positions, it is necessary to use arbitrary proportion of dist_step to separate them,
    i.e., minus and add Pct4OnlyTwoPos*dist_step and for the first and second positions, respectively*/
+   pct2adj4dencluster=&pct2adj4dencluster,
    fixed_min_pos=&min_x,
    fixed_max_pos=&max_x
-   );     
-
+   ); 
+   *The above macro is not good in separating these positions into distinguishable positions;
+   *However, due to historical compatability, the above codes will be kept;
+   *******************************************************************************************************;
+   *Use the other macro to improve it, and it can be canceled if it is still not optimum;
+   *Only run it when requiring the text to be rotated; 
+   %if (&text_rotate_angle>0) %then %do;
+   proc sql noprint;
+   select pos into: _tgt_pos_ separated by ' '
+   from _xtag_ 
+   order by pos;
+   select &fc2distant_close_labels*0.1*(&max_x-&min_x+1)/count(*) into: sep4tgt_pos
+   from _xtag_;
+   %spaceAdjust(data=&_tgt_pos_, out=_xtag1_, goal=COL:, sep=&sep4tgt_pos, newvar4adjnum=newpos); 
+   data _xtag_;
+   merge _xtag_(drop=newpos) _xtag1_(keep=newpos);
+   run;
+   %end;
+   *******************************************************************************************************;
     proc sort data=_xtag_ nodupkeys;by &var4label_scatterplot_dots pos;run;
     data final;set final;xtag=_n_;run;
     proc sql;
@@ -1006,14 +1058,22 @@ run;
    *Need to enlarge the macro var yaxis_offset4max to be 0.1;
    %let yaxis_offset4max=&yoffset4max_drawmarkersontop;
    *Get the positions of these selected markers for making vertical reflines later;
+   *Note: it is important to use put to change larger number into str frist;
+   *otherwise, sas will automatically round the large number to nearest number;
+   *resulting into the wrong number for the newly created macro var markers_pos;
    proc sql noprint;
-   select pos,newpos into: markers_pos separated by ' ',:new_markers_pos separated by ' '
+   select put(pos,best32.),newpos into: markers_pos separated by ' ',:new_markers_pos separated by ' '
    from _xtag_;
    
    %put Your marker positions are as follows:;
    %put &markers_pos;
     
 %end;
+
+*For debug;
+/*data a;*/
+/*set _xtag_;*/
+/*run;*/
 /*%abort 255;*/
 
 
@@ -1031,10 +1091,18 @@ proc sql noprint;
 select distinct trim(left(&var4label_scatterplot_dots)) into: vars4figurename separated by '_'
 from final
 where &var4label_scatterplot_dots^="";
+
+%if %length(&vars4figurename)>100 %then %do;
+   %put You var4figurename is too long:;
+   %put &var4figurename;
+   %put The macro will arbitrarily assign the value of macro var var4label_scatterplot for the macro var;
+   %let  vars4figurename=&var4label_scatterplot_dots;
+%end;
+
 *When there is only one SNP for labeling at the top of the local Manhattan plot, reset the following rotation anger macro var to 0;
 *Also reduce the top cell space represented by the macro var yoffset4max_drawmarkersontop from the default value 0.15 to 0.05;
 *Other parameters restrict the upper and lower offset are also resetted;
-%if %sysfunc(countc(&vars4figurename,_))<4 %then %do;
+%if %sysfunc(countc(&vars4figurename,_))<4 and &auto_rotate2zero=1 %then %do;
     %let text_rotate_angle=0;
 
 /*	%let yoffset4max_drawmarkersontop=0.01;*/
@@ -1062,17 +1130,22 @@ where &var4label_scatterplot_dots^="";
 /*proc sql noprint;*/
 /*select max(pos1), min(pos1)into: max_pos1, :min_pos1*/
 /*from final;*/
+%if &track_width>=500 %then %let extra_reduce_pct=0.8;
+%else %let extra_reduce_pct=1;
+*This means for figure with width < 500, it will increase the 1 fold for the amplification facto;
+*but for figure with width > 500 and < 750, it will keep around 0.8 fold for the amplification facto;
+*in terms of figure with width >750, it will keep around 0.8*0.5 fold for the amplification factor;
 data final ;
 set final;
 pfactor=IFC(length(grp_label)<3,0,length(grp_label))/4;
-if pfactor>3 then pfactor=3;
+if pfactor>5 then pfactor=5;
 *Further adjust it by figure track_width by comparing it to the optimized figure with width 450;
-pfactor=pfactor*450/&track_width;
+pfactor=pfactor*500/&track_width;
 *If track_width>600, it is necessary to reduce the factor 2 folder;
 if &track_width>750 then pfactor=0.5*pfactor;
 if grp_label^="" and (&_maxpos_ - pos1+1)/&window_dist<((1+pfactor)*&move_right_genetxt_pct) then do;
       *Also move the gene label by its length;
-	   _pos1_=pos1-0.65*&window_dist*&move_right_genetxt_pct*pfactor;
+	   _pos1_=pos1-&extra_reduce_pct*&window_dist*&move_right_genetxt_pct*pfactor;
 end;
 else do;
 	  _pos1_=pos1;
@@ -1085,6 +1158,7 @@ set final(keep=grp_label grp1 var4log10P1 _pos1_ pfactor);
 where grp_label^="";
 run;
 proc sort;by var4log10P1 _pos1_;run;
+
 data final_gene;
 set final_gene;
 lag_pos1=lag(_pos1_);
@@ -1092,7 +1166,7 @@ if first.var4log10P1 then do;
  lag_pos1=.;
 end;
 else do;
-   if  (_pos1_ - lag_pos1+1)/&window_dist<(pfactor*&move_right_genetxt_pct)  then lag_pos1_adj=lag_pos1-0.65*&window_dist*&move_right_genetxt_pct*pfactor;
+   if  (_pos1_ - lag_pos1+1)/&window_dist<(pfactor*&move_right_genetxt_pct)  then lag_pos1_adj=lag_pos1-&extra_reduce_pct*&window_dist*&move_right_genetxt_pct*pfactor;
 end;
 by var4log10P1;
 run;
@@ -1174,7 +1248,13 @@ begingraph / designwidth=&track_width designheight=&track_height
        *The adding of walldisplay=none will remove yaxis and other borders, but the yaxis should be kept;
 /*         layout overlay/WALLDISPLAY=none yaxisopts=(*/
 	       *Note: the label option will be the real functional section to update the yaxis label;
+	   %if &makedotheatmap^=1 %then %do;
          layout overlay/yaxisopts=(label="&yaxis_label"	
+       %end;
+       %else %do;
+         *Remove the yaxis labels when plotting in the format of heatmap;
+         layout overlay/yaxisopts=(label="___" labelattrs=(color=white)      
+       %end;
  /*                     only provide tickvalues will prevent other features, such as ticks, in the yaxis            */
 /*                      need to add label to display y label; also remove ticks when makeheatmapdotintooneline=1   */
                         display=(%if &makeheatmapdotintooneline=0 %then %do; 
@@ -1264,9 +1344,20 @@ begingraph / designwidth=&track_width designheight=&track_height
                                                        lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);                                       
           %end;   
           
+          *POSITION=BOTTOM | BOTTOMLEFT | BOTTOMRIGHT | CENTER | LEFT | RIGHT | TOP | TOPLEFT | TOPRIGHT | keyword-column;
+          *specifies the position of the text value with respect to the location of the data point.;
+          *When text_rotate=90, use position=right;
+          *When text_ortate=0, use text=center;
+		  %if &text_rotate_angle>0 %then %do;
+          textplot x=newpos y=top_y4label text=&var4label_scatterplot_dots/ 
+              rotate=&text_rotate_angle position=right textattrs=(size=&font_size4textlabels)
+              POSITIONOFFSETX=0 POSITIONOFFSETY=&yoffset4textlabels;
+		  %end;
+	      %else %do;
           textplot x=newpos y=top_y4label text=&var4label_scatterplot_dots/ 
               rotate=&text_rotate_angle position=center textattrs=(size=&font_size4textlabels)
               POSITIONOFFSETX=0 POSITIONOFFSETY=&yoffset4textlabels;
+		  %end;
            
        %end;
        %else %do;
@@ -1374,7 +1465,9 @@ begingraph / designwidth=&track_width designheight=&track_height
                                        markerattrs=(
                                        symbol=&scattermarker_symbol size=&dotsize
                                        );
-       continuouslegend "sc"/title="Dot value";
+/*        continuouslegend "sc"/title="Dot value"; */
+/*        Only draw integer ticks for the colorbar legend */
+          continuouslegend "sc"/title=" " integer=true;
  %end;
  %else %do;
          scatterplot x=pos y=&yval_var/ 
@@ -1442,6 +1535,7 @@ rc=dlgcdir("&workdir");
 run;
 
 %if %length(&vars4figurename)>0 %then %do;
+     %if %length(&vars4figurename)>32 %then %let vars4figurename=%scan(&vars4figurename,1,%str(_))_and_others;
      %let outimagename=&vars4figurename._%trim(%left(&chr_name))_&st_var%trim(%left(&min_x))_&end_var%trim(%left(&max_x));
 %end;
 %else %do;
@@ -1478,7 +1572,8 @@ ods html style=Newstyle;
 data final;
 set final;
 *Update the x-axis label, which might be revised if the macro is not used for drawing GWAS local Manhattan plot;
-label newpos="%trim(%left(%sysfunc(prxchange(s/^chr/Chromosome /,1,&chr_name)))) (hg19)";
+/* label newpos="%trim(%left(%sysfunc(prxchange(s/^chr/Chromosome /,1,&chr_name)))) (hg19)"; */
+label newpos="%trim(%left(%sysfunc(prxchange(s/^chr/Chromosome /,1,&chr_name))))";
 run;
 
 *Draw the final figure with data set final and the template BedGraph;
@@ -1493,7 +1588,7 @@ run;
 *Need to delete these _y: datasets, as there are used by the above proc template macro scripts;
 %if &debug=0 %then %do;
 proc datasets nolist;
-delete _y: y1for:;
+delete _y: y1for: _xtag_ _single_ _dsdin_ X1_: scgrpnames Header_dsd Final_fmt;
 run;
 %end;
 

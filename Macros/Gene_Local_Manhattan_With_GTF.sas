@@ -62,9 +62,20 @@ Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the 
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
-SNPs2label_scatterplot_dots= /*Add multiple SNP rsids to label dots within or at the top of scatterplot
+SNPs2label_scatterplot_dots=, /*Add multiple SNP rsids to label dots within or at the top of scatterplot
 Note: if this parameter is provided, it will replace the parameter var4label_scatterplot_dots!
 */
+text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=1, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+pct2adj4dencluster=0.15,/*For SNP labels on the top, please try to use this parameter, which only works when 
+there are less than or equal to 3 top SNPs if track_width <= 500, or 5 top SNPs if track_width between 500 and 800, or 6 top SNPs if 
+track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
+and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
+avoid this issue by increasing the pct or reducing it, respectively*/
+yoffset4max_drawmarkersontop=0.55,
+Yoffset4textlabels=3.5 /*Move up the text labels for target SNPs in specific fold; 
+the default value 2.5 fold works for most cases*/
+
 );
 
 *Note: it is arbitrary to have the chr var in the input gwas dsd;
@@ -77,7 +88,7 @@ chr=&gwas_chr_var;
 length Target_SNP $25.;
  Target_SNP="";
  %do _si_=1 %to %ntokens(&SNPs2label_scatterplot_dots);
-    if &SNP_Var_GWAS="%scan(&SNPs2label_scatterplot_dots,&_si_)" then Target_SNP=&SNP_Var_GWAS;
+    if &SNP_Var_GWAS="%scan(&SNPs2label_scatterplot_dots,&_si_,%str( ))" then Target_SNP=&SNP_Var_GWAS;
  %end;
 %end;
 run;
@@ -179,11 +190,21 @@ based on its real value in the heatmap plot; To keep the original dot y axis val
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
 the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
 */
-var4label_scatterplot_dots=&var4label_scatterplot_dots /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+var4label_scatterplot_dots=&var4label_scatterplot_dots, /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
+text_rotate_angle=&text_rotate_angle, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=&auto_rotate2zero, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+pct2adj4dencluster=&pct2adj4dencluster,/*For SNP labels on the top, please try to use this parameter, which only works when 
+there are less than or equal to 3 top SNPs if track_width <= 500, or 5 top SNPs if track_width between 500 and 800, or 6 top SNPs if 
+track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
+and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
+avoid this issue by increasing the pct or reducing it, respectively*/
+yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop,
+Yoffset4textlabels=&Yoffset4textlabels /*Move up the text labels for target SNPs in specific fold; 
+the default value 2.5 fold works for most cases*/
   ); 
   *Need to delete previously generated dataset Final;
   proc datasets nolist;

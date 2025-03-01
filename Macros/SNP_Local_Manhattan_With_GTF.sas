@@ -1,4 +1,19 @@
 %macro SNP_Local_Manhattan_With_GTF(
+/*Tip 1: when there gene labels are cluttered within the gene track, it is feasible to 
+resolve the issue by increasing the values for either variable pct4neg_y or dist2sep_genes or both!
+such as pct4neg_y and dist2sep_genes=1000000; alternatively, it also possible to address the problem
+by increase the width of figure, such as assigning larger value to the macro variable track_width=800.
+  Tip 2: the figure width and height should ideally set around 500 and no less then 300 or greater than
+1000, as large figures are not good for publication purpose! 
+  Tip 3: For SNP labels on the top, please try to use this parameter, which only works when 
+there are less than or equal to 3 top SNPs if track_width <= 500, or 4 top SNPs if track_width between 500 and 800, or 5 top SNPs if 
+track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
+ Tip 4: dist_pct_to_cluster_pos and pct2adj4dencluste (0.0001 to ~) can affect the top SNP labels positions when there are <= 3 or 4, or 5 SNP labels, as the its value
+dist_pct_to_cluster_pos will be internally replaced as 0.5/total number of top SNPs, and pct2adj4dencluste will be changed differently
+when make_even_pos=1, the macro will multiple the amplification_fc with 10*pct2adj4dencluster to further enlarge the even distance among positions; 
+while if make_even_pos=0, it is useful when elements within a cluster is overlapped with each other or overlapped with elements from other cluster, 
+so it is also feasible to avoid this issue by increasing or reducing the pct.
+*/
 /*
 As this macro use other sub-macros, it is not uncommon that some global macro
 vars would be in the same name, such as macro vars chr and i, thus, to avoid of crash, 
@@ -25,8 +40,8 @@ the _ will be replaced with empty string, which is useful when wanting to remove
 if only one scatterplot or the label for a gwas containing spaces;
 The list will be used to label scatterplots 
 by the sub-macro map_grp_assoc2gene4covidsexgwas*/
-design_width=800, 
-design_height=600, 
+design_width=500,/*Best width for publication, and usually used width rangs from 400 to 800*/ 
+design_height=500,/*Best height for publication, and usally used height rangs from 400 to 800*/
 barthickness=10, /*gene track bar thinkness*/
 dotsize=6, 
 dist2sep_genes=100000,/*Distance to separate close genes into different rows in the gene track; provide negative value or 0
@@ -78,8 +93,18 @@ If there are too much space on the top for these SNP labels, please manually cha
 the macro variable yoffset4max_drawmarkersontop included in the macro Lattice_gscatter_over_bed_track
  from 0.2 to a smaller value, such as 0.1;
 */
+text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=1, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+pct2adj4dencluster=2,/*Input value can be ranging from 0.0001 to 10 or even higher value!
+For SNP labels on the top, please try to use this parameter, which only works when 
+there are less than or equal to 3 top SNPs if track_width <= 500, or 4 top SNPs if track_width between 500 and 800, or 5 top SNPs if 
+track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
+and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
+avoid this issue by increasing the pct or reducing it, respectively*/
 yoffset4max_drawmarkersontop=0.15, /*If draw scatterplot marker labels on the top of track, 
  this fixed value will be used instead of yaxis_offset4max!*/
+Yoffset4textlabels=3.5, /*Move up the text labels for target SNPs in specific fold; 
+the default value 2.5 fold works for most cases*/
 verbose=0 /*Not print any notes in SAS log*/
 );
 
@@ -105,7 +130,7 @@ set &gwas_dsd;
 length _Target_SNP_ $25.;
  _Target_SNP_="";
  %do _si_=1 %to %ntokens(&SNPs2label_scatterplot_dots);
-    if &SNP_Var="%scan(&SNPs2label_scatterplot_dots,&_si_)" then _Target_SNP_=&SNP_Var;
+    if &SNP_Var="%scan(&SNPs2label_scatterplot_dots,&_si_,%str( ))" then _Target_SNP_=&SNP_Var;
  %end;
 run;
 %end;
@@ -249,8 +274,15 @@ Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the 
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
-yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop /*If draw scatterplot marker labels on the top of track, 
+text_rotate_angle=&text_rotate_angle, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=&auto_rotate2zero, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+pct2adj4dencluster=&pct2adj4dencluster,/*For SNP labels on the top, please try to use this parameter, which only works when there are less than or equal to 4 top SNPs 
+and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
+avoid this issue by increasing the pct or reducing it, respectively*/
+yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop, /*If draw scatterplot marker labels on the top of track, 
 this fixed value will be used instead of yaxis_offset4max!*/
+Yoffset4textlabels=&Yoffset4textlabels /*Move up the text labels for target SNPs in specific fold; 
+the default value 2.5 fold works for most cases*/
   ); 
   ods printer close;
   *Also need to close the fileref out generated by the macro;

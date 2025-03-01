@@ -25,10 +25,11 @@ Provide a variable name to use its values to draw the 2nd yaxis*/
 both_y_font_size=12, /*Font size for any of the two y-axis*/
 min_axis=0,
 max_axis=2,
-yoffsetmax=0.02, /*offset for the upper y axis maximum value*/
-yoffsetmin=0.02, /*offset for the lower y axis minimum value*/
+yoffsetmax=0.03, /*offset for the upper y axis maximum value*/
+yoffsetmin=0.03, /*offset for the lower y axis minimum value*/
 /*Note: the macro need to have a input variable grp to color dots representing OR;
 So in the following extra condition for input dataset, a new variable grp is created.*/
+outdsd=dsd4OR,/*Output calcuated ORs for further evaluation*/
 extra_condition4updatedsd=%nrstr(
 length sigtag $10.;
 if &marker_var="rs16831827" then do;
@@ -141,6 +142,10 @@ run;
 ods printer close;
 ods listing;
 title;
+
+data &outdsd;
+set tmp;
+run;
 
 %mend;
 

@@ -1,5 +1,5 @@
 %macro Auto_char2num4dsd( dsdin       /* input dsd              */
-                         ,col_num_pct /*Percent of rows is numberic, used for selection of col to be change it into numeric*/
+                         ,col_num_pct /*such as 0.8, indicating percentage of rows is numberic, used for selection of col to be change it into numeric*/
 				         ,dsdout      /* Output dsd             */
                  ) ;
 

@@ -1,4 +1,5 @@
 %macro map_grp_assoc2gene4covidsexgwas(
+/*Note: this macro uses a internal macro Multgscatter_with_gene_exons*/
 gwas_dsd=FM.f_vs_m_mixedpop,/*Requires to have the arbitary var 
 chr in the input gwas dsd*/
 gtf_dsd=FM.GTF_HG19,/*Need to use sas macro import gtf to save GTF_HG19;
@@ -60,8 +61,17 @@ Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the 
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
-yoffset4max_drawmarkersontop=0.15 /*If draw scatterplot marker labels on the top of track, 
+text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=0, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+pct2adj4dencluster=0.15,/*For SNP labels on the top, please try to use this parameter, which only works when 
+there are less than or equal to 3 top SNPs if track_width <= 500, or 5 top SNPs if track_width between 500 and 800, or 6 top SNPs if 
+track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
+and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
+avoid this issue by increasing the pct or reducing it, respectively*/
+yoffset4max_drawmarkersontop=0.25, /*If draw scatterplot marker labels on the top of track, 
  this fixed value will be used instead of yaxis_offset4max!*/
+Yoffset4textlabels=3.5 /*Move up the text labels for target SNPs in specific fold; 
+the default value 2.5 fold works for most cases*/
 );
 %if %ntokens(&gwas_labels_in_order)^=%ntokens(&AssocPVars) %then %do;
   %put Please ensure the gwas_labels_in_order has the same number of elements as that of AssocPVars;
@@ -157,6 +167,7 @@ from exons;
 *Need to compare it with original input min_st and max_end;
 %if &max_end>&max_gpos %then %let max_gpos=&max_end;
 %if &min_st<&min_gpos %then %let min_gpos=&min_st;
+%if &min_gpos<0 %then %let min_gpos=0;
 %put The final chromosomal range for your query region is from &min_gpos to &max_gpos;
 %put However, we will restrict the x-axis to the original min and max genomic position in the final figure;
 *Need to enlarge the grp length by asigning longer comman label for it;
@@ -185,6 +196,11 @@ where chr=&chr and
 (&gwas_pos_var between &min_gpos and &max_gpos);
 /* The region will be different from the (pos between &minst and &maxend); */
 
+*For debug only;
+/*data a;*/
+/*set &gwas_dsd;*/
+/*run;*/
+/*%abort 255;*/
 
 data signal_dsd(where=(var4log10P>0));
 *The final output would be necessary with p<0.05;
@@ -197,7 +213,7 @@ do pi=1 to dim(X);
    output;
 end;
 run;
-
+/*%abort 255;*/
 
 data signal_dsd(rename=(_chr_=chr));
 set signal_dsd;
@@ -232,6 +248,8 @@ min_xaxis=&orig_minst,
 max_xaxis=&orig_maxend,
 yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop,/*If draw scatterplot marker labels on the top of track, 
 this fixed value will be used instead of yaxis_offset4max!*/
+Yoffset4textlabels=&Yoffset4textlabels, /*Move up the text labels for target SNPs in specific fold; 
+the default value 2.5 fold works for most cases*/
 shift_text_yval=&shift_text_yval, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
                       to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;
                       Change it with the macro var pct4neg_y!*/
@@ -260,6 +278,9 @@ based on its real value in the heatmap plot; To keep the original dot y axis val
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
 the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
 */
+text_rotate_angle=&text_rotate_angle, /*Angle to rotate text labels for these selected dots by users*/
+auto_rotate2zero=&auto_rotate2zero, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+pct2adj4dencluster=&pct2adj4dencluster,
 var4label_scatterplot_dots=&var4label_scatterplot_dots /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 

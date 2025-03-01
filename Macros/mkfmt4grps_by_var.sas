@@ -1,7 +1,9 @@
 %macro mkfmt4grps_by_var(
 grpdsd,
 grp_var,
-by_var,
+by_var,/*Empty value is possible for this var, which is handy 
+when there would be duplciates of grp_var after sorting by 
+grp_var and by_var for the by_var to make a new format*/
 outfmt4numgrps,
 outfmt4chargrps
 );
@@ -13,6 +15,22 @@ proc sort data=&grpdsd(keep=&grp_var &by_var) nodupkeys out=grpdsd;
 by &grp_var &by_var;
 run;
 
+proc sql noprint;
+select max(ndup_grps) into: maxdups
+from 
+(select count(*) as ndup_grps
+from grpdsd
+group by &grp_var)
+;
+
+%if &maxdups >1 %then %do;
+		   %put Please evaluate the data set grpdsd for the combination between two vars, including &grp_var and &by_var;
+		   %put It is necessary to have no duplicates in the first grp_var: &grp_var;
+		   %put Currently there are duplicates for grp_var &grp_var after running proc sort nodupkeys by the two vars;
+		   %put You may try to replace the two vars by using grp_var and grp_var, which means to use grp_var to replace the by_var;
+		   %abort 255;
+%end;
+
 *The above dataset may still contains duplicates of &grp_var;
 *Need to keep all unique &by_var and &grp_var;
 /* proc sort data=grpdsd nodupkeys;by &grp_var; */
@@ -20,7 +38,10 @@ run;
 /* run; */
 
 *Need to sort grps by the by_var for making formats;
+*Only when the by_var is not empty, run this codes;
+%if %length(&by_var)>0 %then %do;
 proc sort data=grpdsd;by &by_var;run;
+%end;
 
 %let rnd=%randombetween(100,200);
 %let rnd=&rnd._;

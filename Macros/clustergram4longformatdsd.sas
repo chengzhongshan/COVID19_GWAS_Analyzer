@@ -19,6 +19,9 @@ colname_var=,/*These column-wide names will be used to label heatmap rowlabels*/
 value_var=,/*numeric data for heatmap cells*/
 colaxis_font_setting=%str(Style=italic size=10 weight=normal),/*column label setting for font style, size, and weight*/
 rowaxis_font_setting=%str(Style=italic size=10 weight=normal),/*column label setting for font style, size, and weight*/
+rowaxis_rotation=diagonal2,/*Only functional when the rownames are too crowded;
+If not empty, the heatmap xaxis will be rotated according to the input option, such as
+diagnoal2, diagnoal, or vertical, while if left empty, default setting is to align the tick horizontally*/
 height= ,/*figure height in cm, such as 20;
 if empty, it will use the number of rownames * 0.8 as height*/
 width= ,/*figure width in cm, such as 24;
@@ -41,7 +44,8 @@ Note: if rangemap_setting is not empty, colormodel will not be used!*/
 rangemap_setting=,
 /*If colormodel is EMPTY and rangemap_setting is not EMPTY, the macro will use rangemap setting for colorbar;
 The following is an example code, and ensure the attrvar is named as RangeVar and Var equal to dist, 
-which are hardcoded internally in the macro:
+which are hardcoded internally in the macro, and also ensure the anme="ResponseRange" and attrmap="ResponseRange" use 
+consistently quoted name, otherwise, the attrmap will not be effective;
 *Add more customized ranges to be labeled in the final colorbar!;
 rangemap_setting=%str(
 rangeattrmap name="ResponseRange";
@@ -50,7 +54,7 @@ rangeattrmap name="ResponseRange";
         range MISSING / rangeColorModel=(Lime);   
 endrangeattrmap;
 rangeattrvar var=dist                        
-attrmap="ht"       
+attrmap="ResponseRange"       
 attrvar=RangeVar;  
 )    
 */
@@ -106,8 +110,15 @@ from (select unique(&colname_var) from &dsdin);
 proc sort data=&dsdin out=_x_ nodupkeys;by &rowname_var &colname_var;run;
 data _x_;
 set _x_;
-&rowname_var=prxchange('s/[\W\s]+/_/',-1,trim(left(&rowname_var)));
-&colname_var=prxchange('s/[\W\s]+/_/',-1,trim(left(&colname_var)));
+
+*Only when the input rownames and columnnames do not contain the added linker of multiple ..;
+*Note these linkers may be added by the macro leftalign4catstr;
+if not prxmatch("/\.\./",&rowname_var) then do;
+  &rowname_var=prxchange('s/[\W\s]+/_/',-1,trim(left(&rowname_var)));
+end;
+if not prxmatch("/\.\./",&colname_var) then do;
+  &colname_var=prxchange('s/[\W\s]+/_/',-1,trim(left(&colname_var)));
+end;
 
 *Need to truncate the rowname_var and colname_var and enable their length <=32;
 if length(&rowname_var)>=32 then &rowname_var=substr(&rowname_var,1,32);
@@ -123,11 +134,13 @@ run;
 *The rowname_var will be the rownames;
 *The colname_var will be transposed into column-wide;
 *The value_var will be used for these new, numeric column vars;
+proc sort data=_x_ out=_x_ nodupkeys dupout=_dups_;by &rowname_var &colname_var;run;
 proc transpose data=_x_ out=x;
 var &value_var;
 id &colname_var;
 by &rowname_var;
 run;
+/*%abort 255;*/
 
 data x(keep=&rowname_var _numeric_);
 set x;
@@ -274,7 +287,7 @@ from colnames;
 *Note: the variable row and col will be used to draw Y-axis and X-axis labels!;
 *This is a little confusing, but need to pay attention to it!;
 *Decide whether to draw x-axis labels;
-%if &nrows<100 %then %do; 
+%if &ncols<200 %then %do; 
   %let colaxis_label_setting=tickvalues; 
 %end; 
 %else %do; 
@@ -282,7 +295,7 @@ from colnames;
 %end;
 
  *Decide whether to draw y-axis labels;
-%if &ncols<100 %then %do; 
+%if &nrows<200 %then %do; 
   %let rowaxis_label_setting=tickvalues; 
 %end; 
 %else %do; 
@@ -328,9 +341,17 @@ proc template;
             endlayout;
             *To remove outline, add "walldisplay=none";
             *When there are more than 100 unique rows or columns, do not label them in the heatmap;
+			*TICKVALUEROTATION=DIAGONAL | DIAGONAL2 | VERTICAL;
             layout overlay /walldisplay=none  yaxisopts=(display=none reverse=true
                                         displaysecondary=(&colaxis_label_setting) TICKVALUEATTRS=(&rowaxis_font_setting))
-                             xaxisopts=(display=(&rowaxis_label_setting) TICKVALUEATTRS=(&colaxis_font_setting));
+                             xaxisopts=(
+
+                                       display=(&rowaxis_label_setting) TICKVALUEATTRS=(&colaxis_font_setting)
+
+						    %if %length(&rowaxis_rotation)>0 %then %do;
+                                       discreteopts=(tickvaluefitpolicy=rotate TICKVALUEROTATION=&rowaxis_rotation)
+							%end;
+                                   );
                heatmapparm y=col x=row 
                                %if %length(&rangemap_setting)>0 %then %do;
                                 colorresponse=RangeVar/

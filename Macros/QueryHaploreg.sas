@@ -50,6 +50,23 @@ run;
 %end;
 
 %end;
+
+data &dsdout(drop=chr hg19: hg38:);
+retain gene rsid _chr_ _hg19pos_ _hg38pos_ info;
+set &dsdout;
+chr=prxchange("s/.*chr([\dXY]+).*/$1/",-1,info);
+_chr_=chr+0;
+if chr="X" then _chr_=23;
+hg19pos=prxchange("s/.*chr[\dXY]+\<\/td\>\<td\>(\d+)\<\/td\>\<td\>chr[\dXY]+\<\/td\>\<td\>\d+.*/$1/",-1,info) ;
+_hg19pos_=hg19pos+0;
+hg38pos=prxchange("s/.*chr[\dXY]+\<\/td\>\<td\>\d+\<\/td\>\<td\>chr[\dXY]+\<\/td\>\<td\>(\d+).*/$1/",-1,info);
+_hg38pos_=hg38pos+0;
+run;
+data &dsdout;
+set &dsdout;
+rename _chr_=chr _hg19pos_=hg19pos _hg38pos_=hg38pos;
+run;
+
 %if &print_html=1 %then %do;
 proc print;run;
 %end;

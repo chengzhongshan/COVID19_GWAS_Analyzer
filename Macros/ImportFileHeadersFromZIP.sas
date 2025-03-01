@@ -1,5 +1,6 @@
 %macro ImportFileHeadersFromZIP(
-zip=,/*Only provide file with .gz, .zip, or common text file without comporession*/
+zip=,/*Only provide file with .gz, .zip, or common text file without comporession
+Note: it is necessary to have fullpath for the input file!*/
 filename_rgx=.,
 obs=max,
 sasdsdout=x,
@@ -27,6 +28,9 @@ num_vars2drop=0 /*Provide postive number to work with the macro var global_var_p
 *This will run first even it was put at the end of infile statment;
 %global &var4endlinenum;
 %let &var4endlinenum=-9;
+
+*Restrict obs to be a local macro var;
+%local obs;
 
 %if %FileOrDirExist(&zip)=0 %then %do;
   %put No file for the input macro var zip: &zip;
@@ -359,7 +363,7 @@ zip=&gzfile,
 filename_rgx=gz,
 obs=max,
 sasdsdout=x,
-deleteZIP=0
+deleteZIP=0,
 infile_command=%str(firstobs=1 obs=10;input;info=_infile_;)
 );
 
