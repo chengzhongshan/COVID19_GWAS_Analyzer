@@ -6,7 +6,7 @@ proc freq data=&dsdin;
 table &var4fmt/noprint out=uniquevalues;
 run;
 */
-proc sort data=&dsdin out=uniquevalues nondupkeys;
+proc sort data=&dsdin out=uniquevalues nodupkeys;
 by &numvar4fmt;
 run;
 

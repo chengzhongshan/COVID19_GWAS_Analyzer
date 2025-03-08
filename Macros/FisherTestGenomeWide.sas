@@ -1,5 +1,6 @@
 %macro FisherTestGenomeWide(
-/*Note: this macro will use unique sampleID and pheno_var to make all to all combinations, 
+/*Note: Please use the macro two_cohorts_mut_fisher_test to replace this macro!
+this macro will use unique sampleID and pheno_var to make all to all combinations, 
 please make sure the input table contain all target sampleID and pheno_var;
 If not, please supply a sas dataset containing all target samples and its 
 corresponding grp4fisher variable, and the macro will add these missing samples
@@ -145,7 +146,7 @@ proc sql noprint;select count(unique(&new_pheno)) into: tot_pheno from final;
  %put your group condition is:;
  %put &new_pheno=(&grp_condition4pheno_var);
  %put Please ensure to use the fixed var grp to generate new groups;
- %abort 255;
+/*  %abort 255; */
 
 %end;
 
@@ -156,17 +157,59 @@ run;
 %abort 255;
 */
 
-proc sort data=final;by vars grp &new_pheno;run;
+*Note: order by data for proc freq ensures the group 'Other' and pheno group 0;
+*are specifically used as reference in OR calculation for the two categories of the 2x2 contigency table;
+*Testing the sort by descending or ascending indeed affects the OR calculation direction;
+*The 1st pheno grp is used as reference;
+
+/*
+proc sort data=final;by vars descending grp &new_pheno;run;
 *ods trace on;
 ods select none;
 ods output FishersExact=FishersExact
            CrossTabFreqs=CrossTabFreqs
            Measures=Measures
            RelativeRisks=RelativeRisks;
-proc freq data=final;
+*Note: the order=data ensures the right direction of OR is calcuated between case and Other;           
+proc freq data=final order=data;
 by vars;
 *Note: only 2x2 table will generate OR output;
 table grp*&new_pheno/measures relrisk OR fisher exact;
+run;
+ods select all;
+*ods trace off;
+*/
+
+%Adj_missing_cell_value4fisher(
+longformdsd=final,
+grp_var=grp,
+pheno_var=&new_pheno,
+by_vars=vars,
+newdsdout=new_final
+);
+
+data final;
+set new_final;
+run;
+proc sql noprint;
+drop table new_final;
+
+*Note: it is necessary to sort by both grp and &new_pheno in descending order for calculating ORs in consistent comparison between case and Others;
+proc sort data=final;by vars descending grp desending &new_pheno;run;
+
+*ods trace on;
+ods select none;
+ods output FishersExact=FishersExact
+           CrossTabFreqs=CrossTabFreqs
+           Measures=Measures
+           RelativeRisks=RelativeRisks;
+*Note: the order=data ensures the right direction of OR is calcuated between case and Other;           
+proc freq data=final order=data;
+by vars;
+*Note: only 2x2 table will generate OR output;
+table grp*&new_pheno/measures relrisk OR fisher exact;
+weight adj_count;
+by vars;
 run;
 ods select all;
 *ods trace off;
@@ -190,6 +233,8 @@ run;
 %ds2csv(data=Measures,csvfile="&outcsvname4measures..csv",runmode=b);
 %ds2csv(data=&fisher_dsdout,csvfile="&outcsvname4fisher..csv",runmode=b);
 %ds2csv(data=RelativeRisks,csvfile="&outcsvname4OR..csv",runmode=b);
+*It is possible to use nested natural left outer join to merge all these tables;
+*See  the macro two_cohorts_mut_fisher_test for demonstration;
 
 %mend;
 /*
