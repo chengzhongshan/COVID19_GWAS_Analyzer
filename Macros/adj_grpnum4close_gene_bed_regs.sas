@@ -249,9 +249,24 @@ on a.&gene_grp=b.&gene_grp;
 data &dsdout;
 set &old_dsdout;
 run;
+*When the two vars &dsdout and &old_dsdout have the same name, the original dataset will be overwritten;
+*Need to keep a copy for it.;
+data &old_dsdout.0;
+set &old_dsdout;
+run;
 /*%abort 255;*/
 ***It is necessary to further optimize these regions by merging the largest group number with the smallest group numer;
 ***when any regions in the largest group number are not within the distance threshold;
+
+  *This part might invite issues for separating a gene and its corresponding exons into different groups;
+  *To resovle the issue, it is necessary use minmum st and max end for each gene_grp as input;
+  *First keep a copy for the above &dsdout, and then later update the &outnumgrp with newly calculated group numbers; 
+  proc sql;
+  create table &dsdout as 
+  select distinct &gene_grp,min(&st_var) as &st_var,max(&end_var) as &end_var,&outnumgrp
+  from &dsdout
+  group by &gene_grp;
+/*  %abort 255;*/
 
 %let nmgrp_0=0; 
 %let nmgrp_1=1;
@@ -368,11 +383,18 @@ run;
 
 %end;
 
-*It is necessary to rename the &dsdout as &old_dsdout;
+  *It is necessary to rename the &dsdout as &old_dsdout;
 *&old_dsdout contains the target output data set name, in case that it is the same as input data set name;
-data &old_dsdout;
-set &dsdout;
-run;
+*Update the newly generated grp number to the &old_dsdout;
+/*%put old_dsdout is &old_dsdout and dsdout is &dsdout;*/
+proc sql;
+create table &old_dsdout as 
+select a.*,b.&outnumgrp 
+from &old_dsdout.0(drop=&outnumgrp) as a
+left join
+&dsdout as b
+on a.&gene_grp=b.&gene_grp;
+/*%abort 255;*/
 /* proc print;run; */
 %mend;
 
@@ -424,10 +446,10 @@ chr1 880 900 gene f
 ;
 ****************************************************************************************************;
 *options mprint mlogic symbolgen;
-%let macrodir=/home/cheng.zhong.shan/Macros;
-%include "&macrodir/importallmacros_ue.sas";
-%importallmacros_ue;
-%debug_macro;
+*%let macrodir=/home/cheng.zhong.shan/Macros;
+*%include "&macrodir/importallmacros_ue.sas";
+*%importallmacros_ue;
+*%debug_macro;
 
 *Make sure these gene bed regions are from the same chromosome;
 %adj_grpnum4close_gene_bed_regs(
@@ -437,13 +459,16 @@ end_var=end,
 reg_type=type,
 focused_reg_type4grouping=gene,
 gene_grp=grp,
-gene_dist_thrhd=0.01,
+gene_dist_thrhd=0.2,
 dsdout=xxx,
 outnumgrp=numgrp
 );
 ****************************************************************************************************;
 *Assign negative value for these bed regions;
-data xxx;set xxx;numgrp=-1*numgrp;run;
+data xxx;
+set xxx;
+numgrp=-1*numgrp;
+run;
 ****************************************************************************************************;
 *This will only draw bed regions without scatter plot;
 *Note: the var tag need to be nagative to only draw bed regions;

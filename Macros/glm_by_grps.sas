@@ -11,7 +11,7 @@ exp_cutoff=0.5 /*lsmean expression cutoff for lowly expressed genes
 These genes should be excluded in the differential expression analysis!*/
 );
 
-proc sort data=tgt;by &grpvars;
+proc sort data=&dsd;by &grpvars;
 run;
 /* ods trace on; */
 ods select none;
@@ -20,7 +20,7 @@ ods select none;
 *differential expression p values;
 ods output ModelANOVA=&GLMStatOutDsd DIFF=&GLMStatOutDsd._pdiff 
 lsmeans=&GLMStatOutDsd._lsmeans;
-proc glm data=tgt PLOTS(MAXPOINTS=50000000000);
+proc glm data=&dsd PLOTS(MAXPOINTS=50000000000);
 %if %length("&where_condition")>0 %then %do;
 where &where_condition;
 %end;

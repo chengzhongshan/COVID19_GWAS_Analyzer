@@ -1,9 +1,15 @@
-%macro Gene_Local_Manhattan_With_GTF(/*As this macro use other sub-macros, it is not uncommon that some global macro
+%macro Gene_Local_Manhattan_With_GTF(
+/*
+Note: comparing to the macro SNP_Local_Manhattan_With_GTF, this macro has fewer parameters to control the final figure;
+If possible, please use SNP_Local_Manhattan_With_GTF to draw gene level Manhattan by providing genomic range for a target gene;
+
+As this macro use other sub-macros, it is not uncommon that some global macro
 vars would be in the same name, such as macro vars chr and i, thus, to avoid of crash, chr_var is used instead of macro
 var chr in this macro;this macro will use the gene name to query GTF and GWAS, and then
 make local Manhattan plot with the top SNP at the center around the query gene!
 Please use the updated macro SNP_Local_Manhattan_With_GTF, which is modified to
-draw figures with more customiable parameters!*/
+draw figures with more customiable parameters!
+*/
 gwas_dsd=,
 gwas_chr_var=chr,/*GTF uses numeric chr notation; ensure the type of chr is consistent with input gwas dsd*/
 gwas_AssocPVars=pval1 pval2,
@@ -73,8 +79,10 @@ track_width >=800, otherwise, this parameter will be excluded and even step will
 and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
 avoid this issue by increasing the pct or reducing it, respectively*/
 yoffset4max_drawmarkersontop=0.55,
-Yoffset4textlabels=3.5 /*Move up the text labels for target SNPs in specific fold; 
+Yoffset4textlabels=3.5, /*Move up the text labels for target SNPs in specific fold; 
 the default value 2.5 fold works for most cases*/
+adj_spaces_among_top_snps=1 /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
 
 );
 
@@ -203,8 +211,10 @@ track_width >=800, otherwise, this parameter will be excluded and even step will
 and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
 avoid this issue by increasing the pct or reducing it, respectively*/
 yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop,
-Yoffset4textlabels=&Yoffset4textlabels /*Move up the text labels for target SNPs in specific fold; 
+Yoffset4textlabels=&Yoffset4textlabels, /*Move up the text labels for target SNPs in specific fold; 
 the default value 2.5 fold works for most cases*/
+adj_spaces_among_top_snps=&adj_spaces_among_top_snps /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
   ); 
   *Need to delete previously generated dataset Final;
   proc datasets nolist;

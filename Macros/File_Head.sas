@@ -6,7 +6,9 @@ data _temp_;
    *SNP=prxchange("s/.*(rs\d+).*/$1/",-1,_infile_);
    input line $varying32767. varlen;
 run;
-proc print data=_temp_;run;
+proc print data=_temp_;
+%print_nicer;
+run;
 %mend;
 /*usage demo:
  *for spaces separated file, the dsd in the infile statment is needed;

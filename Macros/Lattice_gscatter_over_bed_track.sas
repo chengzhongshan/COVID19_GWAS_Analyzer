@@ -83,7 +83,7 @@ label specific scatterplot dots based on the customization of the variable predi
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
 label_dots_once_on_top=1,/*Put value 1 to label each unique label once on top of scatterplot;
-provide 0 for labeling selected dots in inside scatterplots;
+provide 0 for labeling selected dots inside scatterplots;
 The script will enlarge the macro var yaxis_offset4max to be 0.1!
 */
 dist_pct_to_cluster_pos=0.02,/*In terms of labels for top SNPs, use the input pct to calcuate dist based on the distance 
@@ -91,7 +91,11 @@ betweent the first label to the last label and
 define labels into cluster if they are too close to each other
 if their distance is less than pct_of_total_dist*/
 fc2distant_close_labels=3,/*In terms of labels for top SNPs, increase the distance among close labels by input fold change
-default value 3 would be good for most situations!*/
+default value 3 would be good for most situations! Note: this parameter is also used to amplify the space for separating
+adjacent SNP labels when adjusting spaces using adj_spaces_among_top_snps=1 with the default setting:
+sep4tgt_pos=&fc2distant_close_labels*0.1*(&max_x-&min_x+1)/total_SNPs
+Whent the above default distance does not work well, it is suggested to increase or reduce the value of fc2distant_close_labels
+*/
 pct2adj4dencluster=2,/*Input value can be ranging from 0.0001 to 10 or even higher value!
 For SNP labels on the top, please try to use this parameter, which only works when 
 there are less than or equal to 3 top SNPs if track_width <= 500, or 4 top SNPs if track_width between 500 and 800, or 5 top SNPs if 
@@ -99,6 +103,8 @@ track_width >=800, otherwise, this parameter will be excluded and even step will
 reflinecolor4selecteddots=gray,/*asign color for the vertical reference lines for userselected dots*/
 text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
 auto_rotate2zero=0, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
+adj_spaces_among_top_snps=1,/*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/
 Yoffset4textlabels=2.5, /*Move up the text labels for target SNPs in specific fold; the default value 2.5 fold works for most cases*/
 font_size4textlabels=10,/*Font size for these text labels*/
 move_right_genetxt_pct=0.08,/*When the right most genes are too close to the right boudary, it is necessary to reduce its x-axis position
@@ -484,7 +490,11 @@ run;
 
 /*Get max grp number for split data into different dsd*/;
 proc sql noprint;
-select max(ord),floor(min(&yval_var)),ceil(max(&yval_var)),min(&st_var)-&dist2st_and_end,max(&end_var)+&dist2st_and_end 
+select put(max(ord),best32.),
+           put(floor(min(&yval_var)),best32.),
+           put(ceil(max(&yval_var)),best32.),
+           put(min(&st_var)-&dist2st_and_end,best32.),
+           put(max(&end_var)+&dist2st_and_end,best32.) 
        into: max_ord,: min_y,: max_y,: min_x,: max_x
 from x1;
 %if %eval(&min_x<0) %then %do;
@@ -1002,6 +1012,7 @@ run;
   %if &track_width<700 %then %let Pct4OnlyTwoPos=0.25;
   %else %let Pct4OnlyTwoPos=0.1;
 
+  %if (&adj_spaces_among_top_snps=1) %then %do;
    %adjust_close_positions(
    indsd=_xtag_,
    outdsd=_xtag_,
@@ -1016,12 +1027,20 @@ run;
    fixed_min_pos=&min_x,
    fixed_max_pos=&max_x
    ); 
+   %end;
+   %else %do;
+	 data _xtag_;
+	 set _xtag_;
+	 newpos=pos;
+	 run;
+   %end;
    *The above macro is not good in separating these positions into distinguishable positions;
    *However, due to historical compatability, the above codes will be kept;
    *******************************************************************************************************;
    *Use the other macro to improve it, and it can be canceled if it is still not optimum;
    *Only run it when requiring the text to be rotated; 
-   %if (&text_rotate_angle>0) %then %do;
+   %if (&text_rotate_angle>0 and &adj_spaces_among_top_snps=1) %then %do;
+   %put We will further optimize the space between each SNP label on the top of the gene track;
    proc sql noprint;
    select pos into: _tgt_pos_ separated by ' '
    from _xtag_ 
@@ -1033,6 +1052,7 @@ run;
    merge _xtag_(drop=newpos) _xtag1_(keep=newpos);
    run;
    %end;
+ 
    *******************************************************************************************************;
     proc sort data=_xtag_ nodupkeys;by &var4label_scatterplot_dots pos;run;
     data final;set final;xtag=_n_;run;
@@ -1062,7 +1082,7 @@ run;
    *otherwise, sas will automatically round the large number to nearest number;
    *resulting into the wrong number for the newly created macro var markers_pos;
    proc sql noprint;
-   select put(pos,best32.),newpos into: markers_pos separated by ' ',:new_markers_pos separated by ' '
+   select put(pos,best32.),put(newpos,best32.) into: markers_pos separated by ' ',:new_markers_pos separated by ' '
    from _xtag_;
    
    %put Your marker positions are as follows:;
@@ -1338,10 +1358,14 @@ begingraph / designwidth=&track_width designheight=&track_height
 *https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/grstatgraph/n1jn4duv8s510xn1y2nlbefm0p46.htm;
 *https://blogs.sas.com/content/graphicallyspeaking/2018/01/15/advanced-ods-graphics-draw-statements;
 *The drawline is better with the drawspace controling the line positions;
-              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=0 x2=%scan(&markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y-0.5) / drawspace=datavalue
+/*              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=0 x2=%scan(&markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y-0.5) / drawspace=datavalue*/
+/*                                                       lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);*/
+/*              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=%sysevalf(&max_y-0.5) x2=%scan(&new_markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y) / drawspace=datavalue*/
+/*                                                       lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);                                       */
+		      drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=0 x2=%scan(&markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y*0.995) / drawspace=datavalue
                                                        lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);
-              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=%sysevalf(&max_y-0.5) x2=%scan(&new_markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y) / drawspace=datavalue
-                                                       lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);                                       
+              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=%sysevalf(&max_y*0.995) x2=%scan(&new_markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y) / drawspace=datavalue
+                                                       lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);    
           %end;   
           
           *POSITION=BOTTOM | BOTTOMLEFT | BOTTOMRIGHT | CENTER | LEFT | RIGHT | TOP | TOPLEFT | TOPRIGHT | keyword-column;

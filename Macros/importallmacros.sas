@@ -1,6 +1,9 @@
 
 %macro importallmacros(/*Note: multiple dirs can only be separated by blank space and put in a single line!*/
-MacroDir=/zcheng/Macros ~/shared/Macros ~/SAS-Useful-Codes/Macros /LocalDisks/F/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros,
+MacroDir=/zcheng/Macros 
+~/shared/Macros 
+~/SAS-Useful-Codes/Macros /LocalDisks/F/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros
+H:/F_Queens/360yunpan/SASCodesLibrary/SAS-Useful-Codes/Macros,
 fileRgx=.sas,
 verbose=0);
 
@@ -17,14 +20,14 @@ options nonotes;
 %do di=1 %to &ndirs;
 %let _Macrodir=%scan(&MacroDir,&di,' ');
 %if %sysfunc(prxmatch(/WIN/,&sysscp)) %then %do;
- filename M&di pipe "dir &_MacroDir";
+ filename M&di pipe "%str(dir %"&_MacroDir%")";
  data tmp_&di;
  length filename $2000.;
  infile M&di lrecl=32767;
  input;
  filename=_infile_;
  filename=prxchange('s/.*\s+([\S]+\.sas)/$1/',-1,filename);
- filename="&_MacroDir\"||filename;
+ filename="&_MacroDir/"||filename;
  if prxmatch('/\.sas/',filename);
  run;
 %end;

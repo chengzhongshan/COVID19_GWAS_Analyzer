@@ -85,7 +85,14 @@ mutfrq_out=mutfrq /*mut frq output*/
 	  if trim(left(&dsd4subgrp_var))="Others" then call symputx('cohort2_tot1',put(COUNT,best12.),'G');
 	  else call symputx('cohort1_tot1',put(COUNT,best12.),'G');
 	  run;
-
+       %if (not %symexist(cohort1_tot1) ) or (not %symexist(cohort2_tot1)) %then %do;
+      
+         %put Either the macro variables cohort1_tot1 (value=&cohort1_tot1) or cohort2_tot1 (value=&cohort2_tot1) has missing value;
+         %put The macro will stop running and exit without aborting other processes outside of the macro;
+         %return;
+         
+      %end;
+      
       %put We calculate the total number of samples for the target group (n=&cohort1_tot1) and Others (n=&cohort2_tot1) based on the input data set &dsd4cnt_two_cohorts_tot;
 	  %let cohort1_tot=&cohort1_tot1;
 	  %let cohort2_tot=&cohort2_tot1;
@@ -665,8 +672,11 @@ mutfrq_out=mutfrq4&outtag
 
 data all;
 set Assoc4:;
-if HigherFrqInCases=1 and P<0.05 and P>0 and Cases_aff>1;
+*if HigherFrqInCases=1 and P<0.05 and P>0 and Cases_aff>1;
+if Cases_aff>=2;
 run;
+%let cohort_rgx=%sysfunc(ifc("&cohort_rgx"=".",panALL_plus_NTU,&cohort_rgx));
+%ds2csv(data=all,csvfile="%sysfunc(pathname(HOME))/fisher_for_&cohort_rgx..csv",runmode=b);
 
 
 */

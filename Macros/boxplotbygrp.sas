@@ -1,6 +1,7 @@
 %macro boxplotbygrp(
 dsdin=,
 grpvar=,
+category_var=%nrstr(&grpvar),
 valvar=,
 panelvars=,
 attrmap_dsd=,
@@ -88,7 +89,7 @@ proc sgpanel data=&dsdin noautolegend;
 %end;
 panelby &panelvars /novarname onepanel columns=&column_num skipemptycells proportional;
 /* panelby &panelvars /rows=1 novarname onepanel; */
-vbox &valvar/group=&grpvar category=&grpvar groupdisplay=cluster attrid=myid grouporder=ascending
+vbox &valvar/group=&grpvar category=%unquote(&category_var) groupdisplay=cluster attrid=myid grouporder=ascending
          outlierattrs=(color=black symbol=circlefilled size=3)
          whiskerattrs=(color=black thickness=2 pattern=3) 
          medianattrs=(color=black thickness=2 pattern=1) 

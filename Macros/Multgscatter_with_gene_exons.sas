@@ -86,11 +86,13 @@ default is empty; provide a variable that include non-empty strings for specific
 scatterplots;*/
 text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
 auto_rotate2zero=0, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
-pct2adj4dencluster=0.25 /*For SNP labels on the top, please try to use this parameter, which only works when 
+pct2adj4dencluster=0.25, /*For SNP labels on the top, please try to use this parameter, which only works when 
 there are less than or equal to 3 top SNPs if track_width <= 500, or 5 top SNPs if track_width between 500 and 800, or 6 top SNPs if 
 track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
 and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
 avoid this issue by increasing the pct or reducing it, respectively*/
+adj_spaces_among_top_snps=1 /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
 );
 
 %let missingscatterdsd=0;
@@ -355,7 +357,9 @@ default is empty; provide a variable that include non-empty strings for specific
 scatterplots;*/ 
 text_rotate_angle=&text_rotate_angle, /*Angle to rotate text labels for these selected dots by users*/
 auto_rotate2zero=&auto_rotate2zero, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
-pct2adj4dencluster=&pct2adj4dencluster 
+pct2adj4dencluster=&pct2adj4dencluster,
+adj_spaces_among_top_snps=&adj_spaces_among_top_snps /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
     );
   
    *options notes;

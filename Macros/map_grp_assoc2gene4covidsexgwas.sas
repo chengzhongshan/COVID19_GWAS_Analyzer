@@ -70,8 +70,10 @@ and SNPs within a cluster are overlapped with each other or overlapped with elem
 avoid this issue by increasing the pct or reducing it, respectively*/
 yoffset4max_drawmarkersontop=0.25, /*If draw scatterplot marker labels on the top of track, 
  this fixed value will be used instead of yaxis_offset4max!*/
-Yoffset4textlabels=3.5 /*Move up the text labels for target SNPs in specific fold; 
+Yoffset4textlabels=3.5, /*Move up the text labels for target SNPs in specific fold; 
 the default value 2.5 fold works for most cases*/
+adj_spaces_among_top_snps=1 /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
 );
 %if %ntokens(&gwas_labels_in_order)^=%ntokens(&AssocPVars) %then %do;
   %put Please ensure the gwas_labels_in_order has the same number of elements as that of AssocPVars;
@@ -281,11 +283,13 @@ the y-axis values for these subgrps, the macro can plot them separately in each 
 text_rotate_angle=&text_rotate_angle, /*Angle to rotate text labels for these selected dots by users*/
 auto_rotate2zero=&auto_rotate2zero, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
 pct2adj4dencluster=&pct2adj4dencluster,
-var4label_scatterplot_dots=&var4label_scatterplot_dots /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
+var4label_scatterplot_dots=&var4label_scatterplot_dots, /*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
 default is empty; provide a variable that include non-empty strings for specific dots in the 
 scatterplots;*/
+adj_spaces_among_top_snps=&adj_spaces_among_top_snps /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
 );
 %mend;
 
