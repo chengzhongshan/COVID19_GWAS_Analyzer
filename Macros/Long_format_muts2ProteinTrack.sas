@@ -33,6 +33,8 @@ there are less than or equal to 3 top SNPs if track_width <= 500, or 5 top SNPs 
 track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
 and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
 avoid this issue by increasing the pct or reducing it, respectively*/
+adj_spaces_among_top_snps=1, /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
 gtf_dsd=LG.GTF_HG38,
 Gene_Var_GTF=Genesymbol,
 GTF_Chr_Var=chr,
@@ -237,9 +239,10 @@ track_width >=800, otherwise, this parameter will be excluded and even step will
 and SNPs within a cluster are overlapped with each other or overlapped with elements from other SNP cluster, so it is feasible to 
 avoid this issue by increasing the pct or reducing it, respectively*/
 yoffset4max_drawmarkersontop=&yoffset4max_drawmarkersontop,
-Yoffset4textlabels=&Yoffset4textlabels /*Move up the text labels for target SNPs in specific fold; 
+Yoffset4textlabels=&Yoffset4textlabels, /*Move up the text labels for target SNPs in specific fold; 
 the default value 2.5 fold works for most cases*/
-
+adj_spaces_among_top_snps=&adj_spaces_among_top_snps /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
 );
 
 

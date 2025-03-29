@@ -142,7 +142,7 @@ quit;
 /* proc print;run; */
 
 *The above will failed to revise the positions of markers if the total number of which is 2;
-*The following code will update these positions specifically for the above scienario;
+*The following code will update these positions specifically for the above scenario;
 proc sql noprint;
 select count(*) into: _tot_rescaled_pos_
 from &outdsd;

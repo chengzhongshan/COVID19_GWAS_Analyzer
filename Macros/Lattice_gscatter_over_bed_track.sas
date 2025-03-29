@@ -101,6 +101,8 @@ For SNP labels on the top, please try to use this parameter, which only works wh
 there are less than or equal to 3 top SNPs if track_width <= 500, or 4 top SNPs if track_width between 500 and 800, or 5 top SNPs if 
 track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!*/
 reflinecolor4selecteddots=gray,/*asign color for the vertical reference lines for userselected dots*/
+snp_line_split_ratio=0.99,/*split the vertical reference lines into two parts based on the ratio, with the 
+smaller part drawn from the end of point of the larger part to the adjusted position of each snp!*/
 text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
 auto_rotate2zero=0, /*supply value 1 when less than 3 text labels, it is good to automatically set the text_rotate_angel=0*/
 adj_spaces_among_top_snps=1,/*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
@@ -1052,6 +1054,7 @@ run;
    merge _xtag_(drop=newpos) _xtag1_(keep=newpos);
    run;
    %end;
+/*   %abort 255;*/
  
    *******************************************************************************************************;
     proc sort data=_xtag_ nodupkeys;by &var4label_scatterplot_dots pos;run;
@@ -1362,9 +1365,9 @@ begingraph / designwidth=&track_width designheight=&track_height
 /*                                                       lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);*/
 /*              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=%sysevalf(&max_y-0.5) x2=%scan(&new_markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y) / drawspace=datavalue*/
 /*                                                       lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);                                       */
-		      drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=0 x2=%scan(&markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y*0.995) / drawspace=datavalue
+		      drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=0 x2=%scan(&markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y*&snp_line_split_ratio) / drawspace=datavalue
                                                        lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);
-              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=%sysevalf(&max_y*0.995) x2=%scan(&new_markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y) / drawspace=datavalue
+              drawline x1=%scan(&markers_pos,&mki,%str( ))  y1=%sysevalf(&max_y*&snp_line_split_ratio) x2=%scan(&new_markers_pos,&mki,%str( ))  y2=%sysevalf(&max_y) / drawspace=datavalue
                                                        lineattrs=(color=&reflinecolor4selecteddots pattern=&reflinepattern thickness=1);    
           %end;   
           

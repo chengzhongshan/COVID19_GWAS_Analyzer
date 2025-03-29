@@ -48,7 +48,7 @@ position adjusted numers*/);
         array u(*) u1-u&nvars;
 		*The input numbers will be changed during evaluation in the array w;
         array w(*) &goal.;
-        eps1000 = 1E-12; /* SAS equivalent for precision */
+        eps1000 = 1000*1E-12; /* SAS equivalent for precision */
         n = dim(w);
         v = &sep.;
         
@@ -63,19 +63,26 @@ position adjusted numers*/);
         
         moving = 1;
 		*Only try 500 times optimization, which would prevent the macro run forever;
-		nmoving=500;
+		nmoving=1;
         do while (moving and nmoving<=500);
             moving = 0;
 			nmoving+1;
 
             i = 1;
-            do while (i <=n);
+			*It is important to restrict the i < n;
+			*when i=n, the loop will fail;
+            do while (i <n);
                 /* Find next block */
                 b = 0;
                 do j = i to n-1;
                     if abs(w[j+1] - w[j] - v) > eps1000 then leave;
                     b + 1;
                 end;
+
+				*Get the last block;
+				*Important: assign b=n-1 if b=0;
+				if b=0 then b=n-1;
+
                 sum_u=0;
                 sum_w=0;
                 do jj=i to i+b;
@@ -104,18 +111,48 @@ position adjusted numers*/);
             end;
             
             /* Move singles */
-            do i = 2 to n-1;
-                k0 = abs(w[i] - w[i-1] - v) > eps1000;
+			/*Use xi but not i*/
+
+/*Matlab original codes for debugging;
+	nloop=0;
+    while ~isempty(i) && nloop<500
+        k0 = abs(diff(w)-v)>eps1000;
+        nloop=nloop+1;
+        for i = find(([1 k0] & w>u) | ([k0 1] & w<u))
+            if i==1; leftLim  =-inf; else leftLim  = w(i-1)+v; end
+            if i==n; rightLim = inf; else rightLim = w(i+1)-v; end
+            w(i) = max(min(u(i),rightLim),leftLim);
+            moving = true;
+        end
+    end
+end % moving
+*The following implements the above matlab codes in SAS;
+*/
+
+		k0=1;
+		niters=500;
+		 do while (k0 and niters<=500);
+            do xi = 1 to n;
+			 if xi=1 and w[xi]>u[xi] then k0=1;
+             if xi=n and w[xi]<u[xi] then k0=1; 
+             if xi>1 and xi<n then k0 = abs(w[xi] - w[xi-1] - v) > eps1000;
                 if k0 then do;
-                    leftLim  = w[i-1] + v;
-                    rightLim = w[i+1] - v;
-                    w[i] = max(min(u[i], rightLim), leftLim);
+				   if xi=1 then leftLim=-1E12;
+                   else leftLim  = w[xi-1] + v;
+                   if xi=n then rightLim=1E12;
+                   else rightLim = w[xi+1] - v;
+                   w[xi] = max(min(u[xi], rightLim), leftLim);
                     moving = 1;
+					*Note: when xi=n, the 1st while loop relying on moving=1 might break;
+					*For debugging, comment out the following code to test the scenario;
+					*if xi=n then moving=0;
+					niters+1;
                 end;
             end;
+		 end;
         end;
     run;
-
+/* %abort 255;*/
 data &out;
 set &out;
 keep Col:;
@@ -145,7 +182,7 @@ data a;
 input x @@;
 ord=_n_;
 cards;
-1 4 5 7 10 101 30 40 32
+10 10 101 30 40 32
 ;
 proc sort;by x;
 proc transpose data=a out=a1(drop=_name_);
@@ -153,7 +190,12 @@ var x;
 run;
 
 *Test the macro;
-%spaceAdjust(data=a1, out=a2, goal=col1-col9, sep=20, newvar4adjnum=AdjPos);
+%spaceAdjust(data=a1, out=a2, goal=col:, sep=20, newvar4adjnum=AdjPos);
+data a2;
+set a2;
+diff=Adjpos-lag(Adjpos);
+proc print;run;
+*Results should be   -15.6000    4.4000   24.4000   44.4000   64.4000  101.0000;
 
 *Test the macro with input as a list;
 %spaceAdjust(data=1 4 5 7000 10 101 3000 40 32, out=a2, goal=col1-col9, sep=2000,newvar4adjnum=AdjPos1);
