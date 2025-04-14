@@ -272,7 +272,9 @@ run;
 %let nmgrp_1=1;
 *For debugging the loop;
 %let nloop=0;
-%do %while (&nmgrp_0 ne &nmgrp_1);
+*Restrict the loop only run maximum of 3 iterations;
+%do %while (&nmgrp_0 ne &nmgrp_1 and &nloop<3);
+   %let nloop=%eval(&nloop+1);
   *Need to create a new numgrp var and reorder the numgrp based on new &outdsd in the loop;
   proc sql;
   create table _tmp_ as
@@ -312,8 +314,14 @@ run;
    *since the consecutive groups, i and i+1 do not have potential non-overlapped regions based on the distance threshold;
 
    %do nmg_i=%ntokens(&nmgrps) %to 3 %by -1; 
-	     %do nmg_ii=1 %to %eval(&nmg_i-2) ; 
-		      %let nloop=%eval(&nloop+1);
+         *%let start_num=%eval(1+%ntokens(&nmgrps)-&nmg_i);
+          %let start_num=1;
+		 *Note: only compare 3 pairs, and the following can not be uncommented as SAS will fail to parse the macro contents due to it is use of pcts;
+		 %let end_num=%sysfunc(ifc(%eval(&nmg_i-2)>%eval(&start_num+6),%eval(&start_num+6),%eval(&nmg_i-2)));
+/*		  %let end_num=%eval(&nmg_i-2);*/
+		 %put Your start and end number for the loop is &start_num and &end_num;
+	     %do nmg_ii= &start_num %to &end_num %by 2; 
+/*		      %let nloop=%eval(&nloop+1);*/
 		       %put Running the n=&nloop loop: comparison for the group &nmg_i with group &nmg_ii;
 			 data p1;set &dsdout;where &outnumgrp=&nmg_ii;
 			 data p2;set &dsdout;where &outnumgrp=&nmg_i;
@@ -328,6 +336,7 @@ run;
 				 data left;set &dsdout;where &outnumgrp^=&nmg_ii and &outnumgrp^=&nmg_i;
 			 %end;
 			  run;
+/*			  %abort 255;*/
 			  *It is important to use distinct to remove duplicate records due to the where condition leads to potential multiple matches;
 			  proc sql;
 			  create table p1_p2 as

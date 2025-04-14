@@ -1,5 +1,14 @@
 %macro map_grp_assoc2gene4covidsexgwas(
-/*Note: this macro uses a internal macro Multgscatter_with_gene_exons*/
+/*Note: this macro uses a internal macro Multgscatter_with_gene_exons
+Also, the macro will only focus on protein coding genes and its exons as demonstrated 
+at lines 125 in the macro as follows:
+type in ("gene" "exon") and protein_coding=1
+It is possible to focus on transcript and its exons by updating the above code;
+*/
+focus_on_transcript=1,/*This will generate a subset exon GTF data set by 
+replacing gene variable with ensembl transcript variable and removing rows 
+with the type of "gene" and update transcript as "gene" to enable the macro
+to work on these transcripts instead of genes*/
 gwas_dsd=FM.f_vs_m_mixedpop,/*Requires to have the arbitary var 
 chr in the input gwas dsd*/
 gtf_dsd=FM.GTF_HG19,/*Need to use sas macro import gtf to save GTF_HG19;
@@ -105,6 +114,7 @@ adjust top SNPs labels if these labels are rotated 90 degree, which is helpful w
     %abort 255;
 %end;
 
+%if &focus_on_transcript=0 %then %do;
 *Need to first select these genes and get their min_pos and max_pos;
 *then use these regions to lookup with associaiton signals;
 data exons(keep=_chr_ st end grp pi type);
@@ -126,6 +136,38 @@ type in ("gene" "exon") and protein_coding=1 and genesymbol not contains '.';
 /*and genesymbol not contains 'ENSG';*/
 run;
 /* %abort 255; */
+%end;
+%else %do;
+*Need to first select these transcripts of genes and get their min_pos and max_pos;
+*then use these regions to lookup with associaiton signals;
+data exons(keep=_chr_ st end grp pi type);
+length _chr_ $5.;
+*Enlarge the length of grp, which may be truncated if too short!;
+length grp $30.;
+set &gtf_dsd;
+pi=0;
+*Note that transcript variable ensembl_transcript is used to replace gene variable;
+grp=ensembl_transcript;
+_chr_=cats("chr",put(chr,2.));
+where chr=&chr and 
+( (st between &min_st and &max_end) or (end between &min_st and &max_end) )
+and 
+/* type="gene" and protein_coding=1; */
+/*This does not work as expected, as some exons belonging to the same gene are colored differently*/
+/*It is also very time-consuming*/
+/* type in ("exon" "gene") and protein_coding=1; */
+type in ("transcript" "exon") and protein_coding=1 and genesymbol not contains '.';
+/*and genesymbol not contains 'ENSG';*/
+run;
+
+*Need to update the type of transcript as gene to draw each transcript as that of a gene in the final track of scatter plots;
+data exons;
+set exons;
+if type="transcript" then type="gene";
+run;
+/* %abort 255; */
+%end;
+
 
 *Important to remove dup exons;
 proc sort data=exons nodupkeys;by _all_;run;
