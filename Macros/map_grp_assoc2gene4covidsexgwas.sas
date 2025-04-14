@@ -143,7 +143,7 @@ run;
 data exons(keep=_chr_ st end grp pi type);
 length _chr_ $5.;
 *Enlarge the length of grp, which may be truncated if too short!;
-length grp $30.;
+length grp $50.;
 set &gtf_dsd;
 pi=0;
 *Note that transcript variable ensembl_transcript is used to replace gene variable;
@@ -216,6 +216,8 @@ from exons;
 %put However, we will restrict the x-axis to the original min and max genomic position in the final figure;
 *Need to enlarge the grp length by asigning longer comman label for it;
 *Filter input gwas_dsd with where condition to reduce the total number of markers;
+*Assign enough length for the variable grp, which will be further combined with gene names later;
+*Larger length will avoid of truncating of gene names;
 proc sql;
 create table signal_dsd as
 select 
@@ -230,7 +232,7 @@ select
         %scan(&ZscoreVars,&i) > 0 as AssocGrp&i,
        -log10(%scan(&AssocPVars,&i)) as var4log10P&i,
      %end;
-       &gwas_pos_var as st,&gwas_pos_var+1 as end,"GWAS_Assoc_Signal" as grp,
+       &gwas_pos_var as st,&gwas_pos_var+1 as end,"GWAS_Assoc_Signal" as grp length=50,
        cats("chr",put(chr,2.)) as _chr_
 from &gwas_dsd	
 %if %length(&where_cndtn_for_gwasdsd)^=0 %then %do;
@@ -238,6 +240,8 @@ from &gwas_dsd
 %end;
 where chr=&chr and 
 (&gwas_pos_var between &min_gpos and &max_gpos);
+/*%abort 255;*/
+
 /* The region will be different from the (pos between &minst and &maxend); */
 
 *For debug only;

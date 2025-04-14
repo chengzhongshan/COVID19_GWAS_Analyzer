@@ -22,6 +22,10 @@ chr_var is used instead of macro var chr in this macro;*/
 Important: there are many other parameters of the sub-macro Lattice_gscatter_over_bed_track,
 which can be modified by changing the default values for them to improve the quality of final produced figure!
 */
+focus_on_transcript=0,/*This will generate a subset exon GTF data set by 
+replacing gene variable with ensembl transcript variable and removing rows 
+with the type of "gene" and update transcript as "gene" to enable the macro
+to work on these transcripts instead of genes*/
 gwas_dsd=,
 chr_var=chr,
 AssocPVars=pval1 pval2,
@@ -221,7 +225,11 @@ run;
    );
 
   title "Local Manhattan plot for target SNP &qsnp";
-  %map_grp_assoc2gene4covidsexgwas( 
+  %map_grp_assoc2gene4covidsexgwas(
+focus_on_transcript=&focus_on_transcript,/*This will generate a subset exon GTF data set by 
+replacing gene variable with ensembl transcript variable and removing rows 
+with the type of "gene" and update transcript as "gene" to enable the macro
+to work on these transcripts instead of genes*/ 
   gwas_dsd=&gwas_dsd, 
   gtf_dsd=&gtf_dsd, 
   chr=&chr, 

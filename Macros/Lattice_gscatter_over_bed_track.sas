@@ -848,7 +848,8 @@ proc print data=final(obs=50);run;
 /*proc print data=final;run;*/
 
 data final(drop=A);
-length grp_label $30.;
+*Ensure the lower gene track name have enough length;
+length grp_label $50.;
 set final;
 *Also need to add grp labels for the first grp, which usually represent genes for all grps;
 *It is important to get the lag value of &grp_var.1 here;
