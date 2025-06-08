@@ -60,7 +60,7 @@ Column headers – CombineLongCOVIDGWAS.gz
 All SAS scripts mentioned in analyzing the two data sets are available at https://github.com/chengzhongshan/COVID19_GWAS_Analyzer/tree/main/LongCOVID_data_and_scripts/LongCOVID_SNP_LocalManhattanPlots.
 
 Reference
-1.	Initiative, C.-H.G. (2023). A second update on mapping the human genetic architecture of COVID-19. Nature 621, E7-E26. 10.1038/s41586-023-06355-3.
+1.	Covid-Host-Genetics-Initiative (2023). A second update on mapping the human genetic architecture of COVID-19. Nature 621, E7-E26. 10.1038/s41586-023-06355-3.
 2.	Cheng, Z., Cai, Y., Zhang, K., Zhang, J., Gui, H., Luo, Y.S., Zhou, J., and DeVeale, B. (2023). MAP3K19 regulatory variation in populations with African ancestry may increase COVID-19 severity. iScience 26, 107555. 10.1016/j.isci.2023.107555.
 3.	Lammi, V., Nakanishi, T., Jones, S.E., Andrews, S.J., Karjalainen, J., Cortes, B., O'Brien, H.E., Ochoa-Guzman, A., Fulton-Howard, B.E., Broberg, M., et al. (2025). Genome-wide association study of long COVID. Nat Genet. 10.1038/s41588-025-02100-w.
 
