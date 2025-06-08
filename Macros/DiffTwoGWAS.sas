@@ -52,7 +52,7 @@ sqrt(
 %let total_d=%sysevalf(&gwas1_tot + &gwas2_tot - 2);
      proc sql;
      create table both as
-     select a.&snp_varname,
+     select a.&snp_varname,  a.&allele1var, a.&allele2var, 
             a.&beta_varname as gwas1_beta,b.&beta_varname as gwas2_beta,
             a.&se_varname as gwas1_se,b.&se_varname as gwas2_se,
             (a.&beta_varname-b.&beta_varname)/(sqrt(2*(&gwas1_tot-1)*a.&se_varname**2/&total_d+2*(&gwas2_tot-1)*b.&se_varname**2/&total_d)) 
@@ -72,7 +72,7 @@ sqrt(
 %else %do;
      proc sql;
      create table both as
-     select a.&snp_varname,
+     select a.&snp_varname, a.&allele1var, a.&allele2var,
             a.&beta_varname as gwas1_beta,b.&beta_varname as gwas2_beta,
             a.&se_varname as gwas1_se,b.&se_varname as gwas2_se,
             (a.&beta_varname-b.&beta_varname)/(sqrt(a.&se_varname**2+b.&se_varname**2)) as diff_zscore,

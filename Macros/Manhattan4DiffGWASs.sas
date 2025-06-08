@@ -50,6 +50,9 @@ draw_local_Manhattan=0,/*Default is to draw genome-wide Manhattan plot; if suppl
 Manhattano around target SNPs when the macro var target_SNPs is provided or top hits if the macro var target_SNPs
 is empty and the macro var top_hit_thresd is supplied with specific association p threshold, such as p < 1e-6*/
 snp_var=rsid,/*It is necessary to have snp_var supplied when drawing local Manhattan plot*/
+snp_gene_splitter=:,/*In case the gene name for the snp is also supplied to the snp_var, the macro
+will split the snp_var into two string, with the first is snp and the 2nd is genename for it, which will
+be plotted at the bottom of the figure as x-axis labels for different snp mahattan plot*/
 target_SNPs=,/*Default is empty; please provide rsid that can be matched with the snp macro variable*/
 Keep_order_of_target_SNPs=0, /*Draw local Manhattan plot according to the order of target SNPs
 Note: need to set this macro with value 1 if drawing local Manhattan plots for target SNPs or top hits, 
@@ -393,6 +396,9 @@ length color $10. text $20.;
 *position '2': put text at the middle of the position and left adjusted;
 *position '3': put text above the position and left adjusted;
 *position '4': put text under the position and center adjusted;
+*see other useful positions, such as A, B, C, D, E, F;
+*and <,+, and >, and 7,8,9;
+*at: https://documentation.sas.com/doc/es/pgmsascdc/v_053/graphref/annotate_position.htm;
 %if "&var_type"="2" or &Keep_order_of_target_SNPs=1 %then %do;
 retain position '4' xsys ysys '2' y &xgrp_y_pos function 'label' text 'xx'  angle &angle4xaxis_label;
 %end;
@@ -439,27 +445,81 @@ xsys = '2'; function = 'draw'; x = &maxbp ; output;
 * horizontal reference line (if needed for 5x10-08);
 xsys = '1'; ysys = '2'; function = 'move'; x = 0; y=&_logP_topval; output;
 xsys = '2'; function = 'draw'; x = &maxbp ; line=1; size=3; color="&refline_color_4zero";output;
+
+*Note: only when &_logP_topval>&gwas_thrsd, the macro can draw these gwas threshold reference line;
 %if (&flip1stGWAS_signal=0) %then %do;
+%if %sysevalf(&_logP_topval>&gwas_thrsd) %then %do;
 xsys = '1'; ysys = '2'; function = 'move'; x = 0; y=&gwas_thrsd; output;
 xsys = '2'; function = 'draw'; x = &maxbp ; line=2; size=1; color="&thrsd_line_color";output;
 %end;
+%end;
 %else %do;
+%if %sysevalf(&_logP_topval>&gwas_thrsd) %then %do;
 xsys = '1'; ysys = '2'; function = 'move'; x = 0; y=&_logP_topval-&gwas_thrsd; output;
 xsys = '2'; function = 'draw'; x = &maxbp ; line=2; size=1; color="&thrsd_line_color";output;
+%end;
 %end;
 
 %do ri=1 %to %ntokens(&Other_P_vars);
 
+*For lines in the middle separating different scatter plots, use large line size to draw lines;
 %if &ri < %ntokens(&Other_P_vars) %then %do;
 xsys = '1'; ysys = '2'; function = 'move'; x = 0; y=&_logP_topval+&_logP_topval*&ri; output;
 xsys = '2'; function = 'draw'; x = &maxbp ;  line=1; size=3; color="&refline_color_4zero";output;
 %end;
 
+%if %sysevalf(&_logP_topval>&gwas_thrsd) %then %do;
+*For lines at the top and bottom, use lighter line size to draw lines;
 xsys = '1'; ysys = '2'; function = 'move'; x = 0; y=&gwas_thrsd+&_logP_topval*&ri; output;
 xsys = '2'; function = 'draw'; x = &maxbp ; line=2; size=1; color="&thrsd_line_color";output;
+%end;
 
 %end;
 
+run;
+
+*Further split text annotation if it contains the split char ":";
+*https://communities.sas.com/t5/Graphics-Programming/Splitting-text-in-two-lines-using-annotion-dataset/td-p/246199;
+*https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/graphref/annotate_position.htm;
+data anno;
+retain str_len_diff 0;
+set anno;
+text0=trim(left(text));
+if prxmatch("/[^&snp_gene_splitter]+:[^&snp_gene_splitter]+/",text) and function='label' then do;
+	  do ti=1 to 2;
+		 text=scan(text0,ti,"&snp_gene_splitter");
+		 str_len_diff=length(scan(text0,1,"&snp_gene_splitter"));
+
+		 *half cell above location right aligned;
+		 %if &angle4xaxis_label=90 %then %do;
+		 if ti=1 then position='B'; *half cell upper location central alignment;
+		 %end;
+		 %else %do;
+		 if ti=1  then position='2';
+		 *one cell below location centeral aligned;
+		 %end;
+
+		 else do;
+            %if &angle4xaxis_label=90 %then %do;
+             position='E';
+			*Adjust space for the second str, ensuring it has similar alignment;
+			 %end;
+			 %else %do;
+		     position='+';*original location central alignment; 
+			 %end;
+			 *See availabel SAS font style: https://documentation.sas.com/doc/en/vwbgraphref/v_001/n0c8945h7o2kmrn1h0uehmio2i6j.htm;
+			 style='ITALIC';
+			str_len_diff=str_len_diff-length(scan(text0,2,"&snp_gene_splitter"))+1;
+			*str_len_diff=round(str_len_diff/2);
+			if str_len_diff>0 then do;
+			  *text=resolve('%AddSpaces4str(str='||text||',add2end=1,nspaces='|| str_len_diff ||',char4space=-)');
+			end;
+		 end;
+		 output;
+	  end;
+end;
+else output;
+drop text0 ti;
 run;
 
  
@@ -612,10 +672,12 @@ label Fake_position="Groups"
 run;
 
 *Also keep a copy of the dataset for further plotting with the macro;
+/*
 data _tgthits_;
 set _tgthits_;
 drop tag_snp;
 run;
+*/
 
 %end;
 

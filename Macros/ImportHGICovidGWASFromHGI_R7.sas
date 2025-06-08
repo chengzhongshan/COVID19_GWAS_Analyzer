@@ -20,8 +20,8 @@ all_meta_AF rsid b38_chr b38_pos b38_ref b38_alt liftover_info;*/
 input 
 CHR
 POS :12. 
-REF :$8. 
-ALT :$8. 
+REF :$1. 
+ALT :$1. 
 SNPID :$15. 
 all_meta_N 
 beta :12. 
@@ -32,11 +32,11 @@ all_inv_var_meta_controls :12.
 all_inv_var_meta_effective :12. 
 het_p 
 AF 
-rsid :$12.
+rsid :$15.
 b38_chr 
 b38_pos :8.
-b38_ref :$8.
-b38_alt :$8.
+b38_ref :$1.
+b38_alt :$1.
 liftover_info $1.
 );
 %end;
@@ -46,8 +46,8 @@ liftover_info $1.
 input 
 CHR 
 POS 	:12.
-REF 	:$8.
-ALT 	:$8.
+REF 	:$1.
+ALT 	:$1.
 SNP 	:$15.
 all_meta_N 
 beta 
@@ -61,7 +61,7 @@ lmso_inv_var_beta
 lmso_inv_var_se
 lmso_inv_var_pval
 AF
-rsid  :$12.
+rsid  :$15.
 b38_chr 
 b38_pos :12.
 b38_ref  :$1.

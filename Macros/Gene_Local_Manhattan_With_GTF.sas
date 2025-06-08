@@ -81,16 +81,22 @@ avoid this issue by increasing the pct or reducing it, respectively*/
 yoffset4max_drawmarkersontop=0.55,
 Yoffset4textlabels=3.5, /*Move up the text labels for target SNPs in specific fold; 
 the default value 2.5 fold works for most cases*/
-adj_spaces_among_top_snps=1 /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
+adj_spaces_among_top_snps=1, /*Provide value 1 to adjust spaces among top SNP labels; otherwise, give value 0 to not 
 adjust top SNPs labels if these labels are rotated 90 degree, which is helpful when the space adjusted labels are not pretty*/ 
-
+focus_on_transcript=0 /*This will generate a subset exon GTF data set by 
+replacing gene variable with ensembl transcript variable and removing rows 
+with the type of "gene" and update transcript as "gene" to enable the macro
+to work on these transcripts instead of genes*/
 );
 
 *Note: it is arbitrary to have the chr var in the input gwas dsd;
 *chr is used by the sub-macro map_grp_assoc2gene4covidsexgwas; 
+%if %length(&SNPs2label_scatterplot_dots)>0 or "&gwas_chr_var"^="chr" %then %do;
 data &gwas_dsd;
 set &gwas_dsd;
+%if "&gwas_chr_var"^="chr" %then %do;
 chr=&gwas_chr_var;
+%end;
 %if %length(&SNPs2label_scatterplot_dots)>0 %then %do;
  %let var4label_scatterplot_dots=Target_SNP;
 length Target_SNP $25.;
@@ -100,6 +106,7 @@ length Target_SNP $25.;
  %end;
 %end;
 run;
+%end;
 
 %do Genei=1 %to %ntokens(&Gene_IDs);
   *query Gene using the index Genei (do not use i that may interupt with other macro var i used other sub-macros!);
@@ -153,6 +160,10 @@ run;
   %end;
   
   %map_grp_assoc2gene4covidsexgwas( 
+  focus_on_transcript=&focus_on_transcript,/*This will generate a subset exon GTF data set by 
+replacing gene variable with ensembl transcript variable and removing rows 
+with the type of "gene" and update transcript as "gene" to enable the macro
+to work on these transcripts instead of genes*/
   gwas_dsd=&gwas_dsd, 
   gtf_dsd=&gtf_dsd, 
   chr=&chr, 
