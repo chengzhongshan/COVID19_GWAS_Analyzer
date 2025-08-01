@@ -37,7 +37,7 @@
   homedir=%sysfunc(pathname(HOME)),/*SAS OnDemand for Academics HOME folder*/ 
   InstallFolder=Macros, /*Put all uncompressed files into the folder under the homedir*/ 
   DeletePreviousFolder=1, /*Delete previous InstallFolder if existing in the target homedir*/ 
-  excluded_files_rgx=Evaluate_FOXP4_SNPs_with_both_long_COVID_and_severe_COVID|COVID19_GWAS_Analyzer_STAR_Protocol_Demo_Codes4MAP3K19|HGI_Hospitalization_GWAS_Analyzer|Differential_GWAS_between_HGI_B1_and_HGI_B2_ODA|PostGWAS4HGI_
+  excluded_files_rgx=Differential_GWAS_between_UKB_Male_vs_Female_Hospitalization_GWAS|Evaluate_FOXP4_SNPs_with_both_long_COVID_and_severe_COVID|COVID19_GWAS_Analyzer_STAR_Protocol_Demo_Codes4MAP3K19|HGI_Hospitalization_GWAS_Analyzer|Differential_GWAS_between_HGI_B1_and_HGI_B2_ODA|PostGWAS4HGI_
   ); 
 %end;
 %else %do;
