@@ -1,15 +1,16 @@
  %macro GEO_Pipeline(/*As different GSE and GPL files use specific genesymbol and probe ids,
 	it is better to run the macro without knowing these headers for them, If failed, it can be rescued 
 	by evaluating these genesymbol and probe ids in the SAS output dataset*/
-GSE_matrix_file
-,ProbVarInMatrix
-,GPL_file
-,ProbVarInAnno
-,GeneVarInAnno
-,SampleInfo_file /*No need to have header: GSM_ID and Sample_details*/
-,Avg4gene_exp
-,outdir
-,Outdsd
+GSE_matrix_file=,
+dlm4matrix='09'x,
+ProbVarInMatrix=,
+GPL_file=,
+ProbVarInAnno=,
+GeneVarInAnno=,
+SampleInfo_file=, /*No need to have header for the two columns: GSM_ID and Sample_details*/
+Avg4gene_exp=,
+outdir=,
+Outdsd=
 );
 
 
@@ -25,13 +26,15 @@ x cd "&outdir";
 %put GeneVarInAnno=&GeneVarInAnno;
 
 /*Import Exp data*/
-%FilterFile( filefullpath=&GSE_matrix_file     
-                  ,ExcludedLineRegx=^! 
-                  ,system=Windows 
-				  ,fileoutfullpath=&GSE_matrix_file..clean
-                 ) ;
+%FilterFile( 
+filefullpath=&GSE_matrix_file,
+ExcludedLineRegx=^!,
+system=Windows,
+fileoutfullpath=&GSE_matrix_file..clean
+) ;
 
-proc import datafile="&GSE_matrix_file..clean" dbms=tab out=Exp replace;
+proc import datafile="&GSE_matrix_file..clean" dbms=dlm out=Exp replace;
+delimiter=&dlm4matrix;
 /*guessingrows 1000 would be enough*/
 getnames=yes;guessingrows=10000;
 run;
@@ -40,7 +43,7 @@ run;
 %FilterFile( filefullpath=&GPL_file     
                   ,ExcludedLineRegx=^# 
                   ,system=Windows 
-				  ,fileoutfullpath=&GPL_file..clean
+		  ,fileoutfullpath=&GPL_file..clean
                  ) ;
 proc import datafile="&GPL_file..clean" dbms=tab out=Anno replace;
 /*guessingrows 1000 would be enough*/

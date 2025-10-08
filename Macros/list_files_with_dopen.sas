@@ -1,0 +1,16 @@
+%macro list_files_with_dopen(dir);
+    filename mydir "&dir";
+    data files;
+        did = dopen('mydir');
+        if did > 0 then do;
+            count = dnum(did);
+            do i = 1 to count;
+                fname = dread(did, i);
+                output;
+            end;
+            rc = dclose(did);
+        end;
+        drop did count i rc;
+    run;
+    proc print data=files; run;
+%mend;

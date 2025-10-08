@@ -1,19 +1,30 @@
 %macro SNP_Local_Manhattan_With_GTF(
-/*Tip 1: when there gene labels are cluttered within the gene track, it is feasible to 
+/*
+Tip 1: when there gene labels are cluttered within the gene track, it is feasible to 
 resolve the issue by increasing the values for either variable pct4neg_y or dist2sep_genes or both!
 such as pct4neg_y and dist2sep_genes=1000000; alternatively, it also possible to address the problem
 by increase the width of figure, such as assigning larger value to the macro variable track_width=800.
+
   Tip 2: the figure width and height should ideally set around 500 and no less then 300 or greater than
 1000, as large figures are not good for publication purpose! 
+
   Tip 3: For SNP labels on the top, please try to use this parameter, which only works when 
 there are less than or equal to 3 top SNPs if track_width <= 500, or 4 top SNPs if track_width between 500 and 800, or 5 top SNPs if 
 track_width >=800, otherwise, this parameter will be excluded and even step will be used to separate them on the top!
+
  Tip 4: dist_pct_to_cluster_pos and pct2adj4dencluste (0.0001 to ~) can affect the top SNP labels positions when there are <= 3 or 4, or 5 SNP labels, as the its value
 dist_pct_to_cluster_pos will be internally replaced as 0.5/total number of top SNPs, and pct2adj4dencluste will be changed differently
 when make_even_pos=1, the macro will multiple the amplification_fc with 10*pct2adj4dencluster to further enlarge the even distance among positions; 
 while if make_even_pos=0, it is useful when elements within a cluster is overlapped with each other or overlapped with elements from other cluster, 
 so it is also feasible to avoid this issue by increasing or reducing the pct.
+
+ Tip 5: In default, the scatterplot will use the transformed values of all variables inclued in the macro variable
+ZscoreVars into a variable for the lattice_subgrp_var to color dots differently across different scatter groups; User can supply
+an independent variable represented by the macro variable color_resp_var to color scatter plot dots but different scattergroups
+will be applied in a union style! 
+
 */
+
 /*
 As this macro use other sub-macros, it is not uncommon that some global macro
 vars would be in the same name, such as macro vars chr and i, thus, to avoid of crash, 
@@ -22,6 +33,7 @@ chr_var is used instead of macro var chr in this macro;*/
 Important: there are many other parameters of the sub-macro Lattice_gscatter_over_bed_track,
 which can be modified by changing the default values for them to improve the quality of final produced figure!
 */
+
 focus_on_transcript=0,/*This will generate a subset exon GTF data set by 
 replacing gene variable with ensembl transcript variable and removing rows 
 with the type of "gene" and update transcript as "gene" to enable the macro
@@ -38,7 +50,10 @@ dist2snp=2000000,
 SNP_Var=snp,
 Pos_Var=pos,
 gtf_dsd=FM.GTF_HG19,
-ZscoreVars=zscore1 zscore2,/*Can be beta1 beat2 or other numberic vars indicating assoc or other +/- directions*/ 
+ZscoreVars=zscore1 zscore2,/*Can be beta1 beat2 or other numberic vars indicating assoc or other +/- directions,
+the values of which can be used to color scatter plots of association signals specifically for its corresponding scatter
+plot group membership for the following gwas labels. Please ensure makedotheatmap=1 and the input zscoreVars 
+are in the same type of variable that can be used properly along with the heatmap feature*/ 
 gwas_labels_in_order=gwas1 gwas2,/*If providing _ for labeling each GWAS, 
 the _ will be replaced with empty string, which is useful when wanting to remove gwas label 
 if only one scatterplot or the label for a gwas containing spaces;
@@ -77,8 +92,29 @@ makedotheatmap=0,/*use colormap to draw dots in scatterplot instead of the discr
 Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
 the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
 
-color_resp_var=,/*Use value of the var to draw colormap of dots in scatterplot
-if empty, the default var would be the same as that of yval_var;*/
+color_resp_var=,/*Use the variable to draw colormap of dots in scatterplots with colors
+supplied by a later macro variable dataContrastCols that are specifically designated for 
+scatterplot dots but not other tracks under the scatter plots, such as gene tracks;.
+previously if the macro var is empty, the default var would be the same as that of yval_var;
+Later it is updated to enable the macro to use lattice_subgrp_var but not yval_var when 
+this color_resp_var is empty! A later macro variable dataContrastCols will be used 
+to supply colors for different groups of the variable solely for coloring scatterplot dots!*/
+fixedcols4tracksunderscatter=cyan blue, /*when color_resp_var is not empty, all tracks under scatterplots will be fixed with 
+two different colors, including cyan and blue, represented by the macro var fixedcols4tracksunderscatter!*/
+color_resp_grpdsd=,/*this dataset contains two columns, including &color_resp_var and the fixed
+variable numgrp4color_resp,which are corresponding to the unique char color_resp_var and 
+its associated numeric var that would be sorted to order these char color_resp_var in the final figure legend!
+Note: for color_resp_var not included in the dataset, they will be asigned as Others;
+Custom colors with the same number of unique color_resp_var for these groups can be provided to 
+a latter macro variable dataContrastCols*/
+dataContrastCols=%str(darkblue darkgreen darkred darkyellow 
+CXFFF000 CXFF7F00 CXFF00FF CXFF0000 CXEAADEA CXE6E8FA CXDB9370 CXDB70DB CXD9D919 CXD8D8BF 
+CXCD7F32 CXC0C0C0 CXBC8F8F CXB87333 CXB5A642 CXADEAEA CXA67D3D CXA62A2A CX9F9F5F CX9F5F9F 
+CX97694F CX8E236B CX8E2323 CX8C7853 CX8C1717 CX871F78 CX856363 CX855E42 CX70DB93 CX5F9F9F 
+CX5C4033 CX545454 CX4F2F4F CX4E2F2F CX32CD32 CX2F4F2F CX238E23 CX236B8E CX23238E CX00FFFF 
+CX00FF00 CX0000FF CX000000
+),
+/*Note: these colors will be used for the scatterplot and gene track together when color_resp_var is a char var, so it is difficult control*/
 
 makeheatmapdotintooneline=0,/*This will make all dots have the same yaxis value but have different colors 
 based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var
@@ -271,8 +307,23 @@ Customize this for different gene exon track! */
 Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
 the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
 
-color_resp_var=&color_resp_var,/*Use value of the var to draw colormap of dots in scatterplot
-if empty, the default var would be the same as that of yval_var;*/
+color_resp_var=&color_resp_var,/*Use the variable to draw colormap of dots in scatterplots with colors
+supplied by a later macro variable dataContrastCols that are specifically designated for 
+scatterplot dots but not other tracks under the scatter plots, such as gene tracks;.
+previously if the macro var is empty, the default var would be the same as that of yval_var;
+Later it is updated to enable the macro to use lattice_subgrp_var but not yval_var when 
+this color_resp_var is empty! A later macro variable dataContrastCols will be used 
+to supply colors for different groups of the variable solely for coloring scatterplot dots!*/
+fixedcols4tracksunderscatter=&fixedcols4tracksunderscatter, /*when color_resp_var is not empty, all tracks under scatterplots will be fixed with 
+two different colors, including cyan and blue, represented by the macro var fixedcols4tracksunderscatter!*/
+color_resp_grpdsd=&color_resp_grpdsd,/*this dataset contains two columns, including &color_resp_var and the fixed
+variable numgrp4color_resp,which are corresponding to the unique char color_resp_var and 
+its associated numeric var that would be sorted to order these char color_resp_var in the final figure legend!
+Note: for color_resp_var not included in the dataset, they will be asigned as Others;
+Custom colors with the same number of unique color_resp_var for these groups can be provided to 
+a latter macro variable dataContrastCols*/
+dataContrastCols=&dataContrastCols,
+/*Note: these colors will be used for the scatterplot and gene track together when color_resp_var is a char var, so it is difficult control*/
 
 makeheatmapdotintooneline=&makeheatmapdotintooneline, /*This will make all dots have the same yaxis value but have different colors 
 based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var

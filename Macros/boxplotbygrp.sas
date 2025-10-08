@@ -78,7 +78,8 @@ options printerpath=svg;
 /* ods graphics /reset=all height=&fig_height noborder; */
 /* %end; */
 /* %else %do; */
-ods graphics /reset=all height=&fig_height width=&fig_width noborder;
+ods graphics /reset=all height=&fig_height width=&fig_width noborder 
+                        imagename="boxplot%randombetween(1,1000)";
 /* %end; */
 
 %if %length(&attrmap_dsd)>0 %then %do;

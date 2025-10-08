@@ -1,12 +1,12 @@
 %macro import_all_bims(
-dir=.,
+dirpath=.,
 outdsd=all_bims,
 debug=0
 );
-%get_filenames(location=&Path,match_rgx=bim);
+%get_filenames(location=&dirpath,match_rgx=bim);
 data &outdsd (drop=fname filepath memname t);
   set filenames;
-  filepath = "&Path"||"\"||memname;
+  filepath = "&dirpath"||"\"||memname;
 		*Need to add truncover to infile data successfully;
 		%if &debug=1 %then %do;
   infile dummy filevar = filepath length=reclen end=done dsd delimiter='09'x obs=10 truncover;
@@ -28,7 +28,7 @@ run;
 %File_Head(filename="J:\D_Queens\SASGWASDatabase\Important_Analysis_Codes\PExFInS_SAS\Databases\1KG_Phase1\ALL_chr17_OneKG.bim",n=10);
 %let path=J:\D_Queens\SASGWASDatabase\Important_Analysis_Codes\PExFInS_SAS\Databases\1KG_Phase1;
 %import_all_bims(
-dir=&path,
+dirpath=&dirpath,
 outdsd=all_bims,
 debug=1
 );

@@ -5,7 +5,8 @@ by_var,/*Empty value is possible for this var, which is handy
 when there would be duplciates of grp_var after sorting by 
 grp_var and by_var for the by_var to make a new format*/
 outfmt4numgrps,
-outfmt4chargrps
+outfmt4chargrps,
+dsd4fmt=dsd4fmt /*This dataset can be used to get fmt info*/
 );
 %local rnd;
 
@@ -67,6 +68,11 @@ type = "n";
 run;
 proc format cntlin=fmt4chargrps&rnd;
 run;
+%if %length(&dsd4fmt)>0 %then %do;
+data &dsd4fmt;
+set fmt4chargrps&rnd;
+run;
+%end;
 
 %mend;
 

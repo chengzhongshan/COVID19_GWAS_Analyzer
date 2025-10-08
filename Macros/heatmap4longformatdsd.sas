@@ -41,7 +41,8 @@ from fmtinfo
 where upcase(name)=upcase("&yvar");
 
 
-ods graphics / reset=all width=&fig_width.px height=&fig_height.px noborder imagefmt=&heatmap_fmt imagename="heatmap";
+ods graphics / reset=all width=&fig_width.px height=&fig_height.px noborder imagefmt=&heatmap_fmt 
+                           imagename="heatmap%randombetween(1,1000)";
 /* proc sgplot data=x(where=(cohort="Laval")); */
 *Remove border with 'noborder';
 proc sgplot data=&dsdin 

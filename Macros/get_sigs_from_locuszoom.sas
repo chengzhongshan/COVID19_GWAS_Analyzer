@@ -34,6 +34,7 @@ drop neg_log_p;
 ) /*In cases of the gwas has different headers, it is necessary to supply customized 
 	infile command for the sas macro*/
   );
+/*%abort 255;*/
 
 %if %length(&chrpos_or_rsids)^=0 %then %do;
   %let ncnds=%ntokens(&chrpos_or_rsids);
@@ -92,9 +93,9 @@ drop neg_log_p;
  %let gi=%eval(&gi+1);
 %end;
 
-
 %put Trying to merge all data sets of GWASs;
 %Union_Data_In_Lib_Rgx(lib=work,excluded=,dsd_contain_rgx=locuszoom_gwas,dsdout=&dsdout);
+/*%abort 255;*/
 *Update the gwas labels;
 data &dsdout;
 set &dsdout;

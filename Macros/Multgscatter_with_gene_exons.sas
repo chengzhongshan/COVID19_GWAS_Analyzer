@@ -71,8 +71,29 @@ makedotheatmap=1,/*use colormap to draw dots in scatterplot instead of the discr
 Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
 the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
 
-color_resp_var=,/*Use value of the var to draw colormap of dots in scatterplot
-if empty, the default var would be the same as that of yval_var;*/
+color_resp_var=,/*Use the variable to draw colormap of dots in scatterplots with colors
+supplied by a later macro variable dataContrastCols that are specifically designated for 
+scatterplot dots but not other tracks under the scatter plots, such as gene tracks;.
+previously if the macro var is empty, the default var would be the same as that of yval_var;
+Later it is updated to enable the macro to use lattice_subgrp_var but not yval_var when 
+this color_resp_var is empty! A later macro variable dataContrastCols will be used 
+to supply colors for different groups of the variable solely for coloring scatterplot dots!*/
+fixedcols4tracksunderscatter=cyan blue, /*when color_resp_var is not empty, all tracks under scatterplots will be fixed with 
+two different colors, including cyan and blue, represented by the macro var fixedcols4tracksunderscatter!*/
+color_resp_grpdsd=,/*this dataset contains two columns, including &color_resp_var and the fixed
+variable numgrp4color_resp,which are corresponding to the unique char color_resp_var and 
+its associated numeric var that would be sorted to order these char color_resp_var in the final figure legend!
+Note: for color_resp_var not included in the dataset, they will be asigned as Others;
+Custom colors with the same number of unique color_resp_var for these groups can be provided to 
+a latter macro variable dataContrastCols*/
+dataContrastCols=%str(darkblue darkgreen darkred darkyellow 
+CXFFF000 CXFF7F00 CXFF00FF CXFF0000 CXEAADEA CXE6E8FA CXDB9370 CXDB70DB CXD9D919 CXD8D8BF 
+CXCD7F32 CXC0C0C0 CXBC8F8F CXB87333 CXB5A642 CXADEAEA CXA67D3D CXA62A2A CX9F9F5F CX9F5F9F 
+CX97694F CX8E236B CX8E2323 CX8C7853 CX8C1717 CX871F78 CX856363 CX855E42 CX70DB93 CX5F9F9F 
+CX5C4033 CX545454 CX4F2F4F CX4E2F2F CX32CD32 CX2F4F2F CX238E23 CX236B8E CX23238E CX00FFFF 
+CX00FF00 CX0000FF CX000000
+),
+/*Note: these colors will be used for the scatterplot and gene track together when color_resp_var is a char var, so it is difficult control*/
 
 makeheatmapdotintooneline=0,/*This will make all dots have the same yaxis value but have different colors 
 based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var
@@ -342,8 +363,23 @@ the default value 2.5 fold works for most cases*/
 Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
 the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
 
- color_resp_var=&color_resp_var,/*Use value of the var to draw colormap of dots in scatterplot
-if empty, the default var would be the same as that of yval_var;*/
+color_resp_var=&color_resp_var,/*Use the variable to draw colormap of dots in scatterplots with colors
+supplied by a later macro variable dataContrastCols that are specifically designated for 
+scatterplot dots but not other tracks under the scatter plots, such as gene tracks;.
+previously if the macro var is empty, the default var would be the same as that of yval_var;
+Later it is updated to enable the macro to use lattice_subgrp_var but not yval_var when 
+this color_resp_var is empty! A later macro variable dataContrastCols will be used 
+to supply colors for different groups of the variable solely for coloring scatterplot dots!*/
+fixedcols4tracksunderscatter=&fixedcols4tracksunderscatter, /*when color_resp_var is not empty, all tracks under scatterplots will be fixed with 
+two different colors, including cyan and blue, represented by the macro var fixedcols4tracksunderscatter!*/
+color_resp_grpdsd=&color_resp_grpdsd,/*this dataset contains two columns, including &color_resp_var and the fixed
+variable numgrp4color_resp,which are corresponding to the unique char color_resp_var and 
+its associated numeric var that would be sorted to order these char color_resp_var in the final figure legend!
+Note: for color_resp_var not included in the dataset, they will be asigned as Others;
+Custom colors with the same number of unique color_resp_var for these groups can be provided to 
+a latter macro variable dataContrastCols*/
+dataContrastCols=&dataContrastCols,
+/*Note: these colors will be used for the scatterplot and gene track together when color_resp_var is a char var, so it is difficult control*/
 
  makeheatmapdotintooneline=&makeheatmapdotintooneline, /*This will make all dots have the same yaxis value but have different colors 
 based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var

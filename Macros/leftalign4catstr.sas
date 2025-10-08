@@ -1,5 +1,5 @@
 %macro leftalign4catstr(/*Note: the final generated combinedVar can be used by 
-proc sgplot with the xaxis valuerotate=diagonal2 for best visual effect*/
+proc sgplot with the xaxis valuesrotate=diagonal2 for best visual effect*/
 dsdin=,
 vars4cat=, /*vars separated by blank spaces in order for catx*/
 combinedVar=combined_vars,/*A new variable containing combined vars by catx*/

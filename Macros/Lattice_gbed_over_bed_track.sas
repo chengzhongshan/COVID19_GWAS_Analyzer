@@ -1,39 +1,34 @@
-%macro Lattice_gscatter_over_bed_track(
-/*
+%macro Lattice_gbed_over_bed_track(
+/*This macro can draw mixed data for CNV and scatter plots in the upper tracks and gene tracks at the bottom!
+All functionalities of this macro have been incoorperated into the macro Lattice_gscatter_over_bed_track, 
+and please use the latter accordingly.
 Note: when makedotheatmap=1, in default, the scatterplot will use lattice_subgrp_var to color dots 
 across different scatter groups; User can supply an independent variable represented by the macro variable
-color_resp_var to color scatter plot dots but different scattergroups will be applied in a union style!
-This macro can also draw mixed CNV and scatter plots upper the gene tracks; 
+color_resp_var to color scatter plot dots but different scattergroups will be applied in a union style! 
 */
-bed_dsd,/*at least contains 7 variables, including chr_var, st_var, end_var, grp_var, and yval_var;
-Too many bed regions (>1000) for the gene track will slow down the macro dramatically;
-Note: the macro will change the input bed_dsd when supplying xaxis_viewmin and xaxis_viewmax*/
-chr_var,/*chromosome name for bed regions*/
-st_var,	/*start positions for bed regions*/
-end_var,/*end positions for bed regions*/
-grp_var,/*it is specifically designed for genes used by the lower gene track, such as genesymbols for all its bed regions,
-and the upper scatterplot tracks do not use it, thus values for data points in the scatterplots can be missing*/
-scatter_grp_var,/*it is used to separate scatterplot data points into different scatter groups, and its values for 
-scatterplot data points and gene bed regions in lower gene track should be positve and negative, respectively;
-when only draw gene tracks, ensure the the negative value, such as -1, provided for all bed regions, and 
-the macro will automatically separate these genes if they are too close to each other!*/
-lattice_subgrp_var,/*specifically designed for scatterplots, its values are used to separate dots in scatterplots 
-into different groups and color them based on its yval_var value; when only draw gene tracks, just assign the same
-value for all bed regions, which can be 0 or any other numeric or character values, as it will be only enable the 
-macro to run successful but will not be used for drawing the final figure!*/
-yval_var, /*this variable is used to draw y-axis for dots of scatterplots and bed regions of genes*/
-yaxis_label=Group,/*The value will be used to label the y-axis*/
-linethickness=20, /*line thinkness for gene bed regions*/
-track_width=800, /*Final figure width*/
-track_height=400,/*Final figure height*/
-dist2st_and_end=0,/*Extend the start and end position for the x-axis*/
+bed_dsd,
+/*Too many bed regions (>1000) for the gene track will slow down the macro dramatically;
+Note: the macro will change the input bed_dsd when supplying xaxis_viewmin and xaxis_viewmax;
+*/
+chr_var,
+st_var,
+end_var,
+grp_var,
+scatter_grp_var,
+lattice_subgrp_var,
+yval_var,
+yaxis_label=Group,
+linethickness=20,
+track_width=800,
+track_height=400,
+dist2st_and_end=0,
 dotsize=10,/*Scatter plot marker symbol size, and the default marker is circlefilled dot*/
 scattermarker_symbol=circlefilled,/*Assign specific marker symbol, such as circlefilled, circle, dot, squarefilled, or square, for scatter plot;
 Note the size of the designated marker symbol will be defined by the macro variable dotsize*/ 
-debug=0,/*keep intermediate data sets for debugging if its value is 1*/
+debug=0,
 add_grp_anno=1, /*This will add group names, such as gene labels, to each member of grp_var*/
-grp_font_size=8, /*font size for gene labels in the lower gene track*/
-grp_anno_font_type=italic, /*other type: normal; specifically designed for the gene label font type*/
+grp_font_size=8,
+grp_anno_font_type=italic, /*other type: normal*/
 shift_text_yval=-0.25, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
 to liftup or lower text labels on the y axis; the default value is -0.25 to put gene lable under gene tracks;
 Change it with the macro var pct4neg_y! Provide very large or small values, such as 9999 or -9999 to remove test labels for genes!*/
@@ -52,25 +47,29 @@ fig_fmt=svg, /*output figure formats: svg, png, jpg, and others*/
 refline_thickness=5,/*Use thick refline to separate different tracks*/
 refline_color=lightgray,/*Color for reflines*/
 pct4neg_y=2, /*the most often used value is 1, and if the value is too large, it will affect the 
- y-axis tick labels by leading to very few y-axis ticks in the final figure!
- So if the above occurs, it is feasible to reduce the value of pct4neg_y or increase
- the value of macro variable track_height inaccordingly.
- compacting the bed track y values by increasing the scatterplot scale, 
- which can reduce the bed trace spaces; It seems that two-fold increasement
- leads to better ticks for different tracks!
- Use value >1 will increase the gene tract, while value < 1 will reduce it!
- Note: when there are only 1 or 2 scatterplots, it is better to provide value = 0.5;
- Modify this parameter with the parameter shift_text_yval to adjust gene label!
- Typically, when there are more scatterplots, it is necessary to increase the value of pct4neg_y accordingly;
- If there are only <4 scatterplots, the value would be usually set as 1 or 2;*/
+              y-axis tick labels by leading to very few y-axis ticks in the final figure!
+              So if the above occurs, it is feasible to reduce the value of pct4neg_y or increase
+              the value of macro variable track_height inaccordingly.
+              compacting the bed track y values by increasing the scatterplot scale, 
+              which can reduce the bed trace spaces; It seems that two-fold increasement
+              leads to better ticks for different tracks!
+              Use value >1 will increase the gene tract, while value < 1 will reduce it!
+              Note: when there are only 1 or 2 scatterplots, it is better to provide value = 0.5;
+              Modify this parameter with the parameter shift_text_yval to adjust gene label!
+              Typically, when there are more scatterplots, it is necessary to increase the value of pct4neg_y accordingly;
+              If there are only <4 scatterplots, the value would be usually set as 1 or 2;
+              */
 NotDrawScatterPlot=0,/*This filter will be useful when it is only wanted to draw the bottom bed track
 without of the scatterplot; this is the idea solution to draw gene track only!*/ 
+
 offsety=0.05,/*If NotDrowScatterPlot=1, this value will be subtracted from negative gene group value;
 This enables the upper and lower part have enough blank space for gene track*/
+
 makedotheatmap=0,/*use colormap to draw dots in scatterplot instead of the discretemap;
 Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
 the negative and postive values of lattice_subgrp_var to color dots in scatterplot
 Note: if makedotheatmap=1, autolegend will be canceled internally!*/
+
 color_resp_var=,/*Use the variable to draw colormap of dots in scatterplots with colors
 supplied by a later macro variable dataContrastCols that are specifically designated for 
 scatterplot dots but not other tracks under the scatter plots, such as gene tracks;.
@@ -89,24 +88,30 @@ a latter macro variable dataContrastCols*/
 makeheatmapdotintooneline=0,/*This will make all dots have the same yaxis value but have different colors 
 based on its real value in the heatmap plot; To keep the original dot y axis value, assign 0 to the macro var
 This would be handy when there are multiple subgrps represented by different y-axis values! By modifying
-the y-axis values for these subgrps, the macro can plot them separately in each subtrack!*/
+the y-axis values for these subgrps, the macro can plot them separately in each subtrack!
+*/
 dot_yvalue4heatmap_at_oneline=1.5,/*When drawing dot in one line for heatmap, sometimes the arbitrary y value assigned to each dot
 may not be optimum, it is advicible to evaluate the initially generated plot and update the value of this macro variable*/
 drawdotintooneline_if_totsc_gt=10,/*When there are too many scatter groups,  let the macro change the macro var makeheatmapdotintooneline=1*/
 var4label_scatterplot_dots=,/*Make sure the variable name is not grp, which is a fixed var used by the macro for other purpose;
 Whenever  makeheatmapdotintooneline=1 or 0, it is possible to use values of the var4label_scatterplot_dots to
 label specific scatterplot dots based on the customization of the variable predifined by users for the input data set; 
-default is empty; provide a variable that include non-empty strings for specific dots in the scatterplots;*/
+default is empty; provide a variable that include non-empty strings for specific dots in the 
+scatterplots;*/
 label_dots_once_on_top=1,/*Put value 1 to label each unique label once on top of scatterplot;
 provide 0 for labeling selected dots inside scatterplots;
-The script will enlarge the macro var yaxis_offset4max to be 0.1!*/
+The script will enlarge the macro var yaxis_offset4max to be 0.1!
+*/
 dist_pct_to_cluster_pos=0.02,/*In terms of labels for top SNPs, use the input pct to calcuate dist based on the distance 
-betweent the first label to the last label and define labels into cluster if they are too close to each other if their distance is less than pct_of_total_dist*/
+betweent the first label to the last label and 
+define labels into cluster if they are too close to each other
+if their distance is less than pct_of_total_dist*/
 fc2distant_close_labels=3,/*In terms of labels for top SNPs, increase the distance among close labels by input fold change
 default value 3 would be good for most situations! Note: this parameter is also used to amplify the space for separating
 adjacent SNP labels when adjusting spaces using adj_spaces_among_top_snps=1 with the default setting:
 sep4tgt_pos=&fc2distant_close_labels*0.1*(&max_x-&min_x+1)/total_SNPs
-Whent the above default distance does not work well, it is suggested to increase or reduce the value of fc2distant_close_labels*/
+Whent the above default distance does not work well, it is suggested to increase or reduce the value of fc2distant_close_labels
+*/
 pct2adj4dencluster=2,/*Input value can be ranging from 0.0001 to 10 or even higher value!
 For SNP labels on the top, please try to use this parameter, which only works when 
 there are less than or equal to 3 top SNPs if track_width <= 500, or 4 top SNPs if track_width between 500 and 800, or 5 top SNPs if 
@@ -125,12 +130,14 @@ the line 1150 of this macro to reduce or increase the ratio of 800/&track_height
 font_size4textlabels=10,/*Font size for these text labels*/
 move_right_genetxt_pct=0.08,/*When the right most genes are too close to the right boudary, it is necessary to reduce its x-axis position
 using the designated pct based on the whole window size that will be automatically calcuated by the macro*/
-mk_fake_axis_with_updated_func=1, /*The new func make the xaxis more compacted between gene tracks and scatter plots;*/
+mk_fake_axis_with_updated_func=1, /*The new func make the xaxis more compacted 
+                                   between gene tracks and scatter plots;*/
 sameyaxis4scatter=1,/*Make the same y-axis for scatterplots*/ 
 maxyvalue4truncat=30,/*Asign yaxis_value >maxyvalue4trancat as the designated value of maxyvalue4trancat*/ 
 adjval4header=-0.5, /*In terms of header of each subscatterplot, provide postive value to move up scatter group header by the input value*/
-ordered_sc_grpnames= ,/*Labels for each scatter plot from down to up in order; Use _ to replace blank space within each name and all
-_ will be changed into black space by the macro at the end*/
+ordered_sc_grpnames= ,/*Labels for each scatter plot from down to up in order
+                       Use _ to replace blank space within each name and all
+                       _ will be changed into black space by the macro at the end*/
 xaxis_label=%nrstr(Position (bp) on chromosome &chr_name), /*The macro var &chr_name will be unquoted after resolved*/        
 xaxis_viewmin=,/*arbitrary xaxis min value to show the figure, and it requires to work with thresholdmin=0*/
 xaxis_viewmax=,/*arbitrary xaxis max vale to show the figure, and it requires to go along with thresholdmax=0*/
@@ -144,7 +151,9 @@ CXFFF000 CXFF7F00 CXFF00FF CXFF0000 CXEAADEA CXE6E8FA CXDB9370 CXDB70DB CXD9D919
 CXCD7F32 CXC0C0C0 CXBC8F8F CXB87333 CXB5A642 CXADEAEA CXA67D3D CXA62A2A CX9F9F5F CX9F5F9F 
 CX97694F CX8E236B CX8E2323 CX8C7853 CX8C1717 CX871F78 CX856363 CX855E42 CX70DB93 CX5F9F9F 
 CX5C4033 CX545454 CX4F2F4F CX4E2F2F CX32CD32 CX2F4F2F CX238E23 CX236B8E CX23238E CX00FFFF 
-CX00FF00 CX0000FF CX000000)*/
+CX00FF00 CX0000FF CX000000
+)*/
+
 /*Note: default is to use %str(), which will apply system colors automatically;
 add the following colors separated by blank space if desired,
 CXADD8E6 CX98FB98 CXF08080 CX0000FF CXFFF00 CX9F5F9F CXA62A2A CX5F9F9F CX871F78
@@ -1009,7 +1018,7 @@ run;
 /*
 proc print data=final(obs=50);run;
 %abort 255;
-*/
+ */
 
 %end;
 
@@ -1184,9 +1193,9 @@ run;
    order by pos;
    select &fc2distant_close_labels*0.1*(&max_x-&min_x+1)/count(*) into: sep4tgt_pos
    from _xtag_;
-   %spaceAdjust(data=&_tgt_pos_, out=_xtag1_, goal=COL:, sep=&sep4tgt_pos, newvar4adjnum=newpos); 
-   data _xtag_;
-   merge _xtag_(drop=newpos) _xtag1_(keep=newpos);
+  %spaceAdjust(data=&_tgt_pos_, out=_xtag1_, goal=COL:, sep=&sep4tgt_pos, newvar4adjnum=newpos); 
+  data _xtag_;
+      merge _xtag_(drop=newpos) _xtag1_(keep=newpos);
    run;
    %end;
 /*   %abort 255;*/
@@ -1633,15 +1642,21 @@ begingraph / designwidth=&track_width designheight=&track_height
 
           %end;                            
           ;
-         %end;
- /*This highlow plot is specifically designed for drawing CNV*/
+         %end;	
+/*
+    highlowplot y=&yval_var high=&end_var low=&st_var /
+	    group=&lattice_subgrp_var
+        datatransparency=0.4
+        type=bar barwidth=0.4
+        highcap=NONE lowcap=NONE; 
+		 */
 /*https://www.lexjansen.com/pharmasug-cn/2019/HW/Pharmasug-China-2019-HW06.pdf*/
  highlowplot y=&yval_var high=&end_var low=&st_var /
 	     group=&lattice_subgrp_var
          datatransparency=0.4
         type=line  lineattrs=(thickness=5pt color=darkorange pattern=dash)
         highcap=NONE lowcap=NONE; 
-	
+
 *Use &grp_var to color dots in scatterplot;         
 /*          scatterplot x=pos y=&yval_var/group=&grp_var name="sc"  */
 /*                                        markerattrs=( */
@@ -1679,7 +1694,7 @@ begingraph / designwidth=&track_width designheight=&track_height
                                        markerattrs=(
                                        symbol=&scattermarker_symbol size=&dotsize);
 %end;                                       
-                                       
+ 
        %if &add_grp_anno=1 %then %do;                              
          *Make sure to add the test label at the end, otherwise, these labels will be blocked by other layers;
          *MARKERCHARACTERPOSITION=CENTER | TOP | BOTTOM | LEFT | RIGHT | TOPLEFT | TOPRIGHT | BOTTOMLEFT | BOTTOMRIGHT;
@@ -1844,23 +1859,24 @@ input chr st end cnv grp $ gscatter_grp lattice_subgrp color_resp_grp :$15.;
 *A good method is to increase scatterplot y values to enlarge scatterplot relatively to gene tracks;
 *if cnv>0 then cnv=4*cnv;
 cards;
-1 200 300 -2 X1 -1 1 rs111
-1 400 500 -2 X1 -1 0 rs111
-1 550 600 -2 X1 -1 1 rs111
-1 900 1000 -2 X1 -1 1 rs112
-1 100 1500 -2 X1 -1 0 rs112
-1 60 61 0.5 a 1 0 NaN
-1 100 101 1 a 1 0 NaN 
-1 1200 1201 3 a 1 1 NaN 
-1 400 401 0 b 2 1 r113 
-1 600 601 2 b 2 0 NaN 
-1 700 701 2 c 3 0 r112
-1 2000 3000 -1 agene -1 0	
-1 2100 2200 -1 agene -1 0	
-1 2300 2400 -1 agene -1 0	
-1 2500 2600 -1 agene -1 0	
-1 2700 2800 -1 agene -1 0	
-1 2900 3000 -1 agene -1 0	
+1 200 300 -2 X1 -1 1 .
+1 400 500 -2 X1 -1 0 .
+1 550 600 -2 X1 -1 1 .
+1 900 1000 -2 X1 -1 1 .
+1 100 1500 -2 X1 -1 0 .
+1 60 161 0.5 a 1 0 r1
+1 100 301 1 a 1 0 r2 
+1 400 401 1 a 1 0 r2 
+1 100 1201 3 a 1 1 r6 
+1 400 801 0 b 2 1 r3 
+1 600 901 2 b 2 0 r4 
+1 700 901 2 c 3 0 r5
+1 2000 3000 -1 agene -1 0 NaN	
+1 2100 2200 -1 agene -1 0 NaN		
+1 2300 2400 -1 agene -1 0 NaN		
+1 2500 2600 -1 agene -1 0 NaN		
+1 2700 2800 -1 agene -1 0 NaN		
+1 2900 3000 -1 agene -1 0 NaN		
 ;
 run;
 *Note: data used by scatterplot but not the gene track should have end-st=1;
@@ -1917,7 +1933,7 @@ if gscatter_grp<0 then scatterlabel="";
 run;
 *%debug_macro;
 optitions mprint;
-%Lattice_gscatter_over_bed_track(
+%Lattice_gbed_over_bed_track(
 bed_dsd=x0,
 chr_var=chr,
 st_var=st,
@@ -1950,7 +1966,7 @@ refline_color=lightgrey,
 pct4neg_y=0.8,
 NotDrawScatterPlot=0,
 makedotheatmap=0,
-color_resp_var=,
+color_resp_var=scatterlabel,
 makeheatmapdotintooneline=0,
 var4label_scatterplot_dots=scatterlabel,
 label_dots_once_on_top=1,
@@ -1963,11 +1979,11 @@ maxyvalue4truncat=10,
 adjval4header=0,
 ordered_sc_grpnames=a_a b_b c_c,          
 scatterdotcols=green yellow, 
-dataContrastCols=%str(green darkorange)
+dataContrastCols=%str(green darkorange pink blue black gray)
 );
 
 *By asigning a char variable to the macro variable color_resp_grp, use custom colors for dots in scatterplots;
-%Lattice_gscatter_over_bed_track(
+%Lattice_gbed_over_bed_track(
 bed_dsd=x0,
 chr_var=chr,
 st_var=st,
@@ -2018,7 +2034,7 @@ dataContrastCols=%str(green darkorange)
 
 *draw colormap with real y-axis values;
 %debug_macro;
-%Lattice_gscatter_over_bed_track(
+%Lattice_gbed_over_bed_track(
 bed_dsd=x0,
 chr_var=chr,
 st_var=st,
@@ -2063,7 +2079,7 @@ dataContrastCols=%str(green darkorange)
 *The macro will try to change the dataset by keeping only negative y axis values;
 *Adjust the yaxis_offset4max to improve the readibility of the gene track;
 *This section can be used to draw regulatory regions grouped by sample or feature;
-%Lattice_gscatter_over_bed_track(
+%Lattice_gbed_over_bed_track(
 bed_dsd=x0,
 chr_var=chr,
 st_var=st,
@@ -2129,7 +2145,7 @@ cards;
 ;
 run;
 
-%Lattice_gscatter_over_bed_track(
+%Lattice_gbed_over_bed_track(
 bed_dsd=x0,
 chr_var=chr,
 st_var=st,
