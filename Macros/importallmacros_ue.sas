@@ -61,6 +61,7 @@
  input;
  filename=_infile_;
  filename=prxchange('s/.*\s+([\S]+\.sas)/$1/',-1,filename);
+ if length(filename)>36 then delete;/*delete sas files with length >32 + 4 (.sas), as these files are not sas macro*/
  filename="&_MacroDir\"||filename;
  if prxmatch('/\.sas/',filename);
  run;
