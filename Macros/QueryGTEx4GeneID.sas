@@ -37,9 +37,14 @@ outdsd=gene_info
   filename out clear;
   libname eqtl clear;
 %end;
+
+/*
 data &outdsd;
 set &outdsd._info:;
 run;
+*/
+%Union_Data_In_Lib_Rgx(lib=work,excluded=,dsd_contain_rgx=&outdsd._info.*,dsdout=&outdsd);
+
 proc datasets nolist;
 delete &outdsd._:;
 run;

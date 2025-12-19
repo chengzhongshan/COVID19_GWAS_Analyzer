@@ -9,7 +9,7 @@ with specific value, such as -1 or 0;
 */
 dsdin=,
 xvar=,
-xaxis_valuesrotate_type=vertical,/*xaxis tick rotation type: vertical, diognal, or diognal2*/
+xaxis_valuesrotate_type=vertical,/*xaxis tick rotation type: vertical, diagonal, or diagonal2*/
 xaix_valuefitpolicy=rotate,/*automatically fit the xaxis tick labels if they are too long, which includes
 none, rotate, rotatethin, split, splitalways, splitrotate, stackedalways, stackedalwaysthin, stagger, staggerroate, 
 stagerthin, thin. See details at https://documentation.sas.com/doc/en/pgmsascdc/v_056/grstatproc/p07m2vpyq75fgan14m6g5pphnwlr.htm#n1bkk2fwzh9l7in1que4qmkricsx*/

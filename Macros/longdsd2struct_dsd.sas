@@ -41,7 +41,7 @@ run;
    *The above assignment will stop the loop;
 %end;
 
-proc sort data=&strcutdsdout;
+proc sort data=&structdsdout;
 by _all_;
 run;
 

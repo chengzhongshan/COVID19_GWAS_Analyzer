@@ -13,6 +13,11 @@ quit;
    %let &outmacrovar=0;
 %end;
 
+*This rescues the situation when all data of the column &colvar are missing;
+%if &allmissing=. %then %do;
+   %let &outmacrovar=1;
+ %end;
+
 %mend;
 /*Demo:
 

@@ -36,8 +36,8 @@ max_cols4labeling=200,/*If there are >200 columns in the heatmap, column labels 
 stdize=0,/*provide value 1 to perform standardize all numeric vars with std method;
 Please do not assign value 1 to perform_log2_for_numeric_vars when assigning value 1 to stdize*/
 perform_log2_for_numeric_vars=0,/*Transform the input numberic vars by using log2(var+0.1)*/
-height=1000,/*figure height*/
-width=1000,/*figure width*/
+height=1000,/*figure height in px*/
+width=1000,/*figure width in px*/
 columnweights=0.05 0.95, /*figure 2 column ratio; to eliminate the left column-wide cell, please change the ratio as 0.0001 and 0.9999*/
 rowweights=0.95 0.95, /*figure 2 row ratio; similarly, to eliminate the upper row-wide cell, please change the ratio as 0.0001 and 0.9999*/
 cluster_type=3,        /*values are 0, 1, 2, and 3 for not clustering heatmap, clustering heatmap by column, row, and both;
@@ -338,7 +338,7 @@ run;
 
  %if &switch_rownames_as_colnames=0 %then %do;
 						%let _colvar_=col;
-            %let  _axis_name=y;
+            %let  _axis_name=x;
  %end;
  %else %do;
 						%let _colvar_=row;
@@ -636,8 +636,8 @@ proc print data=a_trans1;run;
 dsdin=a_trans1,
 rowname_var=a,
 numeric_vars=_numeric_,
-height=10,
-width=14,
+height=500,
+width=600,
 columnweights=0.15 0.85, 
 rowweights=0.15 0.85, 
 cluster_type=1,
@@ -671,11 +671,11 @@ heatmap_dsd=longformat_heatmap_dsd
 dsdin=sashelp.baseball,
 rowname_var=team,
 numeric_vars=_numeric_,
-height=20,
-width=24,
+height=800,
+width=800,
 columnweights=0.15 0.85, 
 rowweights=0.15 0.85,
-cluster_type=1 
+cluster_type=3 
 );
 
 *Note: if only sorting by column with the var rowname_var,;
@@ -704,8 +704,8 @@ from tc;
 dsdin=t2,
 rowname_var=team,
 numeric_vars=_numeric_,
-height=20,
-width=24,
+height=800,
+width=800,
 columnweights=0.01 0.99, 
 rowweights=0.15 0.85,
 cluster_type=1 
@@ -738,11 +738,43 @@ proc sort data=r1 nodupkeys;by team;run;
 dsdin=r1,
 rowname_var=team,
 numeric_vars=_numeric_,
-height=20,
-width=24,
+height=800,
+width=800,
 columnweights=0.1 0.9, 
 rowweights=0.15 0.85,
 cluster_type=2 
+);
+
+*Even better codes to get sub-cluster based on the output from the current macro;
+ods graphics on/width=10000 height=1000;
+%review_tree_branches(
+inputdsd=longformat_heatmap_dsd,
+y_name_var=x_name_,
+y_parent_var=x_parent_,
+y_height_var=x_height_,
+outdsd=out,
+branch_name_dsd=branch_name_dsd 
+);
+
+ods graphics on/reset=all width=1000 height=800;
+%subbranches(
+    data=longformat_heatmap_dsd,  
+	y_name_var=x_name_,
+	y_parent_var=x_parent_,
+	y_height_var=x_height_,
+    out=work.sub,
+    height=,  
+    parent=CL11,  
+    render=YES 
+    );
+
+%review_tree_branches(
+inputdsd=sub,
+y_name_var=x_name_,
+y_parent_var=x_parent_,
+y_height_var=x_height_,
+outdsd=outnew,
+branch_name_dsd=branch_name_dsdnew
 );
 
 */

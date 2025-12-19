@@ -51,7 +51,7 @@ set &dsdin (where=(&axis_var<0));
 run;
 
 %if %totobsindsd(&dsdin._neg)=0 %then %do;
-  %put There are NO negative values in the dsd &dsdin._neg;
+  %put Warning: there are NO negative values in the dsd &dsdin._neg;
   %abort 255;
 %end;
 

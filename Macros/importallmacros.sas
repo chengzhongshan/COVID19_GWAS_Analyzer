@@ -19,6 +19,7 @@ options nonotes;
 
 %do di=1 %to &ndirs;
 %let _Macrodir=%scan(&MacroDir,&di,' ');
+%if %direxist(&_Macrodir) %then %do;
 %if %sysfunc(prxmatch(/WIN/,&sysscp)) %then %do;
  filename M&di pipe "%str(dir %"&_MacroDir%")";
  data tmp_&di;
@@ -40,7 +41,10 @@ options nonotes;
  filename="&_MacroDir/"||filename;
  run;
 %end;
-
+%end;
+%else %do;
+ %put The input directory &_MacroDir does not exist!;
+%end;
 %end;
 
 data tmp;

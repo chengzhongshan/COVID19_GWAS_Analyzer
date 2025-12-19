@@ -37,12 +37,20 @@ position adjusted numers*/);
   data _old_;
   set &data;
   run;
-/*  %abort 255;*/
+/*proc print;run;*/
+/*%abort 255;*/
 
 %let nvars=%TotVarsInDsd(&data,var_type=_numeric_);
 /*  %abort 255;*/
   *Now generate adjust positions for these input numbers;
-  data &out.;
+/*
+https://www.lexjansen.com/pharmasug/2010/CC/CC05.pdf
+It is important to add options nosyntaxcheck here before the data step that is prone to error;
+otherwise, other procedures followed the failed data step will be under the environment of 
+options obs=0; adding this is the only solution when running sas codes in batch mode!
+*/
+OPTIONS NOSYNTAXCHECK;  
+data &out.new;
         set &data.;
 		*Need to make a copy for these input numbers;
         array u(*) u1-u&nvars;
@@ -75,8 +83,9 @@ position adjusted numers*/);
                 /* Find next block */
                 b = 0;
                 do j = i to n-1;
+                    b+1;*It is necessary to put b+1 here before the leave command!;
                     if abs(w[j+1] - w[j] - v) > eps1000 then leave;
-                    b + 1;
+                    /*b + 1;*/
                 end;
 
 				*Get the last block;
@@ -130,7 +139,7 @@ end % moving
 */
 
 		k0=1;
-		niters=500;
+		niters=0;
 		 do while (k0 and niters<=500);
             do xi = 1 to n;
 			 if xi=1 and w[xi]>u[xi] then k0=1;
@@ -152,7 +161,26 @@ end % moving
 		 end;
         end;
     run;
+/*proc print data=_old_;run;*/
 /* %abort 255;*/
+%if %totobsindsd(&out.new)=0 %then %do;
+   %put failed to generate adjusted dataset &out.new;
+   %put try to use the original input dataset &data without adjustment;
+   OPTIONS NOSYNTAXCHECK;
+   data &out;
+   set _old_;
+   run;
+%end;
+%else %do;
+  data &out;
+  set &out.new;
+  run;
+%end;
+/*
+proc print data=&out;run;
+%abort 255;
+*/
+
 data &out;
 set &out;
 keep Col:;

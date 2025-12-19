@@ -32,7 +32,17 @@ sqrt(
 This is called pooled variance;
 */
 allele1var=allele1,
-allele2var=allele2
+allele2var=allele2,
+adjcov=1,/*use adjust var=(se1^2+se2^2-2*cov(b1,b2), and the cov(b1,b2) will be
+estimated based on pruned SNPs provided by user for specific population, such as 
+EUR, the LD pruned SNPs should be compressed into a gz file, such as the file
+downloadable via the link from zenoda that were used by LDSC for the following parameter
+*/
+pruned_snps_gz_file=https://zenodo.org/record/7773502/files/w_hm3.snplist.gz, /*pruned SNPs 
+saved into a compressed gz file, of which the headers are at the 1st row in the file*/
+pct_of_totrandsnps= /*Use proportion, such as 0.1 of total random SNPs, for estimating adjusted cov;
+Use either pruned_snps_gz_file or this threshold! If both are provided, only the last 
+parameter will be used!*/
 );
 
 options compress=no;
@@ -40,6 +50,17 @@ options compress=no;
 *Also keep beta but not se, as se can be re-calculated by z/beta;
 *SAS OnDemand out of memory if including a.&beta_varname as gwas1_beta,b.&beta_varname as gwas2_beta;
 *a.&beta_varname as gwas1_beta,b.&beta_varname as gwas2_beta,;
+
+%if &adjcov=1 and %length(&pct_of_totrandsnps)=0 %then %do;
+*Get LD prunned SNPs for specific population;
+%CheckHeader4GZ_URL(
+any_gz_url=&pruned_snps_gz_file,
+infile_cmd=%str(firstobs=2 obs=max delimiter='09'x;
+input rsid :$15.;), 
+outdsd=Prunned_snps
+);
+%end;
+
 
 *Note: ordering by chr and pos in proc sql will consume too much memory and space;
 
@@ -75,7 +96,7 @@ sqrt(
      select a.&snp_varname, a.&allele1var, a.&allele2var,
             a.&beta_varname as gwas1_beta,b.&beta_varname as gwas2_beta,
             a.&se_varname as gwas1_se,b.&se_varname as gwas2_se,
-            (a.&beta_varname-b.&beta_varname)/(sqrt(a.&se_varname**2+b.&se_varname**2)) as diff_zscore,
+            (a.&beta_varname-b.&beta_varname) as diff_zscore,
      	   a.&p_varname as gwas1_P,
             b.&p_varname as gwas2_P,
             a.&beta_varname/a.&se_varname as gwas1_z,
@@ -102,6 +123,73 @@ data both;
 set both;
 where gwas1_se<=1 and gwas2_se<=1;
 run;
+
+%if &adjcov=1 and %length(&pct_of_totrandsnps)=0 %then %do;
+*Now estimate corr between two GWASs;
+proc sql;
+create table _dsd4corr_ as
+select a.gwas1_z,
+           a.gwas2_z
+from both as a,
+Prunned_snps as b
+where a.&snp_varname=b.rsid;
+proc corr data=_dsd4corr_ pearson noprob outp=corr_out(where=(_TYPE_='CORR'));
+var gwas1_z gwas2_z;
+run;
+/* Extract rho_z from corr_out */
+data _null_;
+  set corr_out;
+  if _NAME_='gwas1_z' then do;
+    rho_z = gwas2_z;
+    call symputx('rho_z', rho_z);
+  end;
+run;
+%put NOTE: Empirical rho_z = &rho_z;
+*Remove the dataset _dsd4corr_;
+proc sql;
+drop table _dsd4corr_;
+*Use updated var to estimate diff_zscore;
+data both;
+set both;
+diff_zscore=diff_zscore/(sqrt(gwas1_se**2+gwas2_se**2 - 2*&rho_z*gwas1_se*gwas2_se));
+run;
+%end;
+%else %if (&pct_of_totrandsnps>0 and &pct_of_totrandsnps<1) %then %do;
+%put We will randomly select %sysevalf(&pct_of_totrandsnps*100)% SNPs to estimate corr between two GWASs;
+proc sql;
+create table _dsd4corr_(where=(randnumber<=&pct_of_totrandsnps)) as
+select a.gwas1_z,
+           a.gwas2_z,
+		   ranuni(0) as randnumber /* Generates a random number between 0 and 1 */
+from both as a;
+proc corr data=_dsd4corr_ pearson noprob outp=corr_out(where=(_TYPE_='CORR'));
+var gwas1_z gwas2_z;
+run;
+/* Extract rho_z from corr_out */
+data _null_;
+  set corr_out;
+  if _NAME_='gwas1_z' then do;
+    rho_z = gwas2_z;
+    call symputx('rho_z', rho_z);
+  end;
+run;
+%put NOTE: Empirical rho_z = &rho_z;
+*Remove the dataset _dsd4corr_;
+proc sql;
+drop table _dsd4corr_;
+*Use updated var to estimate diff_zscore;
+data both;
+set both;
+diff_zscore=diff_zscore/(sqrt(gwas1_se**2+gwas2_se**2 - 2*&rho_z*gwas1_se*gwas2_se));
+run;
+%end;
+%else %do;
+data both;
+set both;
+diff_zscore=diff_zscore/(sqrt(gwas1_se**2+gwas2_se**2));
+run;
+%end;
+/*%abort 255;*/
 
 *When two gwass are correlated or have a same group as case or control;
 *It is necessary to further standardize zscore;
@@ -234,7 +322,7 @@ run;
               P_var=&p_varname,
               logP=1,
               dotsize=2,
-              gwas_sortedby_numchrpos=1);
+              gwas_sortedby_numchrpos=0);
    /*proc sort data=Assoc nodupkeys;*/
    /*by &snp_varname;*/
    /*run;*/
@@ -252,7 +340,7 @@ run;
               P_var=&p_varname,
               logP=1,
               dotsize=2,
-              gwas_sortedby_numchrpos=1);
+              gwas_sortedby_numchrpos=0);
    /*proc sort data=Assoc nodupkeys;*/
    /*by &snp_varname;*/
    /*run;*/

@@ -3,7 +3,11 @@
 *Tranditional transpose procedure usually handle one type of variable to rowwide by other group variables;
 *But this macro can abtain wide format table for multiple variables at rowwide at the same time by other group variables;
 *The key macro parameter to represent these multiple variables is "SameTypeVars";
-Note: if the maximum length of grp_vars >32, it is suggested to set ShortenColnames=1*/
+
+Note: if the maximum length of grp_vars >32, it is suggested to set ShortenColnames=1
+In case of tranposing a table by swtiching rows into columns, please first transpose the table
+into long format dataset, and then run this macro to change it into a wide table!
+*/
 long_dsd, 
 outwide_dsd,
 grp_vars=,/*If grp_vars and SameTypeVars are overlapped,
@@ -12,11 +16,11 @@ grp_vars can be multi vars separated by space, which
 can be numeric and character*/
 subgrpvar4wideheader=,/*This subgrpvar will be used to tag all transposed SameTypeVars 
 in the wide table, and the max length of this var can not be >32!*/
-dlm4subgrpvar=.,/*string used to split the subgrpvar using the scan function if it is too long;
-because scan will treat any of these supplied characters as delemeters to separate the string,
+dlm4subgrpvar=.,/*string used to split the subgrpvar using the SCAN function if it is too long;
+because SCAN will treat any of these supplied characters as delemeters to separate the string,
 it is thus important to use a special char that will not be matched with any character in the 
-string to keep the string unchanged by supplying value 1 to the following macro var*/
-ithelement4subgrpvar=2,/*Keep the nth splitted element of subgrpvar and use it for tag 
+string, such as #, to keep the string unchanged by supplying value 1 to the following macro var*/
+ithelement4subgrpvar=1,/*Keep the nth splitted element of subgrpvar and use it for tag 
 in the final wide table*/
 SameTypeVars=_numeric_, /*These same type of vars will be added with subgrp tag in the 
 final wide table; Make sure they are either numberic or character vars and not 
@@ -97,7 +101,7 @@ _wide_ids_=trim(left(vars))||"_"||trim(left(scan(&subgrpvar4wideheader,&itheleme
 *As the wide_ids will be used by SAS as colnames in the transposed table, SAS will automatically replace space and other none word, such as *, +, -, into _;
 *It is necessary to ensure these wide_ids do not have duplicates by groups, otherwise, the transpose procedure will faile;
 wide_ids=prxchange('s/[\W ]+/_/',-1,trim(left(_wide_ids_)));
-max_wideids_len=max(max_wideids_len,length(max_wideids_len));
+max_wideids_len=max(max_wideids_len,length(wide_ids));
 if eof then call symputx('Max_wideids_len',max_wideids_len);
 run;
 /*%abort 255;*/
@@ -150,7 +154,9 @@ set &long_dsd._1st_trans;
 *This is probamatic, as some different elements may have the same strings for the first 32 chars;
 *The same issue will occur when extracting the last 32 chars; 
 *if length(wide_ids)>32 then wide_ids=substr(wide_ids,1,32);
+%if &ShortenColnames=0 %then %do;
 if  length(wide_ids)>32 then wide_ids=substr(wide_ids,1,32);
+%end;
 run;
 
 

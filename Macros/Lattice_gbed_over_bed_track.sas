@@ -144,7 +144,7 @@ xaxis_viewmax=,/*arbitrary xaxis max vale to show the figure, and it requires to
 rm_gene_legend=1,/*Remove redundant colorful gene legend*/
 scatterdotcols=green orange, /*set colors for the beta directions 
 (negative and positve values) in scatterplots*/            
-dataContrastCols=%str()
+dataContrastCols=%str(),
 /*Note: these colors will be used for the scatterplot and gene track together when color_resp_var is a char var, so it is difficult control;
 %str(darkblue darkgreen darkred darkyellow 
 CXFFF000 CXFF7F00 CXFF00FF CXFF0000 CXEAADEA CXE6E8FA CXDB9370 CXDB70DB CXD9D919 CXD8D8BF 
@@ -205,6 +205,8 @@ SCARLET #8C1717
 TAN #DB9370
 WHEAT #D8D8BF
 */
+/*For CNV bed regions, customize the following parameters*/
+highlow_line_cmd=%str(thickness=6pt color=darkorange pattern=solid)
 );
 *https://documentation.sas.com/doc/en/pgmsascdc/9.4_3.5/grstatproc/p0i3rles1y5mvsn1hrq3i2271rmi.htm;
 *SAS marker symbols;
@@ -1654,7 +1656,8 @@ begingraph / designwidth=&track_width designheight=&track_height
  highlowplot y=&yval_var high=&end_var low=&st_var /
 	     group=&lattice_subgrp_var
          datatransparency=0.4
-        type=line  lineattrs=(thickness=5pt color=darkorange pattern=dash)
+        type=line  lineattrs=(&highlow_line_cmd)
+/*        type=line  lineattrs=(thickness=10pt color=darkorange pattern=dash)*/
         highcap=NONE lowcap=NONE; 
 
 *Use &grp_var to color dots in scatterplot;         
@@ -2180,7 +2183,8 @@ maxyvalue4truncat=16,
 adjval4header=0,
 ordered_sc_grpnames=a_a b_b c_c,          
 scatterdotcols=green yellow, 
-dataContrastCols=%str(green darkorange)
+dataContrastCols=%str(green darkorange),
+highlow_line_cmd=%str(thickness=6pt color=darkorange pattern=solid)
 );
 
 */

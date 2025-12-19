@@ -56,7 +56,10 @@ libname FM '/home/cheng.zhong.shan/my_shared_file_links/cheng.zhong.shan/F_vs_M_
 %let any_gz_url=https://ftp.ncbi.nlm.nih.gov/genomes/refseq/vertebrate_mammalian/Homo_sapiens/annotation_releases/current/GCF_000001405.40-RS_2024_08/GCF_000001405.40_GRCh38.p14_genomic.gbff.gz;;
 *%debug_macro;
 
-%CheckHeader4GZ_URL(any_gz_url=&any_gz_url,outdsd=gbff_hg38);
+%CheckHeader4GZ_URL(
+any_gz_url=&any_gz_url,
+infile_cmd=%str(firstobs=1 obs=max;input;info=_infile_;), 
+outdsd=gbff_hg38);
 
 proc datasets nolist;
 copy in=work out=FM memtype=data move;

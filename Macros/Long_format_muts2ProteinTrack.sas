@@ -1,7 +1,7 @@
 %macro Long_format_muts2ProteinTrack(
 /*See the demo code at the end of this macro for how to generate fake gtf and inptu data set based on ncbi gpff file;
 Note: several important parameters can adjust the label on the top:
-yoffset4max_drawmarkersontop  and Yoffset4textlabels can be used to enlarge the top regions covering the labels;
+yoffset4max_drawmarkersontop and Yoffset4textlabels can be used to enlarge the top regions covering the labels;
 pct2adj4dencluster is able to increase the distance among these labels.
 text_rotate_angle and  pct2adj4dencluster control the rotation of these labels.
 */
@@ -23,7 +23,9 @@ GenerateGeneManhattanPlot=1,/*To not generate gene Manhattan plot, provide value
 SNPs2label_scatterplot_dots=,/*Add mut ids to label scatter dots at the top of figure; ensure
 gwas_snp_var contain these mut ids, otherwise, these muts will not be */
 var4label_scatterplot_dots=,/*Use either this var or input SNPs IDs to label vars*/
-yoffset4max_drawmarkersontop=0.5,/*Increase the top offset region for snp labels*/
+yoffset4max_drawmarkersontop=0.5,/*Increase the top offset region for snp labels if the snp labels were truncated;
+This parameter is also useful for reducing the spaces among gene tracks by increasing its value and also reducing 
+the figure height at the same time!*/
 Yoffset4textlabels=3.5, /*Move up the text labels for target SNPs in specific fold; 
 the default value 2.5 fold works for most cases*/
 text_rotate_angle=90, /*Angle to rotate text labels for these selected dots by users*/
@@ -41,7 +43,8 @@ GTF_Chr_Var=chr,
 GTF_ST_Var=st,
 GTF_End_Var=end,
 design_width=1000, 
-design_height=5000, 
+design_height=5000, /*If gene tracks are sparated with too much space vertically, please try to reudce the height and 
+increase the yoffset4max_drawmarkersontop*/
 barthickness=20, /*gene track bar thinkness*/
 dotsize=8, 
 dist2sep_genes=10,/*Distance to separate close genes into different rows in the gene track; provide negative value

@@ -249,9 +249,16 @@ new_macro_list_var=_tissues_
   %end;
 %end;
 
-data &eQTLSumOutdsd&gi;
+/*data &eQTLSumOutdsd&gi;
 set eqtl:;
-run;
+run;*/
+%Union_Data_In_Lib_Rgx(lib=work,excluded=,dsd_contain_rgx=eqtl.*,dsdout=&eQTLSumOutdsd&gi);
+
+%if %totobsindsd(work.&eQTLSumOutdsd&gi)=0 %then %do;
+  %put No eQTL summary data found for gene &gene;
+  %goto nextgene;
+%end;
+
 
 %if &collect_geno4snps=1 %then %do;
 data &genoexp_outdsd&gi;
@@ -419,11 +426,12 @@ heatmap_fmt=&heatmap_fmt
 );
 title;
 %end;
+%end;
+ %nextgene:
+%end;
+%end;
 
-%end;
-%end;
-%end;
-
+/*
 data &eQTLSumOutdsd;
 set &eQTLSumOutdsd:;
 run;
@@ -433,6 +441,10 @@ run;
 data &genoexp_outdsd._trans;
 set &genoexp_outdsd._trans:;
 run;
+*/
+%Union_Data_In_Lib_Rgx(lib=work,excluded=,dsd_contain_rgx=&eQTLSumOutdsd.*,dsdout=&eQTLSumOutdsd);
+%Union_Data_In_Lib_Rgx(lib=work,excluded=,dsd_contain_rgx=snp_exp*,dsdout=&genoexp_outdsd);
+%Union_Data_In_Lib_Rgx(lib=work,excluded=,dsd_contain_rgx=&genoexp_outdsd._tran.*,dsdout=&genoexp_outdsd._trans);
 
 *Check the SAS log, in cases of mistakenly removing other matched datasets that should be kept;
 proc datasets nolist;
@@ -476,6 +488,88 @@ genoexp_outdsd=genos,
 eQTLSumOutdsd=AssocSummary,
 rgx4tissues=%str(lung|blood)
 );
+
+*Demo 3: a comprehensive testing codes for generating eQTL heatmap among multiple genes for >=1 SNP(s);
+libname G "E:\LongCOVID_HGI_GWAS"; 
+%protein_coding_genes_close2gene(
+gtf=G.gtf_hg38,
+chr4gene=2,
+dist=1e6,
+genesymbol=SF3B1,
+outdsd=combined_genes_by_dist
+);
+%put &nearby_genes;
+
+%GetMultQTLs4GenesInGTEx(
+query_snps=rs150345524,
+genes=&nearby_genes, 
+genoexp_outdsd=genos_and_exps,
+eQTLSumOutdsd=AssocSummary,
+rgx4tissues=%str(.), 
+filter4geno= %str(where geno^=-1), 
+perform_glm=0, 
+create_eqtl_boxplots=1,
+collect_geno4snps=1, 
+heatmap_xvar=tissue,
+heatmap_yvar=SNP,
+heatmap_height=,
+heatmap_width=,
+heatmap_fmt=png,
+boxplotpanel_width=,
+boxplotpanel_height=,
+tissue_eqtl_p_cutoff=1, 
+boxplot_colnum=6
+);
+
+%boxplotbygrp(
+dsdin=genos_and_exps_trans,
+grpvar=geno_rs150345524,
+category_var=%nrstr(&grpvar),
+valvar=exp,
+panelvars=tissue gene,
+attrmap_dsd=,
+fig_height=1000,
+fig_width=2000,
+transparency=0.3,
+boxwidth=0.5,
+column_num=20
+);
+
+libname L "H:\Coorperator_projects\COVID_Papers_2023\HGI_NonHospitalizationGWASPaper\PLCL1_eQTL_GTEx";
+proc datasets;
+copy in=work out=L memtype=data move;
+select genos_and_exps:;
+select Assocsummary;
+select gene_info;
+run;
+libname L clear;
+
+*The above saved datasets can be reused;
+libname L "H:\Coorperator_projects\COVID_Papers_2023\HGI_NonHospitalizationGWASPaper\PLCL1_eQTL_GTEx";
+data Assocsummary;
+set L.Assocsummary;
+run;
+%heatmap4longformatdsd( 
+dsdin=Assocsummary, 
+xvar=tissue, 
+xaxis_valuesrotate_type=diagonal2,
+xaix_valuefitpolicy=rotatethin,
+yvar=genesymbol, 
+colorvar=_log10P_, 
+fig_height=500, 
+fig_width=1000, 
+outline_thickness=1,
+outline_color=white,
+user_yvarfmt=, 
+user_xvarfmt=, 
+colorbar_position=right,
+colorrange=yellow green red,
+yfont_style=italic, 
+xfont_style=normal,
+NotDrawYaxisLabels=0, 
+NotDrawXaxisLabels=0,
+heatmap_fmt=png
+); 
 
 */
 

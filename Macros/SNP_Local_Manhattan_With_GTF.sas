@@ -1,5 +1,9 @@
 %macro SNP_Local_Manhattan_With_GTF(
-/*
+/*Note: this macro can draw CNVs and SNVs together. Please ensure the macro variable
+Variant_Length_Var is not empty, which contains distance of these CNVs (>1), with non-CNVs
+assigned with missing value, and the middle positions of these CNVs is required to be 
+combined with that of SNVs and gene tracks!
+
 Tip 1: when there gene labels are cluttered within the gene track, it is feasible to 
 resolve the issue by increasing the values for either variable pct4neg_y or dist2sep_genes or both!
 such as pct4neg_y and dist2sep_genes=1000000; alternatively, it also possible to address the problem
@@ -22,7 +26,6 @@ so it is also feasible to avoid this issue by increasing or reducing the pct.
 ZscoreVars into a variable for the lattice_subgrp_var to color dots differently across different scatter groups; User can supply
 an independent variable represented by the macro variable color_resp_var to color scatter plot dots but different scattergroups
 will be applied in a union style! 
-
 */
 
 /*
@@ -49,6 +52,11 @@ dist2snp=2000000,
 /*assign value in bp, and the final figure will be add extend this distance for both start and end positions*/
 SNP_Var=snp,
 Pos_Var=pos,
+Variant_Length_Var=,/*this variable if not empty, its value will be used to extend the value of Pos_Var for making 
+the start and end position for SNP_Var, i.e., st=&Pos_Var-0.5*&Variant_Length_Var and end=&Pos_Var-0.5*&Variant_Length_Var;
+This would be especially helpful for mixing CNV and SNV data for making scatter plots, as it is only necessary
+to provide middle position for CNVs and its lengths for ploting CNVs and SNVs together!
+*/
 gtf_dsd=FM.GTF_HG19,
 ZscoreVars=zscore1 zscore2,/*Can be beta1 beat2 or other numberic vars indicating assoc or other +/- directions,
 the values of which can be used to color scatter plots of association signals specifically for its corresponding scatter
@@ -62,7 +70,17 @@ by the sub-macro map_grp_assoc2gene4covidsexgwas*/
 design_width=500,/*Best width for publication, and usually used width rangs from 400 to 800*/ 
 design_height=500,/*Best height for publication, and usally used height rangs from 400 to 800*/
 barthickness=10, /*gene track bar thinkness*/
-dotsize=6, 
+dotsize=6,/*scatter data point size for the following macro variable scattermarker_symbol*/
+
+/*Important parameters for drawing SNVs and CNVs together*/
+scattermarker_symbol=circlefilled,/*Assign specific marker symbol, such as ibeam, circlefilled, circle, dot, squarefilled, or square, for scatter plot;
+Note the size of the designated marker symbol will be defined by the macro variable dotsize; when creating heatmap, you can assign
+squarefilled to the scattermarker_symbol, which would be more compatable with the highlow line style in for CNV or bed regions!*/ 
+highlow_line_cmd=%str(thickness=6 color=darkorange pattern=solid),/*For CNV bed regions, customize the following parameters using dot, dash, or solid line pattern 
+with custome thickness and color for the line; please increase the thickness to match with that of 
+dotsize=10 when scattermarker_symbol=squarefilled for the scatter plot, which will enable the square and the line
+in the same size and color*/
+
 dist2sep_genes=100000,/*Distance to separate close genes into different rows in the gene track; provide negative value or 0
 to have all genes in a single row in the final gene track
 this will ensure these genes close to each other to 
@@ -88,9 +106,34 @@ pct4neg_y=2, /*the most often used value is 1;
               If there are only <4 scatterplots, the value would be usually set as 1 or 2;
               */
 adjval4header=-0.2, /*In terms of header of each subscatterplot, provide postive value to move up scatter group header by the input value*/
-makedotheatmap=0,/*use colormap to draw dots in scatterplot instead of the discretemap;
+makedotheatmap=1,/*use colormap to draw dots in scatterplot instead of the discretemap;
 Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
-the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
+the negative and postive values of lattice_subgrp_var to color dots in scatterplot
+Note: the macro is updated to use heatmap to illustrate positve and negative values
+of scatter plot represented by the variable ZscoreVars in the sub macros
+map_grp_assoc2gene4covidsexgwas=>Multgscatter_with_gene_exons (HERE inside the 1st submacro) 
+=>Lattice_gscatter_over_bed_track, and you can see the details by reading the 
+parameters for  the 2nd sub macro used by the 1st sub mcro;
+Set it as 0 to use binary mode to color the negative and postive values in scatter plot*/
+
+/*Main color scheme for coloring dots in scatter plot with your quantitative color response variable
+Note: it is necessary to have makedotheatmap=1 and use the default heatmap_var or other quantitative
+variable with both negative and positive values to color the scatter plot; when the quantitative response
+variable is postive or negative, please change the heatmap_min_neg_val as 0 for postive values, meanwhile,
+for all negative values, please assign value 0 to heatmap_max_pos_val*/
+heatmap_var=AssocGrp,/*This variable is generated by transposing all ZscoreVars into a long format internally by the macro,
+thus, do not change this macro variable, just update ZscoreVars accordingly; the macro uses this var to draw scatter plot in heatmap
+with rangeattrmap instead of drawing dots using binary mode, such as 0 and 1 representing Pos
+and negative directions of latticen_subgrp_var!*/
+heatmap_Neg_rangealtcolormodel=darkgreen lightgreen deepskyblue,/*Range alt color model for negative values, heatmap_var<=0,  in heatmap*/
+heatmap_Pos_rangealtcolormodel=gold mediumred vipk,/*Range alt color model for positve values, heatmap_var>=0, in heatmap*/
+heatmap_min_neg_val=-8,/*Minimum negative value for the heatmap_var when it is not empty; 
+change this to customize the minimum value for colorbar in heatmap*/
+heatmap_max_pos_val=8,/*Maximum postive value for the heatmap_var when it is not empty; 
+change this to customize the max value for colorbar in heatmap*/
+
+/*Alternative color scheme for categorical color response variable! Please keep it in default
+value if you don't want to use it for your quantitative color response variable*/
 
 color_resp_var=,/*Use the variable to draw colormap of dots in scatterplots with colors
 supplied by a later macro variable dataContrastCols that are specifically designated for 
@@ -259,7 +302,7 @@ run;
    svgfileref=out,
    other_paras4ods_graphics=%str(noborder)
    );
-
+/*  %abort 255;*/
   title "Local Manhattan plot for target SNP &qsnp";
   %map_grp_assoc2gene4covidsexgwas(
 focus_on_transcript=&focus_on_transcript,/*This will generate a subset exon GTF data set by 
@@ -279,6 +322,14 @@ to work on these transcripts instead of genes*/
   design_height=&design_height, 
   barthickness=&barthickness, 
   dotsize=&dotsize, 
+  /*Important parameters for drawing SNVs and CNVs together*/
+scattermarker_symbol=&scattermarker_symbol,/*Assign specific marker symbol, such as ibeam, circlefilled, circle, dot, squarefilled, or square, for scatter plot;
+Note the size of the designated marker symbol will be defined by the macro variable dotsize; when creating heatmap, you can assign
+squarefilled to the scattermarker_symbol, which would be more compatable with the highlow line style in for CNV or bed regions!*/ 
+highlow_line_cmd=&highlow_line_cmd,/*For CNV bed regions, customize the following parameters using dot, dash, or solid line pattern 
+with custome thickness and color for the line; please increase the thickness to match with that of 
+dotsize=10 when scattermarker_symbol=squarefilled for the scatter plot, which will enable the square and the line
+in the same size and color*/
   dist2sep_genes=&dist2sep_genes,
  /*this will ensure these genes close to each other to 
 be separated in the final gene track; 
@@ -288,6 +339,11 @@ be separated in the final gene track;
 Customize this for different gene exon track! */
   where_cndtn_for_gwasdsd=&where_cndtn_for_gwasdsd,
   gwas_pos_var=&Pos_Var,
+  Variant_Length_Var=&Variant_Length_Var,/*this variable if not empty, its value will be used to extend the value of Pos_Var for making 
+the start and end position for SNP_Var, i.e., st=&Pos_Var-0.5*&Variant_Length_Var and end=&Pos_Var-0.5*&Variant_Length_Var;
+This would be especially helpful for mixing CNV and SNV data for making scatter plots, as it is only necessary
+to provide middle position for CNVs and its lengths for ploting CNVs and SNVs together!
+*/
   shift_text_yval=&shift_text_yval, /*in terms of gene track labels, add positive or negative vale, ranging from 0 to 1, 
                       to liftup or lower text labels on the y axis; the default value is -0.2 to put gene lable under gene tracks;
                       Change it with the macro var pct4neg_y!*/
@@ -307,6 +363,23 @@ Customize this for different gene exon track! */
 Note: if makedotheatmap=1, the scatterplot will not use the discretemap mode based on
 the negative and postive values of lattice_subgrp_var to color dots in scatterplot*/
 
+/*Main color scheme for coloring dots in scatter plot with your quantitative color response variable
+Note: it is necessary to have makedotheatmap=1 and use the default heatmap_var or other quantitative
+variable with both negative and positive values to color the scatter plot; when the quantitative response
+variable is postive or negative, please change the heatmap_min_neg_val as 0 for postive values, meanwhile,
+for all negative values, please assign value 0 to heatmap_max_pos_val*/
+heatmap_var=&heatmap_var,/*Assign lattice_subgrp_var to this macro var to draw scatter plot in heatmap
+using lattice_subgrp_var with rangeattrmap instead of drawing dots using binary mode, such as 0 and 1 representing Pos
+and negative directions of latticen_subgrp_var!*/
+heatmap_Neg_rangealtcolormodel=&heatmap_Neg_rangealtcolormodel,/*Range alt color model for negative values, heatmap_var<=0,  in heatmap*/
+heatmap_Pos_rangealtcolormodel=&heatmap_Pos_rangealtcolormodel,/*Range alt color model for positve values, heatmap_var>=0, in heatmap*/
+heatmap_min_neg_val=&heatmap_min_neg_val,/*Minimum negative value for the heatmap_var when it is not empty; 
+change this to customize the minimum value for colorbar in heatmap*/
+heatmap_max_pos_val=&heatmap_max_pos_val,/*Maximum postive value for the heatmap_var when it is not empty; 
+change this to customize the max value for colorbar in heatmap*/
+
+/*Alternative color scheme for categorical color response variable! Please keep it in default
+value if you don't want to use it for your quantitative color response variable*/
 color_resp_var=&color_resp_var,/*Use the variable to draw colormap of dots in scatterplots with colors
 supplied by a later macro variable dataContrastCols that are specifically designated for 
 scatterplot dots but not other tracks under the scatter plots, such as gene tracks;.
@@ -406,6 +479,64 @@ barthickness=15,
 dotsize=8, 
 dist2sep_genes=1000,
 where_cndtn_for_gwasdsd=%str(pval<1)
+);
+
+*Demo codes to draw SNVs and CNVs together;
+libname G "E:\LongCOVID_HGI_GWAS\PGC_Large_GWASs\PGC_GWAS_Analyzer_Paper\DiffGWAS4PTSD_vs_SCZ_Output";
+data top_sigs;
+set G.top_comm_sigs4PGC;
+run;
+libname FM 'E:\LongCOVID_HGI_GWAS';
+
+%let all_snps=rs13387644;
+*Note: the figure height equal to 700 and width > 700 is the best presentation of data;
+data top_sigs;
+set top_sigs;
+*Get Z-scores for both gwass for comparable coloring of scatter plots in local Manhattan plot;
+gwas1_z=gwas1_beta/gwas1_se;
+gwas2_z=gwas2_beta/gwas2_se;
+var_length=.;
+*Make a fake CNV for each GWAS;
+if rsid="rs13387644" then do;
+   var_length=10000;
+   gwas1_P=1e-15;
+   gwas2_P=1e-15;
+   pval=1e-15;
+end;
+run;
+
+%SNP_Local_Manhattan_With_GTF(
+gwas_dsd=top_sigs,
+chr_var=chr,
+AssocPVars=%pull_list(input_list=gwas1_p gwas2_p pval,idx4pull=1 2 3),
+SNP_IDs=&all_snps,
+dist2snp=100000,
+SNP_Var=rsid,
+Pos_Var=pos,
+Variant_Length_Var=Var_length,
+gtf_dsd=FM.GTF_HG19,
+ZscoreVars=%pull_list(input_list=gwas1_z gwas2_z diff_zscore,idx4pull=1 2 3),
+gwas_labels_in_order=%pull_list(input_list=PGC_Schizophrenia PGC_PTSD Schizophrenia_vs_PTSD,idx4pull=1 2 3),
+design_width=950, 
+design_height=800, 
+barthickness=10, 
+dotsize=8, 
+scattermarker_symbol=circlefilled,
+highlow_line_cmd=%str(thickness=8 color=darkred pattern=solid),
+dist2sep_genes=20000000,
+where_cndtn_for_gwasdsd=%str(),
+shift_text_yval=0.2, 
+fig_fmt=png,
+pct4neg_y=2, 
+adjval4header=-2,
+makedotheatmap=1,
+color_resp_var=,
+makeheatmapdotintooneline=0,
+var4label_scatterplot_dots= ,
+SNPs2label_scatterplot_dots=&all_snps, 
+yoffset4max_drawmarkersontop=0.3, 
+Yoffset4textlabels=5, 
+verbose=0
 );
 
 */
