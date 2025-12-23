@@ -103,6 +103,13 @@ run;
 /*proc print;run;*/
 /*options mprint mlogic symbolgen;*/
 
+*Only real macros will be kept;
+data tmp(keep=filename);
+set tmp;
+ismacro=resolve('%is_sas_macro(file='||filename||')');
+if ismacro=1;
+run;
+
 data _null_;
 set tmp;
 %if &verbose=1 %then %do;

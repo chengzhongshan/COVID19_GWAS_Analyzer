@@ -15,7 +15,7 @@
 /*    &return */
 %*The above failed in SAS OnDemand but works in Windows;
 %*The reason is because the sas funciton will return these sas comments if not escaped by %;
-%*Note: it is necessary to assign &fileref but no filerefto fexist here!;
+%*Note: it is necessary to assign &fileref but not fileref to fexist here!;
    %if %sysevalf(&rc=0 and %symexist(fileref) and %sysfunc(fexist(&fileref)))  %then %do;
        1
    %end;

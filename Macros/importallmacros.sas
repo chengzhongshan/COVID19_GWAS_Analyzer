@@ -61,6 +61,13 @@ options notes;
 /*proc print;run;*/
 /*options mprint mlogic symbolgen;*/
 
+*Only real macros will be kept;
+data tmp(keep=filename);
+set tmp;
+ismacro=resolve('%is_sas_macro(file='||filename||')');
+if ismacro=1;
+run;
+
 data _null_;
 set tmp;
 %if &verbose=1 %then %do;
@@ -83,6 +90,10 @@ run;
 
 /*
 
-%importallmacros(MacroDir=E:\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros,fileRgx=Import,verbose=1);
+%importallmacros(
+MacroDir=H:\F_Queens\360yunpan\SASCodesLibrary\SAS-Useful-Codes\Macros,
+fileRgx=Import,
+verbose=1
+);
 
 */
