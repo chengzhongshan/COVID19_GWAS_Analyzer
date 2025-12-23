@@ -33,7 +33,7 @@ filename _file "&file";
 		do while(not eof and found=0 and bytesread < &bytes);
             input line $varying32767. reclen;
             bytesread + reclen;
-            if index(lowcase(line),'%macro') > 0 then found = 1;
+            if index(lowcase(line),'%macro ') > 0 then found = 1;
         end;
         call symputx("&mv",found,'G');
     run;
