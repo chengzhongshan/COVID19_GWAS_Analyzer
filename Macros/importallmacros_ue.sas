@@ -138,7 +138,7 @@ proc print;run;
  filename=_infile_;
  filename=prxchange('s/.*\s+([\S]+\.sas)/$1/',-1,filename);
  filename="&_MacroDir\"||filename;
- if prxmatch('/\.sas/',filename) and scan(filename,-2,'/')='Macros' and length(scan(filename,-1,'/'))<36;
+ if prxmatch('/\.sas/',filename) and scan(filename,-2,'/')='Macros' and length(scan(filename,-1,'/'))<=36;
  run;
 %end;
 %else %do;
@@ -160,8 +160,8 @@ proc print;run;
  %listfiles2dsdInUE(&MacroDir,sas\s*$,tmp_&di);
  data tmp_&di;
  set tmp_&di;
- where scan(filename,-2,'/')='Macros' and length(scan(filename,-1,'/'))<36;
- * delete sas files with length >32 + 4 (.sas), as these files are not sas macro;
+ where scan(filename,-2,'/')='Macros' and length(scan(filename,-1,'/'))<=36;
+ * delete sas files with length >=32 + 4 (.sas), as these files are not sas macro;
  run;
 /*  proc print;run; */
  /*%abort 255;*/
