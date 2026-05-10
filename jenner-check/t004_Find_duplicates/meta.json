@@ -1,0 +1,8 @@
+{
+    "bundle": "t004_Find_duplicates",
+    "source_file": "Macros/Find_duplicates.sas",
+    "source_blob_sha": "0417b3fefd84594ac7f5b002d6f2fd1a98cfd204",
+    "source_commit": "d740c4be52c071237fcc9d40c095554f4d38e9f4",
+    "tier": "real_data",
+    "notes": "Macro definition copied verbatim from Macros/Find_duplicates.sas. The 7-row stacked GWAS table is synthesized to fit the macro's contract: snp is the dedup key, two SNPs (rs16831827, rs7654321) appear in both hgi_b1 and hgi_b2, the rest only once. The macro selects rows whose snp has count(*) > 1, sorts by snp, and prints — the bundle should print exactly 4 rows."
+}

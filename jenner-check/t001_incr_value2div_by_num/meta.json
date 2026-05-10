@@ -1,0 +1,8 @@
+{
+    "bundle": "t001_incr_value2div_by_num",
+    "source_file": "Macros/incr_value2div_by_num.sas",
+    "source_blob_sha": "cc7a11965ce1ce6dbb170bd4329ad76399c51fd0",
+    "source_commit": "d740c4be52c071237fcc9d40c095554f4d38e9f4",
+    "tier": "real_data",
+    "notes": "Macro definition copied verbatim from Macros/incr_value2div_by_num.sas. Driver code calls it with the two examples from the file's own annotations (101/2, 15/4) plus a GWAS-flavoured 327/50 case. No external data; all output is the six computed integers in a single PROC PRINT."
+}
