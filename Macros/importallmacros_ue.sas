@@ -1,13 +1,14 @@
 %macro _is_sas_macro(file=, bytes=8192, mv=IS_SASMACRO);
     %if "%sysfunc(strip(&file))" ="" %then %do;
-        %put ERROR: (is_sas_macro) FILE= must be specified.;
+        %put NOTE: (is_sas_macro) FILE= was blank, so this candidate will be skipped.;
+        %let &mv = 0;
         %return;
     %end;
     %global &mv;
     %let _exists = %sysfunc(fileexist(%sysfunc(dequote(&file))));
     %if &_exists = 0 %then %do;
         %let &mv = 0;
-        %put ERROR: (is_sas_macro) File &file does not exist.;
+        %put NOTE: (is_sas_macro) File &file does not exist, so this candidate will be skipped.;
         %return;
     %end;
 
@@ -102,7 +103,7 @@ proc print;run;
 
 %mend;
 
-%macro importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=.sas,verbose=0);
+%macro importallmacros_ue(MacroDir=%sysfunc(pathname(HOME))/Macros,fileRgx=.sas,verbose=0, usergx2confirm_macro=0);
 
 %if not %_FileOrDirExist_(dir=&MacroDir)  %then %do;
  %put We are going to download the required SAS macros from github;
@@ -180,14 +181,21 @@ run;
 /*options mprint mlogic symbolgen;*/
 
 *Only real macros will be kept;
-data tmp(keep=filename);
+data tmp1(keep=filename);
 set tmp;
-ismacro=resolve('%_is_sas_macro(file='||filename||')');
+%if &usergx2confirm_macro=1 %then %do;
+ *it would take 12mins to check these macros;
+  ismacro=resolve('%_is_sas_macro(file='||filename||')');
+%end;
+%else %do;
+if prxmatch('/\.sas$/i',trim(left(filename))) then ismacro=1;
+%end;
 if ismacro=1;
 run;
+/* %abort 255; */
 
 data _null_;
-set tmp;
+set tmp1;
 %if &verbose=1 %then %do;
 call execute('%put Now try to import the macro: '|| left(strip(filename)));
 %end;
