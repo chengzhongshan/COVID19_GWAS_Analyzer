@@ -1,0 +1,8 @@
+{
+    "bundle": "t002_calculate_binomial_P",
+    "source_file": "Macros/calculate_binomial_P.sas",
+    "source_blob_sha": "1f8a1903c4e38df103c1543e48aabfeaeaff39ad",
+    "source_commit": "d740c4be52c071237fcc9d40c095554f4d38e9f4",
+    "tier": "real_data",
+    "notes": "Macro definition copied verbatim from Macros/calculate_binomial_P.sas. The 17-row demo allele-count table is taken directly from the macro's own annotation block (rows 41-60). One row (1 5, tot_reads=6) is dropped by TotReadCutoff=20, so the printed dataset has 16 observations. Output reports tot_reads, A1A2log2Ratio (clamped at +/-10), Ref_Frq, binomial_P (probbnml with min(A1,A2)) and logP."
+}

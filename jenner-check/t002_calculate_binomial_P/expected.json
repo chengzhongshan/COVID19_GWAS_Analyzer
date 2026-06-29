@@ -1,0 +1,32 @@
+{
+    "_captured_at": "2026-05-10T07:30:00Z",
+    "_captured_run_id": "captured-during-probe",
+    "_captured_from": "https://api.jenneranalytics.com/v1/run",
+
+    "status": "ok",
+    "exit_code": 0,
+
+    "log_contains": [
+        "NOTE: Option OBS changed to 200.",
+        "NOTE: DATA ase_counts",
+        "NOTE: Wrote ase_counts (17 rows, 2 columns).",
+        "NOTE: DATA binom_results",
+        "NOTE: PROC PRINT completed: 16 observations printed,"
+    ],
+    "log_does_not_contain": [
+        "ERROR:",
+        "[JENNER-ERROR"
+    ],
+
+    "output_contains": [
+        "PROC PRINT: binom_results",
+        "TOT_READS",
+        "BINOMIAL_P",
+        "LOGP"
+    ],
+
+    "diagnostics": {
+        "parse_warnings": [],
+        "runtime_warnings": []
+    }
+}

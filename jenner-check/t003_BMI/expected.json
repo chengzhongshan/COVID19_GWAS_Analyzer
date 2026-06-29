@@ -1,0 +1,32 @@
+{
+    "_captured_at": "2026-05-10T07:30:00Z",
+    "_captured_run_id": "captured-during-probe",
+    "_captured_from": "https://api.jenneranalytics.com/v1/run",
+
+    "status": "ok",
+    "exit_code": 0,
+
+    "log_contains": [
+        "NOTE: Option OBS changed to 200.",
+        "NOTE: DATA subjects",
+        "NOTE: Wrote subjects (8 rows, 3 columns).",
+        "NOTE: Wrote subjects (8 rows, 4 columns).",
+        "NOTE: PROC PRINT completed: 8 observations printed, 4 variables"
+    ],
+    "log_does_not_contain": [
+        "ERROR:",
+        "[JENNER-ERROR"
+    ],
+
+    "output_contains": [
+        "PROC PRINT: subjects",
+        "SBJ001",
+        "SBJ008",
+        "BMI"
+    ],
+
+    "diagnostics": {
+        "parse_warnings": [],
+        "runtime_warnings": []
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "bundle": "t003_BMI",
+    "source_file": "Macros/BMI.sas",
+    "source_blob_sha": "342c054638ecf617b7bbb8dbfb7b58978a1fb794",
+    "source_commit": "d740c4be52c071237fcc9d40c095554f4d38e9f4",
+    "tier": "real_data",
+    "notes": "Macro definition copied verbatim from Macros/BMI.sas. Eight synthesized subjects with realistic weight (lb) and height (in) ranges; the macro's own demo block uses Wgt=125, Hgt=63, but a single row gives no signal — the bundle prints a small spread instead. The DATA step pattern (BMI=%BMI(Wgt,Hgt)) matches the macro's documented usage."
+}

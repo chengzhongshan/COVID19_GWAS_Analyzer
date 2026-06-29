@@ -1,0 +1,33 @@
+{
+    "_captured_at": "2026-05-10T07:30:00Z",
+    "_captured_run_id": "captured-during-probe",
+    "_captured_from": "https://api.jenneranalytics.com/v1/run",
+
+    "status": "ok",
+    "exit_code": 0,
+
+    "log_contains": [
+        "NOTE: Option OBS changed to 200.",
+        "NOTE: DATA snp_records",
+        "NOTE: Wrote snp_records (7 rows, 5 columns).",
+        "NOTE: PROC SQL",
+        "NOTE: PROC PRINT completed: 4 observations printed,"
+    ],
+    "log_does_not_contain": [
+        "ERROR:",
+        "[JENNER-ERROR"
+    ],
+
+    "output_contains": [
+        "PROC PRINT: dup_snps",
+        "rs16831827",
+        "rs7654321",
+        "hgi_b1",
+        "hgi_b2"
+    ],
+
+    "diagnostics": {
+        "parse_warnings": [],
+        "runtime_warnings": []
+    }
+}
